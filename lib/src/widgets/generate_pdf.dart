@@ -68,8 +68,12 @@ Future<void> generatePdf({
     final tableRow = pw.Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        pw.Text(
-          data.product!.name.toString(),
+        pw.Container(
+          width: 200,
+          child: pw.Text(
+            (data.product!.name! + "                              ")
+                .substring(0, 30),
+          ),
         ),
         pw.Text(data.quantity.toString(), textAlign: TextAlign.right),
         pw.Text('$basePrice'),
@@ -126,6 +130,7 @@ Future<void> generatePdf({
         pw.SizedBox(height: 20),
         pw.Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           pw.Text('Name'),
+          pw.SizedBox(width: 160),
           pw.Text('Qty'),
           pw.Text('Rate/Unit'),
           gstType == 'WithoutGST' ? Container() : pw.Text('GST/Unit'),

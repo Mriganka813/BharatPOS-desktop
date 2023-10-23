@@ -472,6 +472,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.15.4"
+  htmltopdfwidgets:
+    dependency: "direct main"
+    description:
+      name: htmltopdfwidgets
+      sha256: "406d2710cf75caad35ec5ac1cbb398e1470d1a4f5f0ec5e37b6be2b5661d6a68"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.9+1"
   http:
     dependency: transitive
     description:

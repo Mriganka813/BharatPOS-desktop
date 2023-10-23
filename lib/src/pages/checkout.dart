@@ -1,25 +1,33 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:htmltopdfwidgets/htmltopdfwidgets.dart' as htp;
 import 'package:intl/intl.dart';
 import 'package:ntp/ntp.dart';
+import 'package:open_app_file/open_app_file.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shopos/src/blocs/checkout/checkout_cubit.dart';
 import 'package:shopos/src/config/colors.dart';
+import 'package:shopos/src/config/mediaqury.dart';
 import 'package:shopos/src/models/input/order_input.dart';
 import 'package:shopos/src/models/user.dart';
 import 'package:shopos/src/pages/create_party.dart';
 import 'package:shopos/src/services/global.dart';
 import 'package:shopos/src/services/locator.dart';
+import 'package:shopos/src/services/openpdf_frombackend.dart';
 import 'package:shopos/src/services/party.dart';
 import 'package:shopos/src/services/user.dart';
 import 'package:shopos/src/widgets/custom_button.dart';
 import 'package:shopos/src/widgets/custom_drop_down.dart';
+import 'package:shopos/src/widgets/custom_text_field.dart';
 import 'package:shopos/src/widgets/generate_pdf.dart';
+import 'package:shopos/src/widgets/invoice_template_withGST.dart';
 import 'package:shopos/src/widgets/pdf_bill_template.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shopos/src/provider/billing.dart';
@@ -56,7 +64,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   final _formKey = GlobalKey<FormState>();
   late CheckoutCubit _checkoutCubit;
   late final TextEditingController _typeAheadController;
-
+  bool isBillTo = false;
   String? date;
   bool _isLoading = false;
   User userData = User();
@@ -169,14 +177,22 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 String? defaultBill = prefs.getString('defaultBill');
 
                 if (defaultBill == null) {
-                  _showNewDialog(widget.args.orderInput);
+                  // _showNewDialog(widget.args.orderInput);
+                  _viewPdfwithoutgst(
+                    userData,
+                  );
                 } else if (defaultBill == '57mm') {
-                  _view57mmBill(widget.args.orderInput);
-                  // _viewPdf();
+                  // _view57mmBill(widget.args.orderInput);
+                  _viewPdfwithoutgst(
+                    userData,
+                  );
                 } else if (defaultBill == '80mm') {
-                  _view80mmBill(widget.args.orderInput);
+                  //_view80mmBill(widget.args.orderInput);
+                  _viewPdfwithoutgst(
+                    userData,
+                  );
                 } else if (defaultBill == 'A4') {
-                  _viewPdfwithgst(userData);
+                  _viewPdfwithgst(userData, widget.args.orderInput);
                 }
               },
             ),
@@ -262,36 +278,47 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   ///
-  void _viewPdfwithgst(User user) async {
-    // final targetPath = await getExternalCacheDirectories();
-    // const targetFileName = "Invoice";
+  void _viewPdfwithgst(User user, OrderInput orderInput) async {
+    // final targetPath = await getApplicationDocumentsDirectory();
+    // // const targetFileName = "Invoice";
+    // final filePath = '${targetPath.path}/Invoice.pdf';
     // final htmlContent = invoiceTemplatewithGST(
-    //   type: widget.args.invoiceType.toString(),
-    //   date: DateTime.now(),
-    //   companyName: user.businessName ?? "",
-    //   order: widget.args.orderInput,
-    //   user: user,
-    //   headers: ["Name", "Qty", "Rate/Unit", "GST/Unit", "Amount"],
-    //   total: totalPrice() ?? "",
-    //   subtotal: totalbasePrice() ?? "",
-    //   gsttotal: totalgstPrice() ?? "",
-    // );
-
+    //     type: widget.args.invoiceType.toString(),
+    //     date: DateTime.now(),
+    //     companyName: user.businessName ?? "",
+    //     order: widget.args.orderInput,
+    //     user: user,
+    //     headers: ["Name", "Qty", "Rate/Unit", "GST/Unit", "Amount"],
+    //     total: totalPrice() ?? "",
+    //     subtotal: totalbasePrice() ?? "",
+    //     gsttotal: totalgstPrice() ?? "",
+    //     invoiceNum: date!);
+    // //var filePath = 'test/example.pdf';
+    // var file = File(filePath);
+    // List<htp.Widget> widgets = await htp.HTMLToPdf().convert(htmlContent);
+    // final newpdf = htp.Document();
+    // newpdf.addPage(htp.MultiPage(
+    //     maxPages: 200,
+    //     build: (context) {
+    //       return widgets;
+    //     }));
+    // await file.writeAsBytes(await newpdf.save());
+    // OpenAppFile.open(file.path, mimeType: 'application/pdf');
     // Navigator.of(context)
     //     .pushNamed(ShowPdfScreen.routeName, arguments: htmlContent);
 
-    generatePdf(
-        fileName: "Invoice",
-        date: DateTime.now().toString(),
-        companyName: user.businessName!,
-        orderInput: widget.args.orderInput,
-        user: user,
-        totalPrice: totalPrice() ?? '',
-        gstType: 'WithGST',
-        orderType: widget.args.invoiceType,
-        subtotal: totalbasePrice() ?? '',
-        gstTotal: totalgstPrice() ?? '',
-        invoiceNum: date);
+    // generatePdf(
+    //     fileName: "Invoice",
+    //     date: DateTime.now().toString(),
+    //     companyName: user.businessName!,
+    //     orderInput: widget.args.orderInput,
+    //     user: user,
+    //     totalPrice: totalPrice() ?? '',
+    //     gstType: 'WithGST',
+    //     orderType: widget.args.invoiceType,
+    //     subtotal: totalbasePrice() ?? '',
+    //     gstTotal: totalgstPrice() ?? '',
+    //     invoiceNum: date);
     // final generatedPdfFile = await FlutterHtmlToPdf.convertFromHtmlContent(
     //   htmlContent,
     //   targetPath!.first.path,
@@ -324,6 +351,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
     //   phone: '91${party.phoneNumber ?? ""}',
     //   filePath: [generatedPdfFile.path],
     // );
+    // Openpdffrombackend pdf = Openpdffrombackend();
+    // pdf.getpdf(orderInput, user, date!);
   }
 
   ///
@@ -350,7 +379,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       orderInput: widget.args.orderInput,
       user: user,
       totalPrice: totalPrice() ?? '',
-      gstType: 'WithoutGST',
+      gstType: 'WithGST',
       orderType: widget.args.invoiceType,
       invoiceNum: date,
     );
@@ -529,7 +558,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
               onTap: () async {
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 await prefs.setString('defaultBill', '57mm');
-                _view57mmBill(order);
+                // _view57mmBill(order);
+                _viewPdfwithoutgst(userData);
                 Navigator.of(ctx).pop();
               },
               title: Text('58mm'),
@@ -860,6 +890,77 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           ],
                         ),
                       ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: media.size.width / 2,
+                            child: SwitchListTile(
+                                title: Text('Bill to: '),
+                                value: isBillTo,
+                                onChanged: (val) {
+                                  isBillTo = val;
+                                  setState(() {});
+                                }),
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                        height: 5,
+                      ),
+                      Visibility(
+                        visible: isBillTo,
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                CustomTextField(
+                                  hintText: 'Receiver name',
+                                  onChanged: (val) {
+                                    widget.args.orderInput.reciverName = val;
+                                    setState(() {});
+                                  },
+                                ),
+                                SizedBox(
+                                  width: 20,
+                                ),
+                                CustomTextField(
+                                  hintText: 'Business name',
+                                  onChanged: (val) {
+                                    widget.args.orderInput.businessName = val;
+                                    setState(() {});
+                                  },
+                                ),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            Row(
+                              children: [
+                                CustomTextField(
+                                  hintText: 'Business address',
+                                  onChanged: (val) {
+                                    widget.args.orderInput.businessAddress =
+                                        val;
+                                    setState(() {});
+                                  },
+                                ),
+                                SizedBox(
+                                  width: 20,
+                                ),
+                                CustomTextField(
+                                  hintText: 'GSTIN',
+                                  onChanged: (val) {
+                                    widget.args.orderInput.gst = val;
+                                    setState(() {});
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -877,7 +978,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final res = await UserService.me();
       if ((res.statusCode ?? 400) < 300) {
         final user = User.fromMap(res.data['user']);
-        if (type == 0) _viewPdfwithgst(user);
+        if (type == 0) _viewPdfwithgst(user, widget.args.orderInput);
         if (type == 1) _viewPdfwithoutgst(user);
       }
     } catch (_) {}

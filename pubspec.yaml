@@ -20,7 +20,7 @@ dependencies:
   date_time_picker: 
   dio: ^5.1.1
   dio_cookie_manager: any
-  
+  htmltopdfwidgets: 
   
   flutter_barcode_scanner: ^2.0.0
   flutter_bloc: ^8.0.1
