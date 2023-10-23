@@ -175,12 +175,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 // _onTapShare(0);
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 String? defaultBill = prefs.getString('defaultBill');
+                print(defaultBill);
 
                 if (defaultBill == null) {
-                  // _showNewDialog(widget.args.orderInput);
-                  _viewPdfwithoutgst(
+                   _showNewDialog(widget.args.orderInput);
+                 /* _viewPdfwithoutgst(
                     userData,
-                  );
+                  );*/
                 } else if (defaultBill == '57mm') {
                   // _view57mmBill(widget.args.orderInput);
                   _viewPdfwithoutgst(
@@ -192,7 +193,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     userData,
                   );
                 } else if (defaultBill == 'A4') {
-                  _viewPdfwithgst(userData, widget.args.orderInput);
+                  _viewPdfwithoutgst(userData);
+
                 }
               },
             ),
