@@ -21,6 +21,7 @@ Future<void> generatePdf({
   String? gstTotal,
   String? invoiceNum,
 }) async {
+  var nettotal = 0;
   final pdf = pw.Document();
 
   List<String> address = user.address.toString().split(',');
@@ -66,50 +67,54 @@ Future<void> generatePdf({
       }
     }
     PdfColor pdfColor = PdfColor.fromInt(1);
-      PdfColor pdfColor2 = PdfColor.fromInt(0xFF808080);
+    PdfColor pdfColor2 = PdfColor.fromInt(0xFF808080);
     final tableRow = pw.Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
         pw.Container(
-        
           width: 200,
           child: pw.Text(
-            (data.product!.name! + "                              ")
-                .substring(0, 30),
-          ),
+              (data.product!.name! + "                              ")
+                  .substring(0, 30),
+              style: TextStyle(fontSize: 10)),
         ),
         SizedBox(width: 20),
         Container(
           width: 20,
-        
-          child: pw.Text(data.quantity.toString(), textAlign: TextAlign.center),
+          child: pw.Text(data.quantity.toString(),
+              textAlign: TextAlign.center, style: TextStyle(fontSize: 10)),
         ),
         SizedBox(width: 30),
         Container(
-          width: 70,
-          child: pw.Text('$basePrice')),
-             SizedBox(width: 20),
+            width: 70,
+            child: pw.Text('$basePrice', style: TextStyle(fontSize: 10))),
+        SizedBox(width: 10),
         gstType == 'WithoutGST'
             ? Container()
             : (data.product!.gstRate == 'null'
                 ? pw.Text('NA')
                 : Container(
-                  width: 50,
-                  child: pw.Text(data.product!.saleigst!)
-                )),
-                   SizedBox(width: 20),
+                    width: 50,
+                    child: pw.Text(data.product!.saleigst!,
+                        style: TextStyle(fontSize: 10)))),
+        SizedBox(width: 20),
         orderType == OrderType.sale
             ? Container(
-              width: 50,
-              child: pw.Text('${(data.quantity) * (data.product?.sellingPrice ?? 0)}')
-            ) 
+                width: 50,
+                child: pw.Text(
+                    '${(data.quantity) * (data.product?.sellingPrice ?? 0)}',
+                    style: TextStyle(fontSize: 10)))
             : Container(
-              width: 50,
-              child:pw.Text(
-                '${(data.quantity) * (data.product?.purchasePrice ?? 0)}'), ) 
+                width: 50,
+                child: pw.Text(
+                    '${(data.quantity) * (data.product?.purchasePrice ?? 0)}',
+                    style: TextStyle(fontSize: 10)),
+              )
       ],
     );
     tableRows.add(tableRow);
+
+    nettotal = nettotal + (data.quantity) * (data.product?.purchasePrice ?? 0);
   }
 
   final pw.Column table = pw.Column(
@@ -118,13 +123,13 @@ Future<void> generatePdf({
 
   final font = await rootBundle.load('assets/OpenSans-Regular.ttf');
   final ttf = await Font.ttf(font);
-   PdfColor pdfColor = PdfColor.fromInt(1);
-    PdfColor pdfColor2 = PdfColor.fromInt(0xFF808080);
+  PdfColor pdfColor = PdfColor.fromInt(1);
+  PdfColor pdfColor2 = PdfColor.fromInt(0xFF808080);
   pdf.addPage(
     pw.Page(build: (pw.Context context) {
       return pw.Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-          pw.Text('Invoice($invoiceNum)', style: TextStyle(font: ttf)),
+          pw.Text('Invoice : $invoiceNum', style: TextStyle(font: ttf)),
           pw.Text('Date: ${date.substring(0, 10)}',
               style: TextStyle(font: ttf)),
         ]),
@@ -132,42 +137,66 @@ Future<void> generatePdf({
           height: 10,
         ),
         pw.SizedBox(height: 10),
-        pw.Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            pw.Text('From: ',
-                style: TextStyle(
-                  font: ttf,
-                )),
-            pw.SizedBox(height: 10),
-            pw.Text('$companyName',
-                style: TextStyle(font: ttf, fontWeight: pw.FontWeight.bold)),
-            pw.Text('${address[0].replaceAll('{', '')}',
-                style: TextStyle(font: ttf)),
-            pw.Text('${address[1].replaceAll(' ', '')}',
-                style: TextStyle(font: ttf)),
-            pw.Text('${address[2].replaceAll(' ', '')}',
-                style: TextStyle(font: ttf)),
-            pw.Text('${address[3].replaceAll('}', '').replaceAll(' ', '')}',
-                style: TextStyle(font: ttf)),
-            pw.Text('Email: ${user.email}', style: TextStyle(font: ttf)),
-            pw.Text('Phone: ${user.phoneNumber}', style: TextStyle(font: ttf)),
-          ]),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            pw.Text('Billed to: ',
-                style: TextStyle(
-                  font: ttf,
-                )),
-            pw.SizedBox(height: 10),
-            pw.Text('Business Name:' + user.businessName.toString(),
-                style: TextStyle(font: ttf, fontWeight: pw.FontWeight.bold)),
-            pw.Text('Address:' + address[1], style: TextStyle(font: ttf)),
-            pw.Text('GSTIN:' + user.GstIN.toString(),
-                style: TextStyle(font: ttf)),
-          ])
-        ]),
+        pw.Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                pw.Text('From: ',
+                    style: TextStyle(
+                      font: ttf,
+                    )),
+                pw.SizedBox(height: 10),
+                pw.Text('$companyName',
+                    style:
+                        TextStyle(font: ttf, fontWeight: pw.FontWeight.bold)),
+                pw.Text('${address[0].replaceAll('{', '')}',
+                    style: TextStyle(font: ttf)),
+                pw.Text('${address[1].replaceAll(' ', '')}',
+                    style: TextStyle(font: ttf)),
+                pw.Text('${address[2].replaceAll(' ', '')}',
+                    style: TextStyle(font: ttf)),
+                pw.Text('${address[3].replaceAll('}', '').replaceAll(' ', '')}',
+                    style: TextStyle(font: ttf)),
+                pw.Text('Email: ${user.email}', style: TextStyle(font: ttf)),
+                pw.Text('Phone: ${user.phoneNumber}',
+                    style: TextStyle(font: ttf)),
+              ]),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                if ((orderInput.reciverName != "" &&
+                        orderInput.reciverName != null) ||
+                    (orderInput.businessName != "" &&
+                        orderInput.businessName != null) ||
+                    (orderInput.businessAddress != "" &&
+                        orderInput.businessAddress != null) ||
+                    orderInput.gst != "" && orderInput.gst != null)
+                  pw.Text('Billed to:                        ',
+                      style: TextStyle(
+                        font: ttf,
+                      )),
+                pw.SizedBox(height: 10),
+                if (orderInput.reciverName != "" &&
+                    orderInput.reciverName != null)
+                  pw.Text(orderInput.reciverName.toString(),
+                      style:
+                          TextStyle(font: ttf, fontWeight: pw.FontWeight.bold)),
+                if (orderInput.businessName != "" &&
+                    orderInput.businessName != null)
+                  pw.Text(orderInput.businessName.toString(),
+                      style:
+                          TextStyle(font: ttf, fontWeight: pw.FontWeight.bold)),
+                if (orderInput.businessAddress != "" &&
+                    orderInput.businessAddress != null)
+                  pw.Text(orderInput.businessAddress.toString(),
+                      style: TextStyle(font: ttf)),
+                if (orderInput.gst != "" && orderInput.gst != null)
+                  pw.Text(orderInput.gst.toString(),
+                      style: TextStyle(font: ttf)),
+              ])
+            ]),
 
         pw.SizedBox(height: 20),
-             pw.Divider(thickness: 1,color: pdfColor2),
+        pw.Divider(thickness: 1, color: pdfColor2),
         pw.Row(mainAxisAlignment: MainAxisAlignment.start, children: [
           pw.Container(
             width: 200,
@@ -179,21 +208,18 @@ Future<void> generatePdf({
             child: pw.Text('Qty'),
           ),
           SizedBox(width: 20),
-            pw.Container(
-              
+          pw.Container(
             width: 70,
-            child:  pw.Text('Rate/Unit'),
+            child: pw.Text('Rate/Unit'),
           ),
-         
+          SizedBox(width: 10),
+          gstType == 'WithoutGST'
+              ? Container()
+              : Container(width: 50, child: pw.Text('GST/Unit')),
           SizedBox(width: 20),
-          gstType == 'WithoutGST' ? Container() :Container(
-            width: 50,
-            child:pw.Text('GST/Unit')) ,
-          SizedBox(width: 20),
-          Container(width: 50,child:  pw.Text('Amount') )
-        
+          Container(width: 50, child: pw.Text('Amount'))
         ]),
-        pw.Divider(thickness: 1,color: pdfColor2),
+        pw.Divider(thickness: 1, color: pdfColor2),
 
         // pw.Table(children: [
         //   pw.TableRow(children: [
@@ -212,60 +238,42 @@ Future<void> generatePdf({
 
         pw.SizedBox(height: 20),
 
-        subtotal == null || subtotal == ''
-            ? Container()
-            : pw.Row(children: [
-                pw.Text('Sub Total: ',
-                    style:
-                        TextStyle(font: ttf, fontWeight: pw.FontWeight.bold)),
-                pw.Text('$subtotal', style: TextStyle(font: ttf)),
-                pw.SizedBox(width: 50)
-              ]),
-
-        gstTotal == null || gstTotal == ''
-            ? Container()
-            : pw.Row(children: [
-                pw.Text('GST Total: ',
-                    style:
-                        TextStyle(font: ttf, fontWeight: pw.FontWeight.bold)),
-                pw.Text('$gstTotal', style: TextStyle(font: ttf)),
-                
-              ]),
-
         pw.Row(mainAxisAlignment: MainAxisAlignment.end, children: [
           pw.Text('Sub Total:       ',
-              style: TextStyle(font: ttf, fontWeight: pw.FontWeight.bold)),
+              style: TextStyle(
+                  font: ttf, fontWeight: pw.FontWeight.bold, fontSize: 10)),
           subtotal == null || subtotal == ''
-              ? Container(
-                width: 50,
-                child: pw.Text('0.0') )
+              ? Container(width: 50, child: pw.Text('0.0'))
               : Container(
-                width: 50,
-                child: pw.Text(subtotal.toString(), style: TextStyle(font: ttf)) )
+                  width: 50,
+                  child: pw.Text(double.parse(subtotal).toStringAsFixed(2),
+                      style: TextStyle(font: ttf, fontSize: 10)))
         ]),
 
         pw.Row(mainAxisAlignment: MainAxisAlignment.end, children: [
           pw.Text('GST Total:       ',
-              style: TextStyle(font: ttf, fontWeight: pw.FontWeight.bold)),
-         gstTotal == null || gstTotal == ''
-              ? Container(
-                width: 50,
-                child: pw.Text('0.0') )
-              :Container(
-                width: 50,
-                child: pw.Text(gstTotal.toString(), style: TextStyle(font: ttf)) )
+              style: TextStyle(
+                  font: ttf, fontWeight: pw.FontWeight.bold, fontSize: 10)),
+          gstTotal == null || gstTotal == ''
+              ? Container(width: 50, child: pw.Text('0.0'))
+              : Container(
+                  width: 50,
+                  child: pw.Text(gstTotal.toString(),
+                      style: TextStyle(font: ttf, fontSize: 10)))
         ]),
 
         pw.Row(mainAxisAlignment: MainAxisAlignment.end, children: [
           pw.Text('Net Total:       ',
-              style: TextStyle(font: ttf, fontWeight: pw.FontWeight.bold)),
+              style: TextStyle(
+                  font: ttf, fontWeight: pw.FontWeight.bold, fontSize: 10)),
           subtotal == null || subtotal == ''
-              ? Container(
-                width: 50,
-                child: pw.Text('0.0') )
+              ? Container(width: 50, child: pw.Text('0.0'))
               : Container(
-                width: 50,
-                child: pw.Text(subtotal.toString(), style: TextStyle(font: ttf)) )
+                  width: 50,
+                  child: pw.Text(
+                      (double.parse(subtotal) + double.parse(gstTotal!))
+                          .toStringAsFixed(2),
+                      style: TextStyle(font: ttf, fontSize: 10)))
         ]),
 
         pw.SizedBox(height: 10),
