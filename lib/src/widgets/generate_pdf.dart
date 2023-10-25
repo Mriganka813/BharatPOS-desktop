@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:htmltopdfwidgets/htmltopdfwidgets.dart';
 import 'package:open_app_file/open_app_file.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/widgets.dart';
 import 'package:shopos/src/models/input/order_input.dart';
@@ -290,12 +291,14 @@ Future<void> generatePdf({
   print('ruuning');
 
   // Save PDF to a file
-  final file = File(fileName);
+  final directory = await getApplicationDocumentsDirectory();
+  final filePath = '${directory.path}/Invoice.pdf';
+  final file = File(filePath);
   await file.writeAsBytes(await pdf.save());
 
   print('pdf save');
 
-  await OpenAppFile.open(
+  OpenAppFile.open(
     file.path,
     mimeType: 'application/pdf',
   );
