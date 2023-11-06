@@ -173,28 +173,29 @@ class _CheckoutPageState extends State<CheckoutPage> {
               title: const Text("Open pdf"),
               onTap: () async {
                 // _onTapShare(0);
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                String? defaultBill = prefs.getString('defaultBill');
-                print(defaultBill);
+                // SharedPreferences prefs = await SharedPreferences.getInstance();
+                // String? defaultBill = prefs.getString('defaultBill');
+                // print(defaultBill);
+                _showNewDialog(widget.args.orderInput);
 
-                if (defaultBill == null) {
-                  _showNewDialog(widget.args.orderInput);
-                  /* _viewPdfwithoutgst(
-                    userData,
-                  );*/
-                } else if (defaultBill == '57mm') {
-                  // _view57mmBill(widget.args.orderInput);
-                  _viewPdfwithoutgst(
-                    userData,
-                  );
-                } else if (defaultBill == '80mm') {
-                  //_view80mmBill(widget.args.orderInput);
-                  _viewPdfwithoutgst(
-                    userData,
-                  );
-                } else if (defaultBill == 'A4') {
-                  _viewPdfwithoutgst(userData);
-                }
+                // if (defaultBill == null) {
+                //   _showNewDialog(widget.args.orderInput);
+                //   /* _viewPdfwithoutgst(
+                //     userData,
+                //   );*/
+                // } else if (defaultBill == '57mm') {
+                //   _view57mmBill(widget.args.orderInput);
+                //   // _viewPdfwithoutgst(
+                //   //   userData,
+                //   // );
+                // } else if (defaultBill == '80mm') {
+                //   _view80mmBill(widget.args.orderInput);
+                //   // _viewPdfwithoutgst(
+                //   //   userData,
+                //   // );
+                // } else if (defaultBill == 'A4') {
+                //   _viewPdfwithoutgst(userData);
+                // }
               },
             ),
             // ListTile(
@@ -493,7 +494,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   ///
-    String? totalbasePrice() {
+  String? totalbasePrice() {
     return widget.args.orderInput.orderItems?.fold<double>(
       0,
       (acc, curr) {
@@ -520,7 +521,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   ///
- String? totalgstPrice() {
+  String? totalgstPrice() {
     return widget.args.orderInput.orderItems?.fold<double>(
       0,
       (acc, curr) {
@@ -547,6 +548,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       },
     ).toStringAsFixed(2);
   }
+
   _showNewDialog(
     OrderInput order,
   ) async {
@@ -558,18 +560,18 @@ class _CheckoutPageState extends State<CheckoutPage> {
           children: [
             ListTile(
               onTap: () async {
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                await prefs.setString('defaultBill', '57mm');
-                // _view57mmBill(order);
-                _viewPdfwithoutgst(userData);
+                // SharedPreferences prefs = await SharedPreferences.getInstance();
+                // await prefs.setString('defaultBill', '57mm');
+                _view57mmBill(order);
+                // _viewPdfwithoutgst(userData);
                 Navigator.of(ctx).pop();
               },
               title: Text('58mm'),
             ),
             ListTile(
               onTap: () async {
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                await prefs.setString('defaultBill', '80mm');
+                // SharedPreferences prefs = await SharedPreferences.getInstance();
+                // await prefs.setString('defaultBill', '80mm');
                 _view80mmBill(order);
                 Navigator.of(ctx).pop();
               },
@@ -577,8 +579,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ),
             ListTile(
               onTap: () async {
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                await prefs.setString('defaultBill', 'A4');
+                // SharedPreferences prefs = await SharedPreferences.getInstance();
+                // await prefs.setString('defaultBill', 'A4');
                 _viewPdfwithoutgst(userData);
                 Navigator.of(ctx).pop();
               },
@@ -920,7 +922,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                   hintText: 'Receiver name',
                                   onChanged: (val) {
                                     widget.args.orderInput.reciverName = val;
-                                
+
                                     setState(() {});
                                   },
                                 ),
