@@ -1,26 +1,29 @@
 import 'package:image_picker/image_picker.dart';
 
 class ProductFormInput {
-  ProductFormInput(
-      {this.name,
-      this.sellingPrice,
-      this.barCode,
-      this.id,
-      this.purchasePrice,
-      this.quantity,
-      this.image,
-      this.gst = false,
-      this.salecgst,
-      this.saleigst,
-      this.salesgst,
-      this.purchasecgst,
-      this.purchaseigst,
-      this.purchasesgst,
-      this.gstRate,
-      this.baseSellingPriceGst,
-      this.basePurchasePriceGst,
-      this.imageFile,
-      this.expirydate = ""});
+  ProductFormInput({
+    this.name,
+    this.sellingPrice,
+    this.barCode,
+    this.id,
+    this.purchasePrice,
+    this.quantity,
+    this.image,
+    this.gst = false,
+    this.salecgst,
+    this.saleigst,
+    this.salesgst,
+    this.purchasecgst,
+    this.purchaseigst,
+    this.purchasesgst,
+    this.gstRate,
+    this.baseSellingPriceGst,
+    this.basePurchasePriceGst,
+    this.imageFile,
+    this.expirydate,
+    this.available = true,
+    this.batchNumber,
+  });
 
   String? name;
   String? id;
@@ -38,9 +41,12 @@ class ProductFormInput {
   String? barCode;
   String? quantity;
   String? image;
-  String? expirydate;
+  DateTime? expirydate;
   bool gst;
   XFile? imageFile;
+  bool? available;
+
+  String? batchNumber;
 
   Map<String, dynamic> toMap() => {
         "name": name,

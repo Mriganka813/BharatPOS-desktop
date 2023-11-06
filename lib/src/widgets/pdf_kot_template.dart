@@ -13,6 +13,7 @@ import 'package:shopos/src/models/user.dart';
 
 class PdfKotUI {
   static Future<void> generate57mmKot({
+    String tableNo="",
     required User user,
     required OrderInput order,
     required List<String> headers,
@@ -56,7 +57,8 @@ class PdfKotUI {
               pw.Text('${dateFormat()}',
                   style: pw.TextStyle(fontSize: 9, font: ttf)),
               pw.SizedBox(height: 10),
-              pw.Text('Table', style: pw.TextStyle(fontSize: 9, font: ttf)),
+              pw.Text('Table: $tableNo', style: pw.TextStyle(fontSize: 9, font: ttf)),
+              
               pw.SizedBox(height: 10),
               pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -103,11 +105,13 @@ class PdfKotUI {
   }
 
   static Future<void> generate80mmKot({
+     String tableNo="",
     required User user,
     required OrderInput order,
     required List<String> headers,
     required DateTime date,
     required String invoiceNum,
+
   }) async {
     final pdf = pw.Document();
     final roll80 = PdfPageFormat.roll80;
@@ -146,7 +150,7 @@ class PdfKotUI {
               pw.Text('${dateFormat()}',
                   style: pw.TextStyle(fontSize: 9, font: ttf)),
               pw.SizedBox(height: 10),
-              pw.Text('Table', style: pw.TextStyle(fontSize: 9, font: ttf)),
+              pw.Text('Table: $tableNo', style: pw.TextStyle(fontSize: 9, font: ttf)),
               pw.SizedBox(height: 10),
               pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,

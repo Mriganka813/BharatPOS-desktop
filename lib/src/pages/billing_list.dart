@@ -12,6 +12,7 @@ import 'package:shopos/src/pages/create_sale.dart';
 import 'package:shopos/src/pages/home.dart';
 import 'package:shopos/src/provider/billing.dart';
 import 'package:shopos/src/services/user.dart';
+import 'package:shopos/src/widgets/custom_text_field2.dart';
 import 'package:shopos/src/widgets/pdf_kot_template.dart';
 
 enum kotType {
@@ -67,7 +68,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
 
   String date = '';
   bool showOption = false;
-
+  TextEditingController tableNoController = TextEditingController();
   @override
   void initState() {
     // getAllOrderInputList();
@@ -288,6 +289,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
       Navigator.pop(context);
     }
     await PdfKotUI.generate57mmKot(
+        tableNo: tableNoController.text,
         user: user,
         order: orderInput,
         headers: ["Item", "Qty"],
@@ -306,6 +308,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
       Navigator.pop(context);
     }
     await PdfKotUI.generate80mmKot(
+        tableNo: tableNoController.text,
         user: user,
         order: orderInput,
         headers: ["Item", "Qty"],
@@ -375,6 +378,13 @@ class _BillingListScreenState extends State<BillingListScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+             CustomTextField2(
+                  hintText: "Enter Table No (optional)",
+                  inputType: TextInputType.number,
+                  controller: tableNoController,
+                  value: "",
+                  validator: (e) => null,
+                ),
             ListTile(
               onTap: () async {
                 SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -493,8 +503,12 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                       //         .toList()[index],
                                       //     index,
                                       //     provider);
+                                      _showNewDialog(
+                                          provider.salesBilling.values
+                                              .toList()[index],
+                                        );
 
-                                      SharedPreferences prefs =
+                                      /*SharedPreferences prefs =
                                           await SharedPreferences.getInstance();
 
                                       String? defaultFormat =
@@ -515,7 +529,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                           provider.salesBilling.values
                                               .toList()[index],
                                         );
-                                      }
+                                      }*/
                                     },
                                     title: Text(
                                       'KOT',
