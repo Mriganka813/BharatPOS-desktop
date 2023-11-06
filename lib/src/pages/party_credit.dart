@@ -7,8 +7,11 @@ import 'package:shopos/src/blocs/specific%20party/specific_party_cubit.dart';
 import 'package:shopos/src/blocs/specific%20party/specific_party_state.dart';
 import 'package:shopos/src/config/colors.dart';
 import 'package:shopos/src/models/party.dart';
+import 'package:shopos/src/services/global.dart';
+import 'package:shopos/src/services/locator.dart';
+import 'package:shopos/src/services/set_or_change_pin.dart';
 import 'package:shopos/src/widgets/custom_button.dart';
-
+import 'package:pin_code_fields/pin_code_fields.dart' as pinCode;
 class ScreenArguments {
   final String partyId;
   final String partName;
@@ -33,6 +36,9 @@ class PartyCreditPage extends StatefulWidget {
 class _PartyCreditPageState extends State<PartyCreditPage> {
   late final SpecificPartyCubit _specificpartyCubit;
   late Party _specificPartyInput;
+  PinService _pinService = PinService();
+
+  final TextEditingController pinController = TextEditingController();
 
   @override
   void initState() {
@@ -436,19 +442,39 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
             ListTile(
               title: const Text("Edit"),
               onTap: () async {
-                Navigator.pop(context);
-                await modelOpenUpdate(context, id, total, type);
+                var result = true;
+
+                if (await _pinService.pinStatus()==true) {
+                  result = await _showPinDialog() as bool;
+                }
+                if (result!) {
+                  Navigator.pop(context);
+                  await modelOpenUpdate(context, id, total, type);
+                } else {
+                  Navigator.pop(context);
+                  locator<GlobalServices>().errorSnackBar("Incorrect pin");
+                }
               },
             ),
             ListTile(
               title: const Text("Delete"),
-              onTap: () {
-                widget.args.tabbarNo == 0
-                    ? _specificpartyCubit.deleteCustomerExpense(
-                        Party(id: id), widget.args.partyId)
-                    : _specificpartyCubit.deleteSupplierExpense(
-                        Party(id: id), widget.args.partyId);
-                Navigator.pop(context);
+              onTap: () async{
+                   var result = true;
+
+                if (await _pinService.pinStatus()==true) {
+                  result = await _showPinDialog() as bool;
+                }
+                if (result!) {
+                  widget.args.tabbarNo == 0
+                      ? _specificpartyCubit.deleteCustomerExpense(
+                          Party(id: id), widget.args.partyId)
+                      : _specificpartyCubit.deleteSupplierExpense(
+                          Party(id: id), widget.args.partyId);
+                  Navigator.pop(context);
+                } else {
+                  Navigator.pop(context);
+                  locator<GlobalServices>().errorSnackBar("Incorrect pin");
+                }
               },
             ),
           ],
@@ -456,11 +482,73 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
   }
 
   currentdate(String dates) {
+    if(dates!="")
+    {
     DateTime d = DateTime.parse(dates);
     var datereq = DateFormat.MMMM().format(d);
-    return Text(
+     return Text(
       d.day.toString() + " " + datereq + ", " + d.year.toString(),
       style: const TextStyle(color: Colors.black45),
     );
+    }
+    else
+    {
+      Text("");
+    }
+   
+  }
+
+    Future<bool?> _showPinDialog() {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+              content: pinCode.PinCodeTextField(
+                onChanged: (e){},
+                autoDisposeControllers: false,
+                appContext: context,
+                length: 6,
+                obscureText: true,
+                obscuringCharacter: '*',
+                blinkWhenObscuring: true,
+                animationType: pinCode.AnimationType.fade,
+                keyboardType: TextInputType.number,
+                pinTheme: pinCode.PinTheme(
+                  shape: pinCode.PinCodeFieldShape.underline,
+                  borderRadius: BorderRadius.circular(5),
+                  fieldHeight: 40,
+                  fieldWidth: 30,
+                  inactiveColor: Colors.black45,
+                  inactiveFillColor: Colors.white,
+                  selectedFillColor: Colors.white,
+                  selectedColor: Colors.black45,
+                  disabledColor: Colors.black,
+                  activeFillColor: Colors.white,
+                ),
+                cursorColor: Colors.black,
+                controller: pinController,
+                animationDuration: const Duration(milliseconds: 300),
+                enableActiveFill: true,
+              ),
+              title: Text('Enter your pin'),
+              actions: [
+                Center(
+                    child: CustomButton(
+                        title: 'Verify',
+                        onTap: () async {
+                          bool status = await _pinService.verifyPin(
+                              int.parse(pinController.text.toString()));
+                          if (status) {
+                            pinController.clear();
+                            Navigator.of(ctx).pop(true);
+                          } else {
+                            Navigator.of(ctx).pop(false);
+                            pinController.clear();
+
+                            return;
+                          }
+                        }))
+              ],
+            ));
   }
 }

@@ -174,9 +174,15 @@ class _BillingListScreenState extends State<BillingListScreen> {
               // else {
               double sum = 0;
               if (curr.product!.baseSellingPriceGst! != "null")
+              {
                 sum = double.parse(curr.product!.baseSellingPriceGst!);
+                print("dddsum=");
+                print(sum);
+              }
               else {
                 sum = curr.product!.sellingPrice!.toDouble();
+                 print("dddsum=");
+                print(sum);
               }
               return (curr.quantity * sum) + acc;
               // }

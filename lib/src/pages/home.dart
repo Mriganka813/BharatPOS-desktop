@@ -9,7 +9,9 @@ import 'package:shopos/src/pages/expense.dart';
 import 'package:shopos/src/pages/party_list.dart';
 import 'package:shopos/src/pages/reports.dart';
 import 'package:shopos/src/pages/search_result.dart';
+import 'package:shopos/src/pages/set_pin.dart';
 import 'package:shopos/src/pages/sign_in.dart';
+import 'package:shopos/src/services/set_or_change_pin.dart';
 import 'package:shopos/src/widgets/custom_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -24,7 +26,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late final HomeCubit _homeCubit;
-
+   PinService _pinService = PinService();
   ///
   @override
   void initState() {
@@ -81,6 +83,17 @@ class _HomePageState extends State<HomePage> {
                         subtitle: Text(state.user.email ?? ""),
                       ),
                       Divider(),
+                         ListTile(
+                        leading: Icon(Icons.lock),
+                        title: Title(
+                            color: Colors.black, child: Text("Set/Change pin")),
+                        onTap: () async {
+                          bool status = await _pinService.pinStatus();
+                          print(status);
+                          Navigator.of(context).pushNamed(SetPinPage.routeName,
+                              arguments: status);
+                        },
+                      ),
                       ListTile(
                         leading: Icon(Icons.security_outlined),
                         title: Title(

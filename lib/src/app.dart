@@ -19,6 +19,7 @@ import 'package:shopos/src/pages/reports.dart';
 import 'package:shopos/src/pages/report_table.dart';
 import 'package:shopos/src/pages/search_result.dart';
 import 'package:shopos/src/pages/select_products_screen.dart';
+import 'package:shopos/src/pages/set_pin.dart';
 import 'package:shopos/src/pages/sign_in.dart';
 import 'package:shopos/src/pages/splash.dart';
 import 'package:shopos/src/services/global.dart';
@@ -126,6 +127,11 @@ class MyApp extends StatelessWidget {
               case BillingListScreen.routeName:
                 return BillingListScreen(
                   orderType: settings.arguments as OrderType,
+                );
+                case SetPinPage.routeName:
+                bool status = settings.arguments as bool;
+                return SetPinPage(
+                  isPinSet: status,
                 );
 
               case ReportTable.routeName:

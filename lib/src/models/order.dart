@@ -27,11 +27,11 @@ class Order {
             (x) => OrderItem.fromMap(x),
           ),
         ),
-        modeOfPayment: json["modeOfPayment"],
+        modeOfPayment: json["modeOfPayment"]??"",
         id: json["_id"],
         party: json["party"] is Map ? Party.fromMap(json["party"]) : null,
         user: json["user"] is Map ? User.fromMMap(json["user"]) : null,
-        createdAt: json["createdAt"],
+        createdAt: json["createdAt"]??"",
         total: json['total'] ?? 0,
       );
 

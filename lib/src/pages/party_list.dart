@@ -10,7 +10,9 @@ import 'package:shopos/src/pages/party_credit.dart';
 import 'package:shopos/src/services/global.dart';
 import 'package:shopos/src/services/locator.dart';
 import 'package:shopos/src/services/party.dart';
-
+import 'package:shopos/src/services/set_or_change_pin.dart';
+import 'package:shopos/src/widgets/custom_button.dart';
+import 'package:pin_code_fields/pin_code_fields.dart' as pinCode;
 class PartyListPage extends StatefulWidget {
   static const routeName = '/party_list';
   const PartyListPage({Key? key}) : super(key: key);
@@ -209,8 +211,8 @@ class _PartyListPageState extends State<PartyListPage>
   }
 }
 
-class PartiesListView extends StatelessWidget {
-  const PartiesListView({
+class PartiesListView extends StatefulWidget {
+ PartiesListView({
     Key? key,
     required this.parties,
     required this.tabno,
@@ -223,15 +225,24 @@ class PartiesListView extends StatelessWidget {
   final PartyCubit partyCubit;
 
   @override
+  State<PartiesListView> createState() => _PartiesListViewState();
+}
+
+class _PartiesListViewState extends State<PartiesListView> {
+   PinService _pinService = PinService();
+
+  final TextEditingController pinController = TextEditingController();
+
+  @override
   Widget build(BuildContext context) {
     return ListView.separated(
       shrinkWrap: true,
       separatorBuilder: (context, index) {
         return const Divider();
       },
-      itemCount: parties.length,
+      itemCount: widget.parties.length,
       itemBuilder: (context, index) {
-        final party = parties[index];
+        final party = widget.parties[index];
         return ListTile(
           title: Text(party.name ?? ""),
           trailing: party.balance! >= 0
@@ -246,11 +257,11 @@ class PartiesListView extends StatelessWidget {
           onTap: () async {
             await Navigator.pushNamed(context, PartyCreditPage.routeName,
                 arguments: ScreenArguments(
-                    party.id!, party.name!, party.phoneNumber!, tabno));
-            partyCubit.getInitialCreditParties();
+                    party.id!, party.name!, party.phoneNumber!, widget.tabno));
+            widget.partyCubit.getInitialCreditParties();
           },
           onLongPress: () {
-            showModal(party, context, tabno);
+            showModal(party, context, widget.tabno);
           },
         );
       },
@@ -271,21 +282,95 @@ class PartiesListView extends StatelessWidget {
             ListTile(
               title: const Text("Edit"),
               onTap: () async {
-                await Navigator.pushNamed(context, CreatePartyPage.routeName,
-                    arguments: CreatePartyArguments(_party.id!, _party.name!,
-                        _party.phoneNumber!, _party.address!, _partyType));
-                Navigator.pop(context);
-                partyCubit.getInitialCreditParties();
+                 var result = true;
+
+                if (await _pinService.pinStatus()==true) {
+                  result = await _showPinDialog() as bool;
+                }
+                if (result == true) {
+                  await Navigator.pushNamed(context, CreatePartyPage.routeName,
+                      arguments: CreatePartyArguments(_party.id!, _party.name!,
+                          _party.phoneNumber!, _party.address!, _partyType));
+                  Navigator.pop(context);
+                  widget.partyCubit.getInitialCreditParties();
+                } else {
+                  Navigator.pop(context);
+                  locator<GlobalServices>().errorSnackBar("Incorrect pin");
+                }
               },
             ),
             ListTile(
               title: const Text("Delete"),
-              onTap: () {
-                partyCubit.deleteParty(_party);
-                Navigator.pop(context);
+              onTap: () async{
+              var result = true;
+
+                if (await _pinService.pinStatus()==true) {
+                  result = await _showPinDialog() as bool;
+                }
+                if (result == true) {
+                  widget.partyCubit.deleteParty(_party);
+                  Navigator.pop(context);
+                } else {
+                  Navigator.pop(context);
+                  locator<GlobalServices>().errorSnackBar("Incorrect pin");
+                }
               },
             ),
           ],
         )).show();
+  }
+
+   Future<bool?> _showPinDialog() {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+              content: pinCode.PinCodeTextField(
+                onChanged: (e){},
+                autoDisposeControllers: false,
+                appContext: context,
+                length: 6,
+                obscureText: true,
+                obscuringCharacter: '*',
+                blinkWhenObscuring: true,
+                animationType: pinCode.AnimationType.fade,
+                keyboardType: TextInputType.number,
+                pinTheme: pinCode.PinTheme(
+                  shape: pinCode.PinCodeFieldShape.underline,
+                  borderRadius: BorderRadius.circular(5),
+                  fieldHeight: 40,
+                  fieldWidth: 30,
+                  inactiveColor: Colors.black45,
+                  inactiveFillColor: Colors.white,
+                  selectedFillColor: Colors.white,
+                  selectedColor: Colors.black45,
+                  disabledColor: Colors.black,
+                  activeFillColor: Colors.white,
+                ),
+                cursorColor: Colors.black,
+                controller: pinController,
+                animationDuration: const Duration(milliseconds: 300),
+                enableActiveFill: true,
+              ),
+              title: Text('Enter your pin'),
+              actions: [
+                Center(
+                    child: CustomButton(
+                        title: 'Verify',
+                        onTap: () async {
+                          bool status = await _pinService.verifyPin(
+                              int.parse(pinController.text.toString()));
+                          if (status) {
+                            pinController.clear();
+                            Navigator.of(ctx).pop(true);
+                          } else {
+                            Navigator.of(ctx).pop(false);
+                            pinController.clear();
+
+                            return;
+                          }
+                        }))
+              ],
+            ));
   }
 }

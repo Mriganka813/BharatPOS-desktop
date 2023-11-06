@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:shopos/src/blocs/product/product_cubit.dart';
 import 'package:shopos/src/config/colors.dart';
 import 'package:shopos/src/pages/create_product.dart';
+import 'package:shopos/src/services/global.dart';
+import 'package:shopos/src/services/locator.dart';
 import 'package:shopos/src/services/search_service.dart';
+import 'package:shopos/src/services/set_or_change_pin.dart';
+import 'package:shopos/src/widgets/custom_button.dart';
 import 'package:shopos/src/widgets/custom_text_field.dart';
 import 'package:shopos/src/widgets/product_card_horizontal.dart';
 
@@ -35,6 +40,8 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
   bool isLoadingMore = false;
   late final ProductCubit _productCubit;
   late List<Product> _products;
+  PinService _pinService = PinService();
+  final TextEditingController pinController = TextEditingController();
 
   int page = 0;
   int _currentPage = 1;
@@ -206,24 +213,44 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                                       children: [
                                         ProductCardHorizontal(
                                           product: prodList[index],
-                                          onDelete: () {
-                                            _productCubit.deleteProduct(
-                                                prodList[index],
-                                                _currentPage,
-                                                _limit);
-                                            setState(() {
-                                              prodList.removeAt(index);
-                                            });
+                                          onDelete: () async {
+                                            var result = true;
+
+                                            if (await _pinService.pinStatus() ==
+                                                true) {
+                                              result = await _showPinDialog()
+                                                  as bool;
+                                            }
+
+                                            if (result!) {
+                                              _productCubit.deleteProduct(
+                                                  prodList[index],
+                                                  _currentPage,
+                                                  _limit);
+                                              setState(() {
+                                                prodList.removeAt(index);
+                                              });
+                                            }
                                           },
                                           onEdit: () async {
-                                            await Navigator.pushNamed(
-                                              context,
-                                              CreateProduct.routeName,
-                                              arguments: prodList[index].id,
-                                            );
+                                            var result = true;
+                                            print("llllllll");
+                                            if (await _pinService.pinStatus() ==
+                                                true) {
+                                              result = await _showPinDialog()
+                                                  as bool;
+                                            }
+                                            if (result) {
+                                              await Navigator.pushNamed(
+                                                context,
+                                                CreateProduct.routeName,
+                                                arguments: prodList[index].id,
+                                              );
 
-                                            _productCubit.getProducts(
-                                                _currentPage, _limit);
+                                              _productCubit.getProducts(
+                                                  _currentPage, _limit);
+                                              pinController.clear();
+                                            }
                                           },
                                         ),
                                         // if (_products.contains(prodList[index]))
@@ -281,5 +308,61 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                   ),
                 ),
               ]));
+  }
+
+  Future<bool?> _showPinDialog() {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+              content: PinCodeTextField(
+                onChanged: (e) {},
+                autoDisposeControllers: false,
+                appContext: context,
+                length: 6,
+                obscureText: true,
+                obscuringCharacter: '*',
+                blinkWhenObscuring: true,
+                animationType: AnimationType.fade,
+                keyboardType: TextInputType.number,
+                pinTheme: PinTheme(
+                  shape: PinCodeFieldShape.underline,
+                  borderRadius: BorderRadius.circular(5),
+                  fieldHeight: 40,
+                  fieldWidth: 30,
+                  inactiveColor: Colors.black45,
+                  inactiveFillColor: Colors.white,
+                  selectedFillColor: Colors.white,
+                  selectedColor: Colors.black45,
+                  disabledColor: Colors.black,
+                  activeFillColor: Colors.white,
+                ),
+                cursorColor: Colors.black,
+                controller: pinController,
+                animationDuration: const Duration(milliseconds: 300),
+                enableActiveFill: true,
+              ),
+              title: Text('Enter your pin'),
+              actions: [
+                Center(
+                    child: CustomButton(
+                        title: 'Verify',
+                        onTap: () async {
+                          bool status = await _pinService.verifyPin(
+                              int.parse(pinController.text.toString()));
+                          if (status) {
+                            Navigator.of(ctx).pop(true);
+                            pinController.clear();
+                          } else {
+                            Navigator.of(ctx).pop(false);
+                            pinController.clear();
+
+                            locator<GlobalServices>()
+                                .errorSnackBar("Incorrect pin");
+                            return;
+                          }
+                        }))
+              ],
+            ));
   }
 }

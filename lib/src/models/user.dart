@@ -24,6 +24,7 @@ class User {
   Object? address;
   Object? role;
   String? businessName;
+
   String? businessType;
   int? phoneNumber;
   String? id;
