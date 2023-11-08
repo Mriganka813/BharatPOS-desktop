@@ -333,6 +333,7 @@ class _CreateProductState extends State<CreateProduct> {
                         Container(
                           width: 400,
                           child: CustomTextField2(
+                         
                             controller: sellingPriceController,
                             label: "Selling Price",
                             value: _formInput.sellingPrice,
@@ -355,6 +356,7 @@ class _CreateProductState extends State<CreateProduct> {
                         Container(
                           width: 400,
                           child: CustomTextField2(
+             
                             controller: purchasePriceController,
                             label: "Purchase Price",
                             value: _formInput.purchasePrice != "null"
@@ -416,6 +418,7 @@ class _CreateProductState extends State<CreateProduct> {
                               Container(
                                 width: 400,
                                 child: CustomTextField2(
+                            
                                   controller: gstratePriceController,
                                   label: "GST Rate (%)",
                                   value: _formInput.gstRate != "null"

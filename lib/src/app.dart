@@ -80,10 +80,9 @@ class MyApp extends StatelessWidget {
               case PartyListPage.routeName:
                 return const PartyListPage();
               case SearchProductListScreen.routeName:
-                return SearchProductListScreen();
+                return SearchProductListScreen(  args: settings.arguments as ProductListPageArgs);
 
-              case SelectProductScreen.routeName:
-                return SelectProductScreen();
+          
               case ReportsPage.routeName:
                 return const ReportsPage();
               case ExpensePage.routeName:

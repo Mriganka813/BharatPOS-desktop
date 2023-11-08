@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -13,9 +14,14 @@ import 'package:shopos/src/models/order.dart';
 import 'package:shopos/src/models/order_item.dart';
 
 import 'package:pdf/widgets.dart' as pw;
+import 'package:shopos/src/models/party.dart';
 import 'package:shopos/src/models/product.dart';
+import 'package:shopos/src/pages/create_party.dart';
 import 'package:shopos/src/services/global.dart';
 import 'package:shopos/src/services/locator.dart';
+import 'package:shopos/src/services/party.dart';
+import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xcel;
+
 
 class tableArg {
   final List<Order>? orders;
@@ -53,10 +59,12 @@ class _ReportTableState extends State<ReportTable> {
   List<String> totallist = [];
   List<String> mrplist = [];
   String taxfileType = "initailized";
-
+  String partynametoFilter = "";
+  TextEditingController FilterTextEditorController = TextEditingController();
   ScreenshotController screenshotController = ScreenshotController();
   late Uint8List _imageFile;
-
+  late final TextEditingController _typeAheadController =
+      TextEditingController();
   @override
   void initState() {
     super.initState();
@@ -114,7 +122,9 @@ class _ReportTableState extends State<ReportTable> {
     final headersStock = [
       'Item Name',
       'Stock Quantity',
-      'Stock Value',
+      'Sales Value',
+      'Purchase Value',
+      'profit margin'
     ];
 
     if (widget.args.type == "ReportType.sale") {
@@ -172,102 +182,343 @@ class _ReportTableState extends State<ReportTable> {
     }
   }
 
-  showSaleRow() {
+   showSaleRow() {
     if (taxfileType == "quarterly") {
-      return List.generate(
-          datelist.length,
-          (int index) => DataRow(cells: [
-                DataCell(Text(datelist[index], style: TextStyle(fontSize: 6))),
-                DataCell(Text(timelist[index], style: TextStyle(fontSize: 6))),
-                DataCell(
-                    Text(partynamelist[index], style: TextStyle(fontSize: 6))),
-                DataCell(Text(moplist[index], style: TextStyle(fontSize: 6))),
-                DataCell(Text(productnamelist[index],
-                    style: TextStyle(fontSize: 6))),
-                DataCell(Text(mrplist[index], style: TextStyle(fontSize: 6))),
-                DataCell(
-                    Text(totalsplist[index], style: TextStyle(fontSize: 6))),
-              ]));
+      List<DataRow> list = [];
+      var total = 0;
+      for (int i = 0; i < datelist.length; i++) {
+        if (partynamelist[i] == partynametoFilter || partynametoFilter == "") {
+          list.add(DataRow(cells: [
+            DataCell(Text(datelist[i], style: TextStyle(fontSize: 6))),
+            DataCell(Text(timelist[i], style: TextStyle(fontSize: 6))),
+            DataCell(Text(partynamelist[i], style: TextStyle(fontSize: 6))),
+            DataCell(Text(moplist[i], style: TextStyle(fontSize: 6))),
+            DataCell(Text(productnamelist[i], style: TextStyle(fontSize: 6))),
+            DataCell(Text(mrplist[i], style: TextStyle(fontSize: 6))),
+            DataCell(Text(totalsplist[i], style: TextStyle(fontSize: 6))),
+          ]));
+          if (i != datelist.length - 1) total += int.parse(totalsplist[i]);
+        }
+      }
+
+      if (partynametoFilter != "")
+        list.add(DataRow(cells: [
+          DataCell(Text(datelist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(timelist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(partynamelist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(moplist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(productnamelist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(mrplist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(total.toString(), style: TextStyle(fontSize: 6))),
+        ]));
+
+      return list;
     } else {
-      return List.generate(
-          datelist.length,
-          (int index) => DataRow(cells: [
-                DataCell(Text(datelist[index], style: TextStyle(fontSize: 6))),
-                DataCell(Text(timelist[index], style: TextStyle(fontSize: 6))),
-                DataCell(
-                    Text(partynamelist[index], style: TextStyle(fontSize: 6))),
-                DataCell(Text(moplist[index], style: TextStyle(fontSize: 6))),
-                DataCell(Text(productnamelist[index],
-                    style: TextStyle(fontSize: 6))),
-                DataCell(
-                    Text(basesplist[index], style: TextStyle(fontSize: 6))),
-                DataCell(
-                    Text(gstratelist[index], style: TextStyle(fontSize: 6))),
-                DataCell(Text(cgstlist[index], style: TextStyle(fontSize: 6))),
-                DataCell(Text(sgstlist[index], style: TextStyle(fontSize: 6))),
-                DataCell(Text(igstlist[index], style: TextStyle(fontSize: 6))),
-                DataCell(Text(mrplist[index], style: TextStyle(fontSize: 6))),
-                DataCell(
-                    Text(totalsplist[index], style: TextStyle(fontSize: 6))),
-              ]));
+      List<DataRow> list = [];
+
+      var total = 0;
+      var basesplitTotal = 0;
+      var gstrateTotal = 0;
+      var cgstTotal = 0;
+      var sgstTotal = 0;
+      var igstTotal = 0;
+      var mrpTotal = 0;
+
+      for (int i = 0; i < datelist.length; i++) {
+        if (partynamelist[i] == partynametoFilter || partynametoFilter == "") {
+          /*
+          print("ADadda");
+          print(datelist[i]);
+          print(timelist[i]);
+          print(partynamelist[i]);
+          print(productnamelist[i]);
+          print(basesplist[i]);
+          print(gstratelist[i]);
+          print(cgstlist[i]);
+          print(sgstlist[i]);
+          print(mrplist[i]);
+          print(igstlist[i]);
+          print(totalsplist[i]);
+          print(moplist[i]);*/
+
+          if (i != datelist.length - 1 &&
+              totalsplist[i].length != 0 &&
+              totalsplist[i] != "null") total += int.parse(totalsplist[i]);
+
+          if (i != datelist.length - 1 &&
+              basesplist[i].length != 0 &&
+              basesplist[i] != "N/A" &&
+              basesplist[i] != "null")
+            basesplitTotal += int.parse(basesplist[i].split(".")[0]);
+          if (i != datelist.length - 1 &&
+              gstratelist[i].length != 0 &&
+              gstratelist[i] != "N/A%" &&
+              gstratelist[i] != "null%")
+            gstrateTotal += int.parse(gstratelist[i].split("%")[0]);
+          if (i != datelist.length - 1 &&
+              cgstlist[i].length != 0 &&
+              cgstlist[i] != "N/A" &&
+              cgstlist[i] != "null")
+            cgstTotal += int.parse(cgstlist[i].split(".")[0]);
+          if (i != datelist.length - 1 &&
+              sgstlist[i].length != 0 &&
+              sgstlist[i] != "N/A" &&
+              sgstlist[i] != "null")
+            sgstTotal += int.parse(sgstlist[i].split(".")[0]);
+          if (i != datelist.length - 1 &&
+              igstlist[i].length != 0 &&
+              igstlist[i] != "N/A" &&
+              igstlist[i] != "null")
+            igstTotal += int.parse(igstlist[i].split(".")[0]);
+          if (i != datelist.length - 1 &&
+              mrplist[i].length != 0 &&
+              mrplist[i] != "N/A" &&
+              mrplist[i] != "null") mrpTotal += int.parse(mrplist[i]);
+          list.add(DataRow(cells: [
+            DataCell(Text(datelist[i], style: TextStyle(fontSize: 6))),
+            DataCell(Text(timelist[i], style: TextStyle(fontSize: 6))),
+            DataCell(Text(partynamelist[i], style: TextStyle(fontSize: 6))),
+            DataCell(Text(moplist[i], style: TextStyle(fontSize: 6))),
+            DataCell(Text(productnamelist[i], style: TextStyle(fontSize: 6))),
+            DataCell(Text(
+                i == datelist.length - 1
+                    ? basesplitTotal.toString()
+                    : basesplist[i],
+                style: TextStyle(fontSize: 6))),
+            DataCell(Text(
+                i == datelist.length - 1
+                    ? gstrateTotal.toString()
+                    : gstratelist[i],
+                style: TextStyle(fontSize: 6))),
+            DataCell(Text(
+                i == datelist.length - 1 ? cgstTotal.toString() : cgstlist[i],
+                style: TextStyle(fontSize: 6))),
+            DataCell(Text(
+                i == datelist.length - 1 ? sgstTotal.toString() : sgstlist[i],
+                style: TextStyle(fontSize: 6))),
+            DataCell(Text(
+                i == datelist.length - 1 ? igstTotal.toString() : igstlist[i],
+                style: TextStyle(fontSize: 6))),
+            DataCell(Text(
+                i == datelist.length - 1 ? mrpTotal.toString() : mrplist[i],
+                style: TextStyle(fontSize: 6))),
+            DataCell(Text(totalsplist[i], style: TextStyle(fontSize: 6))),
+          ]));
+        }
+      }
+      if (partynametoFilter != "")
+        list.add(DataRow(cells: [
+          DataCell(Text(datelist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(timelist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(partynamelist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(moplist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(productnamelist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(basesplist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(gstratelist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(cgstlist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(sgstlist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(igstlist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(mrplist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(total.toString(), style: TextStyle(fontSize: 6))),
+        ]));
+      return list;
     }
   }
 
-  showPurchaseRow() {
-    return List.generate(
-        datelist.length,
-        (int index) => DataRow(cells: [
-              DataCell(Text(datelist[index], style: TextStyle(fontSize: 6))),
-              DataCell(Text(timelist[index], style: TextStyle(fontSize: 6))),
-              DataCell(
-                  Text(partynamelist[index], style: TextStyle(fontSize: 6))),
-              DataCell(Text(moplist[index], style: TextStyle(fontSize: 6))),
-              DataCell(
-                  Text(productnamelist[index], style: TextStyle(fontSize: 6))),
-              DataCell(Text(basesplist[index], style: TextStyle(fontSize: 6))),
-              DataCell(Text(gstratelist[index], style: TextStyle(fontSize: 6))),
-              DataCell(Text(cgstlist[index], style: TextStyle(fontSize: 6))),
-              DataCell(Text(sgstlist[index], style: TextStyle(fontSize: 6))),
-              DataCell(Text(igstlist[index], style: TextStyle(fontSize: 6))),
-              DataCell(Text(mrplist[index], style: TextStyle(fontSize: 6))),
-              DataCell(Text(totalsplist[index], style: TextStyle(fontSize: 6))),
-            ]));
-  }
+showPurchaseRow() {
+    var total = 0;
+    var basesplitTotal = 0;
+    var gstrateTotal = 0;
+    var cgstTotal = 0;
+    var sgstTotal = 0;
+    var igstTotal = 0;
+    var mrpTotal = 0;
 
-  showExpenseRow() {
-    return List.generate(
-      widget.args.expenses!.length,
-      (index) {
-        final expense = widget.args.expenses?[index];
-        final date = DateFormat('dd MMM, yyyy').format(expense!.createdAt!);
-        final time = DateFormat('hh:mm a').format(expense.createdAt!);
-        return DataRow(cells: [
-          DataCell(Text("$date", style: TextStyle(fontSize: 6))),
-          DataCell(Text("$time", style: TextStyle(fontSize: 6))),
-          DataCell(Text("${expense.header}", style: TextStyle(fontSize: 6))),
-          DataCell(
-              Text("${expense.description}", style: TextStyle(fontSize: 6))),
-          DataCell(
-              Text("${expense.modeOfPayment}", style: TextStyle(fontSize: 6))),
-          DataCell(Text("${expense.amount}", style: TextStyle(fontSize: 6))),
-        ]);
-      },
-    ).toList();
-  }
+    List<DataRow> list = [];
 
-  showStockRow() {
-    return List.generate(
-      widget.args.products!.length,
-      (index) {
-        final product = widget.args.products?[index];
-        return DataRow(cells: [
-          DataCell(Text("${product!.name}", style: TextStyle(fontSize: 6))),
-          DataCell(Text("${product.quantity}", style: TextStyle(fontSize: 6))),
-          DataCell(Text("${product.quantity! * product.sellingPrice!}",
+    for (int index = 0; index < datelist.length; index++) {
+      if (partynamelist[index] == partynametoFilter ||
+          partynametoFilter == "") {
+        if (index != datelist.length - 1 && totalsplist[index].length != 0)
+          total += int.parse(totalsplist[index]);
+
+        if (index != datelist.length - 1 &&
+            basesplist[index].length != 0 &&
+            basesplist[index] != "N/A")
+          basesplitTotal += int.parse(basesplist[index].split(".")[0]);
+        if (index != datelist.length - 1 &&
+            gstratelist[index].length != 0 &&
+            gstratelist[index] != "N/A%")
+          gstrateTotal += int.parse(gstratelist[index].split("%")[0]);
+        if (index != datelist.length - 1 &&
+            cgstlist[index].length != 0 &&
+            cgstlist[index] != "N/A")
+          cgstTotal += int.parse(cgstlist[index].split(".")[0]);
+        if (index != datelist.length - 1 &&
+            sgstlist[index].length != 0 &&
+            sgstlist[index] != "N/A")
+          sgstTotal += int.parse(sgstlist[index].split(".")[0]);
+        if (index != datelist.length - 1 &&
+            igstlist[index].length != 0 &&
+            igstlist[index] != "N/A")
+          igstTotal += int.parse(igstlist[index].split(".")[0]);
+        if (index != datelist.length - 1 &&
+            mrplist[index].length != 0 &&
+            mrplist[index] != "N/A") mrpTotal += int.parse(mrplist[index]);
+
+        list.add(DataRow(cells: [
+          DataCell(Text(datelist[index], style: TextStyle(fontSize: 6))),
+          DataCell(Text(timelist[index], style: TextStyle(fontSize: 6))),
+          DataCell(Text(partynamelist[index], style: TextStyle(fontSize: 6))),
+          DataCell(Text(moplist[index], style: TextStyle(fontSize: 6))),
+          DataCell(Text(productnamelist[index], style: TextStyle(fontSize: 6))),
+          DataCell(Text(
+              index == datelist.length - 1
+                  ? basesplitTotal.toString()
+                  : basesplist[index],
               style: TextStyle(fontSize: 6))),
-        ]);
-      },
-    ).toList();
+          DataCell(Text(
+              index == datelist.length - 1
+                  ? gstrateTotal.toString()
+                  : gstratelist[index],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(
+              index == datelist.length - 1
+                  ? cgstTotal.toString()
+                  : cgstlist[index],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(
+              index == datelist.length - 1
+                  ? sgstTotal.toString()
+                  : sgstlist[index],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(
+              index == datelist.length - 1
+                  ? igstTotal.toString()
+                  : igstlist[index],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(
+              index == datelist.length - 1
+                  ? mrpTotal.toString()
+                  : mrplist[index],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(totalsplist[index], style: TextStyle(fontSize: 6))),
+        ]));
+      }
+    }
+
+
+      if (partynametoFilter != "")
+        list.add(DataRow(cells: [
+          DataCell(Text(datelist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(timelist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(partynamelist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(moplist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(productnamelist[datelist.length - 1],
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(basesplitTotal.toString(),
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(gstrateTotal.toString(),
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(cgstTotal.toString(),
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(sgstTotal.toString(),
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(igstTotal.toString(),
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(mrpTotal.toString(),
+              style: TextStyle(fontSize: 6))),
+          DataCell(Text(total.toString(), style: TextStyle(fontSize: 6))),
+        ]));
+      return list;
+   
+  }
+ showExpenseRow() {
+    int total = 0;
+    List<DataRow> list = [];
+
+    for (int index = 0; index < widget.args.expenses!.length; index++) {
+      final expense = widget.args.expenses?[index];
+      final date = DateFormat('dd MMM, yyyy').format(expense!.createdAt!);
+      final time = DateFormat('hh:mm a').format(expense.createdAt!);
+      total = total + expense.amount!;
+      list.add(DataRow(cells: [
+        DataCell(Text("$date", style: TextStyle(fontSize: 6))),
+        DataCell(Text("$time", style: TextStyle(fontSize: 6))),
+        DataCell(Text("${expense.header}", style: TextStyle(fontSize: 6))),
+        DataCell(Text("${expense.description}", style: TextStyle(fontSize: 6))),
+        DataCell(
+            Text("${expense.modeOfPayment}", style: TextStyle(fontSize: 6))),
+        DataCell(Text("${expense.amount}", style: TextStyle(fontSize: 6))),
+      ]));
+    }
+    list.add(DataRow(cells: [
+      DataCell(Text("", style: TextStyle(fontSize: 6))),
+      DataCell(Text("", style: TextStyle(fontSize: 6))),
+      DataCell(Text("", style: TextStyle(fontSize: 6))),
+      DataCell(Text("", style: TextStyle(fontSize: 6))),
+      DataCell(Text("", style: TextStyle(fontSize: 6))),
+      DataCell(Text("$total", style: TextStyle(fontSize: 6))),
+    ]));
+
+    return list;
+  }
+
+showStockRow() {
+    int productQTYTotal = 0;
+    int salesValueTotal = 0;
+    double purchaseValueTotal = 0;
+    int marginValueTotal = 0;
+    List<DataRow> list = [];
+    for (int index = 0; index < widget.args.products!.length; index++) {
+      final product = widget.args.products?[index];
+      var salesValue = product!.quantity! * product.sellingPrice!;
+      var purchaseValue = product.quantity! * product.purchasePrice;
+
+      productQTYTotal += product.quantity!;
+      salesValueTotal += salesValue.toInt();
+      purchaseValueTotal += purchaseValue;
+      marginValueTotal += (salesValue - purchaseValue).toInt();
+      list.add(DataRow(cells: [
+        DataCell(Text("${product.name}", style: TextStyle(fontSize: 6))),
+        DataCell(Text("${product.quantity}", style: TextStyle(fontSize: 6))),
+        DataCell(Text("$salesValue", style: TextStyle(fontSize: 6))),
+        DataCell(Text("$purchaseValue", style: TextStyle(fontSize: 6))),
+        DataCell(Text("${salesValue - purchaseValue}",
+            style: TextStyle(fontSize: 6))),
+      ]));
+    }
+
+    list.add(DataRow(cells: [
+      DataCell(Text("", style: TextStyle(fontSize: 6))),
+      DataCell(Text("$productQTYTotal", style: TextStyle(fontSize: 6))),
+      DataCell(Text("$salesValueTotal", style: TextStyle(fontSize: 6))),
+      DataCell(Text("$salesValueTotal", style: TextStyle(fontSize: 6))),
+      DataCell(Text("$marginValueTotal", style: TextStyle(fontSize: 6))),
+    ]));
+
+    return list;
   }
 
   String breakruler = "";
@@ -334,6 +585,236 @@ class _ReportTableState extends State<ReportTable> {
     }).toList();
   }
 
+
+
+saleExcelReport() async {
+    final headersSP = [
+      'Date',
+      'Time',
+      'Party',
+      'M.O.P.',
+      'Product',
+      'Amount/Unit',
+      'GST Rate/Unit',
+      'CGST/Unit',
+      'SGST/Unit',
+      'GST/Unit',
+      'MRP/Unit',
+      'Total',
+    ];
+
+    final xcel.Workbook workbook = xcel.Workbook();
+    final xcel.Worksheet sheet = workbook.worksheets[0];
+
+    for (int i = 1; i <= headersSP.length; i++) {
+      sheet.getRangeByIndex(1, i).setText(headersSP[i - 1]);
+    }
+
+    for (int i = 0; i < datelist.length; i++) {
+      print(datelist.length);
+      if (taxfileType == "quarterly") {
+        sheet.getRangeByIndex(i + 2, 1).setText(datelist[i]);
+        sheet.getRangeByIndex(i + 2, 2).setText(timelist[i]);
+        sheet.getRangeByIndex(i + 2, 3).setText(partynamelist[i]);
+        sheet.getRangeByIndex(i + 2, 4).setText(moplist[i]);
+        sheet.getRangeByIndex(i + 2, 5).setText(productnamelist[i]);
+        sheet.getRangeByIndex(i + 2, 6).setText(mrplist[i]);
+        sheet.getRangeByIndex(i + 2, 7).setText(totalsplist[i]);
+      } else {
+        sheet.getRangeByIndex(i + 2, 1).setText(datelist[i] ?? '');
+        sheet.getRangeByIndex(i + 2, 2).setText(timelist[i]);
+        sheet.getRangeByIndex(i + 2, 3).setText(partynamelist[i]);
+        sheet.getRangeByIndex(i + 2, 4).setText(moplist[i]);
+        sheet.getRangeByIndex(i + 2, 5).setText(productnamelist[i]);
+        sheet.getRangeByIndex(i + 2, 6).setText(basesplist[i]);
+        sheet.getRangeByIndex(i + 2, 7).setText(gstratelist[i]);
+        sheet.getRangeByIndex(i + 2, 8).setText(cgstlist[i]);
+        sheet.getRangeByIndex(i + 2, 9).setText(sgstlist[i]);
+        sheet.getRangeByIndex(i + 2, 10).setText(igstlist[i]);
+        sheet.getRangeByIndex(i + 2, 11).setText(mrplist[i]);
+        sheet.getRangeByIndex(i + 2, 12).setText(totalsplist[i]);
+      }
+    }
+
+    final List<int> bytes = workbook.saveAsStream();
+    final directory = await getApplicationDocumentsDirectory();
+    File excelFileLocal = File('${directory.path}/Sale.xlsx');
+    await excelFileLocal.writeAsBytes(bytes);
+
+    Share.shareFiles(
+      [excelFileLocal.path],
+      mimeTypes: [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      ],
+    );
+
+    workbook.dispose();
+  }
+
+
+  PurchaseExcelReport() async {
+    final headersSP = [
+      'Date',
+      'Time',
+      'Party',
+      'M.O.P.',
+      'Product',
+      'Amount/Unit',
+      'GST Rate/Unit',
+      'CGST/Unit',
+      'SGST/Unit',
+      'GST/Unit',
+      'MRP/Unit',
+      'Total',
+    ];
+    final xcel.Workbook workbook = xcel.Workbook();
+    final xcel.Worksheet sheet = workbook.worksheets[0];
+
+    for (int i = 1; i <= headersSP.length; i++) {
+      sheet.getRangeByIndex(1, i).setText(headersSP[i - 1]);
+    }
+
+    for (int i = 0; i < datelist.length; i++) {
+      print(datelist.length);
+      if (taxfileType == "quarterly") {
+        sheet.getRangeByIndex(i + 2, 1).setText(datelist[i]);
+        sheet.getRangeByIndex(i + 2, 2).setText(timelist[i]);
+        sheet.getRangeByIndex(i + 2, 3).setText(partynamelist[i]);
+        sheet.getRangeByIndex(i + 2, 4).setText(moplist[i]);
+        sheet.getRangeByIndex(i + 2, 5).setText(productnamelist[i]);
+        sheet.getRangeByIndex(i + 2, 6).setText(mrplist[i]);
+        sheet.getRangeByIndex(i + 2, 7).setText(totalsplist[i]);
+      } else {
+        sheet.getRangeByIndex(i + 2, 1).setText(datelist[i] ?? '');
+        sheet.getRangeByIndex(i + 2, 2).setText(timelist[i]);
+        sheet.getRangeByIndex(i + 2, 3).setText(partynamelist[i]);
+        sheet.getRangeByIndex(i + 2, 4).setText(moplist[i]);
+        sheet.getRangeByIndex(i + 2, 5).setText(productnamelist[i]);
+        sheet.getRangeByIndex(i + 2, 6).setText(basesplist[i]);
+        sheet.getRangeByIndex(i + 2, 7).setText(gstratelist[i]);
+        sheet.getRangeByIndex(i + 2, 8).setText(cgstlist[i]);
+        sheet.getRangeByIndex(i + 2, 9).setText(sgstlist[i]);
+        sheet.getRangeByIndex(i + 2, 10).setText(igstlist[i]);
+        sheet.getRangeByIndex(i + 2, 11).setText(mrplist[i]);
+        sheet.getRangeByIndex(i + 2, 12).setText(totalsplist[i]);
+      }
+    }
+
+    final List<int> bytes = workbook.saveAsStream();
+    final directory = await getApplicationDocumentsDirectory();
+    File excelFileLocal = File('${directory.path}/Purchase.xlsx');
+    await excelFileLocal.writeAsBytes(bytes);
+
+    Share.shareFiles(
+      [excelFileLocal.path],
+      mimeTypes: [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      ],
+    );
+
+    workbook.dispose();
+  }
+
+ExpenseExcelReport() async {
+    final headersExpense = [
+      'Date',
+      'Time',
+      'Header',
+      'Description',
+      'M.O.P',
+      'Amount'
+    ];
+    final xcel.Workbook workbook = xcel.Workbook();
+    final xcel.Worksheet sheet = workbook.worksheets[0];
+
+    for (int i = 1; i <= headersExpense.length; i++) {
+      sheet.getRangeByIndex(1, i).setText(headersExpense[i - 1]);
+    }
+
+    for (int i = 0; i < widget.args.expenses!.length; i++) {
+      print(datelist.length);
+      final expense = widget.args.expenses![i];
+      final date = DateFormat('dd MMM, yyyy').format(expense.createdAt!);
+      final time = DateFormat('hh:mm a').format(expense.createdAt!);
+
+      sheet.getRangeByIndex(i + 2, 1).setText(date.toString());
+      sheet.getRangeByIndex(i + 2, 2).setText(time.toString());
+      sheet.getRangeByIndex(i + 2, 3).setText(expense.header);
+      sheet.getRangeByIndex(i + 2, 4).setText(expense.description);
+      sheet.getRangeByIndex(i + 2, 5).setText(expense.modeOfPayment);
+      sheet.getRangeByIndex(i + 2, 6).setText(expense.amount.toString());
+    }
+
+    final List<int> bytes = workbook.saveAsStream();
+    final directory = await getApplicationDocumentsDirectory();
+    File excelFileLocal = File('${directory.path}/Expense.xlsx');
+    await excelFileLocal.writeAsBytes(bytes);
+
+    Share.shareFiles(
+      [excelFileLocal.path],
+      mimeTypes: [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      ],
+    );
+
+    workbook.dispose();
+  }
+STOCKExcelReport() async {
+    final headersStock = [
+      'Item Name',
+      'Stock Quantity',
+      'Sales Value',
+      'Purchase Value',
+      'profit margin'
+    ];
+
+    final xcel.Workbook workbook = xcel.Workbook();
+    final xcel.Worksheet sheet = workbook.worksheets[0];
+
+    for (int i = 1; i <= headersStock.length; i++) {
+      sheet.getRangeByIndex(1, i).setText(headersStock[i - 1]);
+    }
+
+    for (int i = 0; i < widget.args.products!.length; i++) {
+      final product = widget.args.products![i];
+      var salesValue = product.quantity! * product.sellingPrice!;
+      var purchaseValue = product.quantity! * product.purchasePrice;
+
+      sheet.getRangeByIndex(i + 2, 1).setText(product.name);
+      sheet.getRangeByIndex(i + 2, 2).setText(product.quantity.toString());
+      sheet.getRangeByIndex(i + 2, 3).setText(salesValue.toString());
+      sheet.getRangeByIndex(i + 2, 4).setText(purchaseValue.toString());
+      sheet
+          .getRangeByIndex(i + 2, 5)
+          .setText((salesValue - purchaseValue).toString());
+    }
+
+    final List<int> bytes = workbook.saveAsStream();
+    final directory = await getApplicationDocumentsDirectory();
+    File excelFileLocal = File('${directory.path}/Stock.xlsx');
+    await excelFileLocal.writeAsBytes(bytes);
+
+    Share.shareFiles(
+      [excelFileLocal.path],
+      mimeTypes: [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      ],
+    );
+
+    workbook.dispose();
+  }
+
+
+
+
+
+
+
+
+
+
+
+
   String total() {
     for (int i = 0; i < totalsplist.length; i++) {
       print(totalsplist[i]);
@@ -398,6 +879,30 @@ class _ReportTableState extends State<ReportTable> {
       mimeTypes: ['application/pdf'],
     );
   }
+  Future<Iterable<Party>> _searchParties(String pattern) async {
+    if (pattern.isEmpty) {
+      return [];
+    }
+    // final type =
+    //   widget.args.invoiceType == OrderType.sale ? "customer" : "supplier";
+
+    try {
+      final response;
+      if (widget.args.type == "ReportType.purchase") {
+        response = await const PartyService().getCreditPurchaseParties();
+      } else {
+        response = await const PartyService().getCreditSaleParties();
+      }
+      //  final response =await const PartyService().getSearch(pattern, type: "customer");
+
+      // final data = response.data['allParty'] as List<dynamic>;
+      //  return data.map((e) => Party.fromMap(e));
+      return response;
+    } catch (err) {
+      // log(err.toString());
+      return [];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -411,12 +916,35 @@ class _ReportTableState extends State<ReportTable> {
                     ? Text("Expense Report")
                     : Text("Stock Report"),
         actions: [
-          IconButton(
+            if (widget.args.type != "ReportType.stock" &&
+              widget.args.type != "ReportType.expense")
+            IconButton(
+                onPressed: () {
+                  _showDialog();
+                },
+                icon: Icon(Icons.filter_alt)),
+        /*  IconButton(
             onPressed: () async {
               sharePDF();
             },
             icon: Icon(Icons.share),
+          ),*/
+             IconButton(
+            onPressed: () async {
+              // sharePDF();
+              // _convertImageToExcel();
+              widget.args.type == "ReportType.sale"
+                  ? saleExcelReport()
+                  : widget.args.type == "ReportType.purchase"
+                      ? PurchaseExcelReport()
+                      : widget.args.type == "ReportType.expense"
+                          ? ExpenseExcelReport()
+                          : STOCKExcelReport();
+              // saleExcelReport();
+            },
+            icon: Icon(Icons.share),
           ),
+        
         ],
       ),
       body: Align(
@@ -445,6 +973,93 @@ class _ReportTableState extends State<ReportTable> {
           ),
         ),
       ),
+    );
+  }
+   Future<bool?> _showDialog() {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Text('Enter party name to Filter'),
+            ],
+          ),
+          content: TypeAheadFormField<Party>(
+            validator: (value) {
+              return null;
+            },
+            debounceDuration: const Duration(milliseconds: 500),
+            textFieldConfiguration: TextFieldConfiguration(
+              controller: _typeAheadController,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: "Party",
+                suffixIcon: GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, CreatePartyPage.routeName,
+                        arguments: CreatePartyArguments(
+                            "",
+                            "",
+                            "",
+                            "",
+                            /* widget.args.invoiceType ==
+                                                    OrderType.purchase
+                                                ? 'supplier'
+                                                : 'customer',*/
+                            "supplier"));
+                  },
+                  child: const Icon(Icons.add_circle_outline_rounded),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 2,
+                  horizontal: 10,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            suggestionsCallback: (String pattern) {
+              if (int.tryParse(pattern.trim()) != null) {
+                return Future.value([]);
+              }
+
+              return _searchParties(pattern);
+            },
+            itemBuilder: (context, party) {
+              return ListTile(
+                leading: const Icon(Icons.person),
+                title: Text(party.name ?? ""),
+              );
+            },
+            onSuggestionSelected: (Party party) {
+              setState(() {
+                partynametoFilter = party.name!;
+              });
+              _typeAheadController.text = party.name ?? "";
+              Navigator.pop(ctx, false);
+            },
+          ),
+          actions: [
+            TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx, false);
+                },
+                child: Text('Cancel')),
+            TextButton(
+                onPressed: () {
+                  setState(() {
+                    partynametoFilter = "";
+                  });
+
+                  Navigator.pop(ctx, false);
+                },
+                child: Text('clear')),
+          ],
+        );
+      },
     );
   }
 }

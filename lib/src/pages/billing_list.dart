@@ -379,6 +379,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
              CustomTextField2(
+           
                   hintText: "Enter Table No (optional)",
                   inputType: TextInputType.number,
                   controller: tableNoController,

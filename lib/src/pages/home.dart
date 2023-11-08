@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:new_version/new_version.dart';
 import 'package:shopos/src/blocs/home/home_cubit.dart';
 import 'package:shopos/src/config/colors.dart';
+import 'package:shopos/src/pages/checkout.dart';
 import 'package:shopos/src/pages/create_purchase.dart';
 import 'package:shopos/src/pages/create_sale.dart';
 import 'package:shopos/src/pages/expense.dart';
@@ -26,7 +27,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late final HomeCubit _homeCubit;
-   PinService _pinService = PinService();
+  PinService _pinService = PinService();
+
   ///
   @override
   void initState() {
@@ -83,7 +85,7 @@ class _HomePageState extends State<HomePage> {
                         subtitle: Text(state.user.email ?? ""),
                       ),
                       Divider(),
-                         ListTile(
+                      /*   ListTile(
                         leading: Icon(Icons.lock),
                         title: Title(
                             color: Colors.black, child: Text("Set/Change pin")),
@@ -93,7 +95,7 @@ class _HomePageState extends State<HomePage> {
                           Navigator.of(context).pushNamed(SetPinPage.routeName,
                               arguments: status);
                         },
-                      ),
+                      ),*/
                       ListTile(
                         leading: Icon(Icons.security_outlined),
                         title: Title(
@@ -182,6 +184,10 @@ class _HomePageState extends State<HomePage> {
                             Navigator.pushNamed(
                               context,
                               SearchProductListScreen.routeName,
+                              arguments: ProductListPageArgs(
+                                isSelecting: false,
+                                orderType: OrderType.sale,
+                              ),
                             );
                           },
                         ),

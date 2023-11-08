@@ -320,13 +320,13 @@ class _PartiesListViewState extends State<PartiesListView> {
         )).show();
   }
 
-   Future<bool?> _showPinDialog() {
+  Future<bool?> _showPinDialog() {
     return showDialog(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
               content: pinCode.PinCodeTextField(
-                onChanged: (e){},
+                onChanged: (v){},
                 autoDisposeControllers: false,
                 appContext: context,
                 length: 6,
@@ -352,24 +352,41 @@ class _PartiesListViewState extends State<PartiesListView> {
                 animationDuration: const Duration(milliseconds: 300),
                 enableActiveFill: true,
               ),
-              title: Text('Enter your pin'),
+              title: Row(
+                children: [
+                  Expanded(child: Text('Enter your pin')),
+                  GestureDetector(
+                    onTap: (){
+                        Navigator.of(ctx).pop();
+                               Navigator.of(ctx).pop();
+                    },
+                    child: Icon(Icons.close))
+                ],
+              ),
               actions: [
                 Center(
-                    child: CustomButton(
-                        title: 'Verify',
-                        onTap: () async {
-                          bool status = await _pinService.verifyPin(
-                              int.parse(pinController.text.toString()));
-                          if (status) {
-                            pinController.clear();
-                            Navigator.of(ctx).pop(true);
-                          } else {
-                            Navigator.of(ctx).pop(false);
-                            pinController.clear();
-
-                            return;
-                          }
-                        }))
+                    child: Container(
+                      width: 200,
+                      height: 40,
+                      child: CustomButton(
+                                     
+                          title: 'Verify',
+                          style: TextStyle(fontSize: 20,color: Colors.white),
+                          onTap: () async {
+                            bool status = await _pinService.verifyPin(
+                                int.parse(pinController.text.toString()));
+                            print(status);
+                            if (status) {
+                              pinController.clear();
+                              Navigator.of(ctx).pop(true);
+                            } else {
+                              Navigator.of(ctx).pop(false);
+                              pinController.clear();
+                    
+                              return;
+                            }
+                          }),
+                    ))
               ],
             ));
   }

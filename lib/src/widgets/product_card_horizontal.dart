@@ -1,8 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shopos/src/models/product.dart';
+import 'package:shopos/src/services/product_availability_service.dart';
 
-class ProductCardHorizontal extends StatelessWidget {
+class ProductCardHorizontal extends StatefulWidget {
   final Product product;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
@@ -10,7 +11,12 @@ class ProductCardHorizontal extends StatelessWidget {
   final VoidCallback? addQuantity;
   final int selectQuantity;
   final bool? isSelecting;
-  const ProductCardHorizontal({
+  Function onAdd;
+  Function onRemove;
+  Function onTap;
+  bool isAvailable;
+  final int noOfQuatityadded;
+  ProductCardHorizontal({
     Key? key,
     required this.product,
     required this.onDelete,
@@ -18,146 +24,231 @@ class ProductCardHorizontal extends StatelessWidget {
     this.isSelecting = false,
     this.addQuantity,
     this.reduceQuantity,
-    this.selectQuantity = 0
+    this.selectQuantity = 0,
+    this.isAvailable = true,
+    this.noOfQuatityadded = 0,
+    required this.onAdd,
+    required this.onRemove,
+    required this.onTap,
   }) : super(key: key);
+  @override
+  State<ProductCardHorizontal> createState() => _ProductCardHorizontalState();
+}
+
+class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
+  int itemQuantity = 0;
+  ProductAvailabilityService productAvailability = ProductAvailabilityService();
+
+  bool tapflag = false;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    itemQuantity = widget.noOfQuatityadded;
+    setState(() {});
+  }
 
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 200,
-      child: Card(
-        elevation: 5,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(5),
-                  child: product.image != null
-                      ? CachedNetworkImage(
-                          imageUrl: product.image!,
-                          fit: BoxFit.cover,
-                        )
-                      : Image.asset('assets/images/image_placeholder.png'),
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 3,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    Container(
-                      width: MediaQuery.of(context).size.width / 2.25,
-                      alignment: Alignment.center,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        physics: BouncingScrollPhysics(),
-                        child: Text(
-                          product.name ?? "",
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.headline6,
-                        ),
-                      ),
-                    ),
-                    Divider(color: Colors.black54),
-                    const SizedBox(height: 5),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Available'),
-                        Text('${product.quantity}'),
-                      ],
-                    ),
-                    Visibility(
-                      visible: product.gstRate != "null",
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Price'),
-                              Text('₹ ${product.baseSellingPriceGst}'),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('GST @${product.gstRate}%'),
-                              Text('₹ ${product.saleigst}'),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Net Sell Price'),
-                        Text('₹ ${product.sellingPrice}'),
-                      ],
-                    ),
+  void dispose()
+  {
 
-                    // previous version (will use after sometime)
-                    // Text('${product.quantity} pcs'),
-                    // // const SizedBox(height: 2),
-                    // // Text(color),
-                    // const SizedBox(height: 2),
-                    // product.purchasePrice != 0
-                    //     ? Text('Purchase Price ${product.purchasePrice}')
-                    //     : Container(),
-                    // const SizedBox(height: 2),
-                    // Text('Sale Price ${product.sellingPrice}'),
-                  ],
-                ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.topRight,
-              child: GestureDetector(
-                onTap: () {},
+  }
+
+  @override
+  void didUpdateWidget(Widget oldWidget) {
+
+    print("changeeeeeeeeeeeeeeeeeeeeeeeed");
+  }
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        widget.onTap(itemQuantity);
+        if (tapflag) if (itemQuantity == 1) itemQuantity = 0;
+
+        if (!tapflag) if (itemQuantity == 0) itemQuantity = 1;
+
+        tapflag = !tapflag;
+        setState(() {});
+      },
+      child: SizedBox(
+        height: 250,
+        child: Card(
+      
+          elevation: 5,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 2,
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: PopupMenuButton<int>(
-                    child: const Icon(Icons.more_vert_rounded),
-                    onSelected: (int e) {
-                      if (e == 0) {
-                        onEdit();
-                      } else if (e == 1) {
-                        onDelete();
-                      }
-                    },
-                    itemBuilder: (BuildContext context) {
-                      return <PopupMenuItem<int>>[
-                        const PopupMenuItem<int>(
-                          value: 0,
-                          child: Text('Edit'),
-                        ),
-                        const PopupMenuItem<int>(
-                          value: 1,
-                          child: Text(
-                            'Delete',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        )
-                      ];
-                    },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(5),
+                    child: widget.product.image != null
+                        ? CachedNetworkImage(
+                            imageUrl: widget.product.image!,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.asset('assets/images/image_placeholder.png'),
                   ),
                 ),
               ),
-            )
-          ],
+              Expanded(
+                flex: 3,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: MediaQuery.of(context).size.width / 2.25,
+                        alignment: Alignment.center,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: BouncingScrollPhysics(),
+                          child: Text(
+                            widget.product.name ?? "",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.headline6,
+                          ),
+                        ),
+                      ),
+                      Divider(color: Colors.black54),
+                      const SizedBox(height: 5),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Available'),
+                          Text('${widget.product.quantity}'),
+                        ],
+                      ),
+                      Visibility(
+                        visible: widget.product.gstRate != "null",
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Price'),
+                                Text('₹ ${widget.product.baseSellingPriceGst}'),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('GST @${widget.product.gstRate}%'),
+                                Text('₹ ${widget.product.saleigst}'),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Net Sell Price'),
+                          Text('₹ ${widget.product.sellingPrice}'),
+                        ],
+                      ),
+                
+                        Visibility(
+                          visible:(itemQuantity > 0 && widget.isSelecting == true) ,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    itemQuantity++;
+                                  });
+                        
+                                  widget.onAdd();
+                                },
+                                icon:
+                                    const Icon(Icons.add_circle_outline_rounded),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(3.0),
+                                child: Text(
+                                  "$itemQuantity",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                  if (itemQuantity == 1) {
+                                    tapflag = !tapflag;
+                                  }
+                        
+                                  setState(() {
+                                    itemQuantity--;
+                                  });
+                                  widget.onRemove();
+                                },
+                                icon: const Icon(
+                                    Icons.remove_circle_outline_rounded),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      // previous version (will use after sometime)
+                      // Text('${product.quantity} pcs'),
+                      // // const SizedBox(height: 2),
+                      // // Text(color),
+                      // const SizedBox(height: 2),
+                      // product.purchasePrice != 0
+                      //     ? Text('Purchase Price ${product.purchasePrice}')
+                      //     : Container(),
+                      // const SizedBox(height: 2),
+                      // Text('Sale Price ${product.sellingPrice}'),
+                    ],
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.topRight,
+                child: GestureDetector(
+                  onTap: () {},
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: PopupMenuButton<int>(
+                      child: const Icon(Icons.more_vert_rounded),
+                      onSelected: (int e) {
+                        if (e == 0) {
+                          widget.onEdit();
+                        } else if (e == 1) {
+                          widget.onDelete();
+                        }
+                      },
+                      itemBuilder: (BuildContext context) {
+                        return <PopupMenuItem<int>>[
+                          const PopupMenuItem<int>(
+                            value: 0,
+                            child: Text('Edit'),
+                          ),
+                          const PopupMenuItem<int>(
+                            value: 1,
+                            child: Text(
+                              'Delete',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          )
+                        ];
+                      },
+                    ),
+                  ),
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -199,9 +290,10 @@ class ProductCardPurchase extends StatelessWidget {
                 .toStringAsFixed(2));
       }
       if (product.gstRate == "null") {
-        baseSellingPrice = double.parse((product.sellingPrice! * productQuantity)
-            .toDouble()
-            .toStringAsFixed(2));
+        baseSellingPrice = double.parse(
+            (product.sellingPrice! * productQuantity)
+                .toDouble()
+                .toStringAsFixed(2));
       }
       SellingPrice = (product.sellingPrice! * productQuantity);
     }
@@ -230,7 +322,6 @@ class ProductCardPurchase extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
-
           children: [
             Expanded(
               flex: 0,

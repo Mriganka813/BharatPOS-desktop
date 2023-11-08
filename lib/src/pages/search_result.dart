@@ -1,7 +1,10 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:shopos/src/blocs/product/product_cubit.dart';
+import 'package:shopos/src/blocs/report/report_cubit.dart';
 import 'package:shopos/src/config/colors.dart';
+import 'package:shopos/src/pages/checkout.dart';
 import 'package:shopos/src/pages/create_product.dart';
 import 'package:shopos/src/services/global.dart';
 import 'package:shopos/src/services/locator.dart';
@@ -9,24 +12,25 @@ import 'package:shopos/src/services/search_service.dart';
 import 'package:shopos/src/services/set_or_change_pin.dart';
 import 'package:shopos/src/widgets/custom_button.dart';
 import 'package:shopos/src/widgets/custom_text_field.dart';
+import 'package:shopos/src/widgets/custom_text_field2.dart';
 import 'package:shopos/src/widgets/product_card_horizontal.dart';
 
 import '../models/product.dart';
 
-// class ProductListPageArgs {
-//   bool isSelecting;
-//   final OrderType orderType;
-//   ProductListPageArgs({
-//     this.isSelecting = false,
-//     required this.orderType,
-//   });
-// }
+class ProductListPageArgs {
+  bool isSelecting;
+  final OrderType orderType;
+  ProductListPageArgs({
+    this.isSelecting = true,
+    required this.orderType,
+  });
+}
 
 class SearchProductListScreen extends StatefulWidget {
   static const routeName = '/search-product-list-screen';
 
-  // const SearchProductListScreen({this.args});
-  // final ProductListPageArgs? args;
+  SearchProductListScreen({required this.args});
+  ProductListPageArgs args;
 
   @override
   State<SearchProductListScreen> createState() =>
@@ -40,12 +44,16 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
   bool isLoadingMore = false;
   late final ProductCubit _productCubit;
   late List<Product> _products;
-  PinService _pinService = PinService();
-  final TextEditingController pinController = TextEditingController();
+  bool itemCheckedFlag = false;
+  TextEditingController searchController = TextEditingController();
 
   int page = 0;
   int _currentPage = 1;
   int _limit = 20;
+  bool isAvailable = true;
+  PinService _pinService = PinService();
+  late final ReportCubit _reportCubit;
+  final TextEditingController pinController = TextEditingController();
 
   @override
   void initState() {
@@ -53,6 +61,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
     _products = [];
     _productCubit = ProductCubit()..getProducts(_currentPage, _limit);
     scrollController.addListener(_scrollListener);
+    _reportCubit = ReportCubit();
     fetchSearchedProducts();
   }
 
@@ -60,6 +69,11 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
   // Navigator.of(context).pushNamed(SearchProductDetailsScreen.routeName,
   //    arguments: prodList[idx]);
   //}
+  @override
+  void dispose() {
+    _reportCubit.close();
+    super.dispose();
+  }
 
   Future<void> fetchSearchedProducts() async {
     var newProducts =
@@ -108,8 +122,49 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
   //   });
   // }
 
+  void _selectProduct(Product product) {
+    print("helooooooooo");
+    final isSale = widget.args?.orderType == OrderType.sale;
+    if (isSale && (product.quantity ?? 0) < 1) {
+      locator<GlobalServices>().infoSnackBar('Item not available');
+      return;
+    }
+
+    setState(() {
+      _products.add(product);
+    });
+  }
+
+  void increaseTheQuantity(Product product) {
+    _selectProduct(product);
+  }
+
+  void decreaseTheQuantity(Product product) {
+    for (int j = 0; j < _products.length; j++) {
+      if (_products[j].id == product.id) {
+        _products.removeAt(j);
+        break;
+      }
+    }
+    setState(() {});
+  }
+
+  int countNoOfQuatityInArray(Product product) {
+    int count = 0;
+    _products.forEach((element) {
+      if (element.id == product.id) count++;
+    });
+
+    return count;
+  }
+
+  FocusNode node = FocusNode();
+  
+  GlobalKey widgetKey = GlobalKey();
+    
   @override
   Widget build(BuildContext context) {
+   
     final height = MediaQuery.of(context).size.height;
     // final width = MediaQuery.of(context).size.width;
 
@@ -133,31 +188,31 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              // if (widget.args?.isSelecting ?? false)
-              //   Expanded(
-              //     child: CustomButton(
-              //         title: "Continue",
-              //         padding: const EdgeInsets.symmetric(vertical: 15),
-              //         onTap: () {
-              //           if (_products.isEmpty) {
-              //             ScaffoldMessenger.of(context).showSnackBar(
-              //               const SnackBar(
-              //                 backgroundColor: Colors.red,
-              //                 content: Text(
-              //                   "Please select products before continuing",
-              //                   style: TextStyle(color: Colors.white),
-              //                 ),
-              //               ),
-              //             );
-              //             return;
-              //           }
-              //           Navigator.pop(
-              //             context,
-              //             _products,
-              //           );
-              //         }),
-              //   ),
-              // if (widget.args?.isSelecting ?? false) const SizedBox(width: 20),
+              if (widget.args!.isSelecting)
+                Expanded(
+                  child: CustomButton(
+                      title: "Continue",
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      onTap: () {
+                        if (_products.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              backgroundColor: Colors.red,
+                              content: Text(
+                                "Please select products before continuing",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        Navigator.pop(
+                          context,
+                          _products,
+                        );
+                      }),
+                ),
+              if (widget.args?.isSelecting ?? false) const SizedBox(width: 20),
               FloatingActionButton(
                 onPressed: () async {
                   _productCubit.getProducts(_currentPage, _limit);
@@ -189,7 +244,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                       child: GridView.builder(
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2, mainAxisExtent: 230),
+                                  crossAxisCount: 2, mainAxisExtent: 250),
                           shrinkWrap: true,
                           padding: EdgeInsets.all(8),
                           physics: AlwaysScrollableScrollPhysics(),
@@ -199,19 +254,37 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                           controller: scrollController,
                           itemBuilder: (context, index) {
                             if (index < prodList.length) {
-                              return GestureDetector(
-                                onTap: () {
-                                  // _selectProduct(prodList[index]);
-                                  print(_products);
-                                },
+                              return Container(
+                                height: 250,
                                 child: Column(
                                   children: [
-                                    SizedBox(
-                                      height: height / 240,
-                                    ),
                                     Stack(
                                       children: [
                                         ProductCardHorizontal(
+                                          noOfQuatityadded:
+                                              countNoOfQuatityInArray(
+                                                  prodList[index]),
+                                          isSelecting: true,
+                                          onAdd: () {
+                                            increaseTheQuantity(
+                                                prodList[index]);
+                                          },
+                                          onRemove: () {
+                                            decreaseTheQuantity(
+                                                prodList[index]);
+                                          },
+                                          onTap: (q) {
+                                            if (q == 1) {
+                                              decreaseTheQuantity(
+                                                  prodList[index]);
+                                              itemCheckedFlag = false;
+                                            } else if (q == 0) {
+                                              _selectProduct(prodList[index]);
+                                              itemCheckedFlag = true;
+                                            }
+
+                                            setState(() {});
+                                          },
                                           product: prodList[index],
                                           onDelete: () async {
                                             var result = true;
@@ -253,25 +326,24 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                                             }
                                           },
                                         ),
-                                        // if (_products.contains(prodList[index]))
-                                        //   const Align(
-                                        //     alignment: Alignment.topRight,
-                                        //     child: Padding(
-                                        //       padding: EdgeInsets.all(8.0),
-                                        //       child: CircleAvatar(
-                                        //         radius: 15,
-                                        //         backgroundColor: Colors.green,
-                                        //         child: Icon(
-                                        //           Icons.check,
-                                        //           color: Colors.white,
-                                        //         ),
-                                        //       ),
-                                        //     ),
-                                        //   ),
+                                        if (countNoOfQuatityInArray(
+                                                prodList[index]) >
+                                            0)
+                                          const Align(
+                                            alignment: Alignment.topRight,
+                                            child: Padding(
+                                              padding: EdgeInsets.all(8.0),
+                                              child: CircleAvatar(
+                                                radius: 15,
+                                                backgroundColor: Colors.green,
+                                                child: Icon(
+                                                  Icons.check,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                       ],
-                                    ),
-                                    SizedBox(
-                                      height: height / 240,
                                     ),
                                   ],
                                 ),
@@ -289,14 +361,26 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
 //               child: CustomTextField(
-                  child: CustomTextField(
+                  child: CustomTextField2(
+                    key: widgetKey,
+                    controller: searchController,
+
                     prefixIcon: const Icon(Icons.search),
                     hintText: 'Search',
                     onChanged: (String e) async {
+                   
                       if (e.isNotEmpty) {
+                        prodList.clear();
+                        setState(() {
+                          
+                        });
+                   
+                    
                         prodList = await searchProductServices.searchproduct(e);
+
                         print("searchbar running");
                         setState(() {});
+                      
                       }
                     },
                     // onsubmitted: (value) {
@@ -316,7 +400,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
               content: PinCodeTextField(
-                onChanged: (e) {},
+                onChanged: (v) {},
                 autoDisposeControllers: false,
                 appContext: context,
                 length: 6,
@@ -342,26 +426,39 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                 animationDuration: const Duration(milliseconds: 300),
                 enableActiveFill: true,
               ),
-              title: Text('Enter your pin'),
+              title: Row(
+                children: [
+                  Expanded(child: Text('Enter your pin')),
+                  GestureDetector(
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                      },
+                      child: Icon(Icons.close))
+                ],
+              ),
               actions: [
                 Center(
-                    child: CustomButton(
-                        title: 'Verify',
-                        onTap: () async {
-                          bool status = await _pinService.verifyPin(
-                              int.parse(pinController.text.toString()));
-                          if (status) {
-                            Navigator.of(ctx).pop(true);
-                            pinController.clear();
-                          } else {
-                            Navigator.of(ctx).pop(false);
-                            pinController.clear();
+                    child: Container(
+                  width: 200,
+                  height: 40,
+                  child: CustomButton(
+                      title: 'Verify',
+                      style: TextStyle(fontSize: 20, color: Colors.white),
+                      onTap: () async {
+                        bool status = await _pinService.verifyPin(
+                            int.parse(pinController.text.toString()));
+                        print(status);
+                        if (status) {
+                          pinController.clear();
+                          Navigator.of(ctx).pop(true);
+                        } else {
+                          Navigator.of(ctx).pop(false);
+                          pinController.clear();
 
-                            locator<GlobalServices>()
-                                .errorSnackBar("Incorrect pin");
-                            return;
-                          }
-                        }))
+                          return;
+                        }
+                      }),
+                ))
               ],
             ));
   }

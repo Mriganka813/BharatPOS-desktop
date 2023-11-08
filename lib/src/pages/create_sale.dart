@@ -7,6 +7,7 @@ import 'package:shopos/src/models/input/order_input.dart';
 import 'package:shopos/src/models/product.dart';
 import 'package:shopos/src/pages/billing_list.dart';
 import 'package:shopos/src/pages/checkout.dart';
+import 'package:shopos/src/pages/search_result.dart';
 import 'package:shopos/src/pages/select_products_screen.dart';
 import 'package:shopos/src/provider/billing.dart';
 import 'package:shopos/src/services/global.dart';
@@ -254,7 +255,7 @@ class _CreateSaleState extends State<CreateSale> {
                   onTap: () async {
                     final result = await Navigator.pushNamed(
                       context,
-                      SelectProductScreen.routeName,
+                    SearchProductListScreen.routeName,
                       arguments: ProductListPageArgs(
                         isSelecting: true,
                         orderType: OrderType.sale,
@@ -263,16 +264,56 @@ class _CreateSaleState extends State<CreateSale> {
                     if (result == null && result is! List<Product>) {
                       return;
                     }
-                    final orderItems = (result as List<Product>)
-                        .map((e) => OrderItemInput(
-                              product: e,
-                              quantity: 1,
-                              price: 0,
-                            ))
-                        .toList();
-                    setState(() {
-                      _orderInput.orderItems?.addAll(orderItems);
-                    });
+                  
+                          var temp = result as List<Product>;
+                          var tempMap = {};
+
+                          for (int i = 0; i < temp.length; i++) {
+                            int count=1;
+                            if(!tempMap.containsKey("${temp[i].id}"))
+                            {
+                              for (int j = i+1; j < temp.length; j++) {
+                              if(temp[i].id==temp[j].id)
+                              {
+                                count++;
+                                print("count =$count");
+                               
+                              }
+                            }
+                            tempMap["${temp[i].id}"]=count;   
+                            }
+                            
+                          }
+
+
+
+                              for (int i = 0; i < temp.length; i++) {
+                  
+                           
+                              for (int j = i+1; j < temp.length; j++) {
+                              if(temp[i].id==temp[j].id)
+                              {
+                            
+                                    temp.removeAt(j);
+                                    j--;
+                               
+                              }
+                            }
+                       
+                            
+                          }
+
+                          final orderItems = temp
+                              .map((e) => OrderItemInput(
+                                    product: e,
+                                    quantity: tempMap["${e.id}"],
+                                    price: 0,
+                                  ))
+                              .toList();
+                          setState(() {
+                            _orderInput.orderItems?.addAll(orderItems);
+                           // newAddedItems!.addAll(orderItems);
+                          });
                   },
                 ),
                 // const VerticalDivider(

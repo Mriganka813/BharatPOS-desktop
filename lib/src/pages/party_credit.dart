@@ -3,15 +3,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
+import 'package:shopos/src/blocs/report/report_cubit.dart';
 import 'package:shopos/src/blocs/specific%20party/specific_party_cubit.dart';
 import 'package:shopos/src/blocs/specific%20party/specific_party_state.dart';
 import 'package:shopos/src/config/colors.dart';
+import 'package:shopos/src/models/order.dart';
 import 'package:shopos/src/models/party.dart';
 import 'package:shopos/src/services/global.dart';
 import 'package:shopos/src/services/locator.dart';
 import 'package:shopos/src/services/set_or_change_pin.dart';
 import 'package:shopos/src/widgets/custom_button.dart';
 import 'package:pin_code_fields/pin_code_fields.dart' as pinCode;
+
 class ScreenArguments {
   final String partyId;
   final String partName;
@@ -37,15 +40,15 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
   late final SpecificPartyCubit _specificpartyCubit;
   late Party _specificPartyInput;
   PinService _pinService = PinService();
-
+  late final ReportCubit _reportCubit;
   final TextEditingController pinController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
     _specificpartyCubit = SpecificPartyCubit();
     fetchdata();
     _specificPartyInput = Party();
+    _reportCubit = ReportCubit();
   }
 
   void fetchdata() {
@@ -57,7 +60,29 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
   @override
   void dispose() {
     _specificpartyCubit.close();
+    _reportCubit.close();
     super.dispose();
+  }
+
+  void sort(List<Order> o) {
+    for (int i = 0; i < o.length; i++) {
+      for (int j = i + 1; j < o.length; j++) {
+        print(o[i].createdAt.toString());
+        String dateString = o[i].createdAt!=""&& o[i].createdAt!="null" && o[i].createdAt!=" "?o[i].createdAt:DateTime.now().toString();
+
+        DateTime dateTimei = DateTime.parse(dateString);
+
+        String dateStringj = o[j].createdAt!=""&& o[j].createdAt!="null"&& o[j].createdAt!=" "?o[j].createdAt:DateTime.now().toString();
+
+        DateTime dateTimej = DateTime.parse(dateStringj);
+
+        if (dateTimej.isBefore(dateTimei)) {
+          var temp = o[i];
+          o[i] = o[j];
+          o[j] = temp;
+        }
+      }
+    }
   }
 
   TextEditingController value = TextEditingController();
@@ -84,19 +109,22 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
           builder: (context, state) {
             if (state is SpecificPartyListRender) {
               final orders = state.specificparty;
+
               return ListView.builder(
                 physics: const BouncingScrollPhysics(),
                 shrinkWrap: true,
                 reverse: true,
                 itemCount: orders.length,
                 itemBuilder: (BuildContext context, int index) {
+                 sort(orders);
                   final order = orders[index];
+
                   return Column(
                     children: [
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 15, bottom: 15),
-                          child: currentdate(order.createdAt),
+                          child: currentdate(order.createdAt!),
                         ),
                       ),
                       Align(
@@ -112,7 +140,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                               await openEditModal(
                                   order.id!,
                                   order.total!,
-                                  order.createdAt,
+                                  order.createdAt!,
                                   order.modeOfPayment!,
                                   context);
                             },
@@ -458,8 +486,8 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
             ),
             ListTile(
               title: const Text("Delete"),
-              onTap: () async{
-                   var result = true;
+              onTap: () async {
+                var result = true;
 
                 if (await _pinService.pinStatus()==true) {
                   result = await _showPinDialog() as bool;
@@ -482,29 +510,22 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
   }
 
   currentdate(String dates) {
-    if(dates!="")
-    {
+    dates=dates!=""?dates:DateTime.now().toString();
     DateTime d = DateTime.parse(dates);
     var datereq = DateFormat.MMMM().format(d);
-     return Text(
+    return Text(
       d.day.toString() + " " + datereq + ", " + d.year.toString(),
       style: const TextStyle(color: Colors.black45),
     );
-    }
-    else
-    {
-      Text("");
-    }
-   
   }
 
-    Future<bool?> _showPinDialog() {
+  Future<bool?> _showPinDialog() {
     return showDialog(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
               content: pinCode.PinCodeTextField(
-                onChanged: (e){},
+                onChanged: (v){},
                 autoDisposeControllers: false,
                 appContext: context,
                 length: 6,
@@ -530,24 +551,41 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                 animationDuration: const Duration(milliseconds: 300),
                 enableActiveFill: true,
               ),
-              title: Text('Enter your pin'),
+              title: Row(
+                children: [
+                  Expanded(child: Text('Enter your pin')),
+                  GestureDetector(
+                    onTap: (){
+                        Navigator.of(ctx).pop();
+                               Navigator.of(ctx).pop();
+                    },
+                    child: Icon(Icons.close))
+                ],
+              ),
               actions: [
                 Center(
-                    child: CustomButton(
-                        title: 'Verify',
-                        onTap: () async {
-                          bool status = await _pinService.verifyPin(
-                              int.parse(pinController.text.toString()));
-                          if (status) {
-                            pinController.clear();
-                            Navigator.of(ctx).pop(true);
-                          } else {
-                            Navigator.of(ctx).pop(false);
-                            pinController.clear();
-
-                            return;
-                          }
-                        }))
+                    child: Container(
+                      width: 200,
+                      height: 40,
+                      child: CustomButton(
+                                     
+                          title: 'Verify',
+                          style: TextStyle(fontSize: 20,color: Colors.white),
+                          onTap: () async {
+                            bool status = await _pinService.verifyPin(
+                                int.parse(pinController.text.toString()));
+                            print(status);
+                            if (status) {
+                              pinController.clear();
+                              Navigator.of(ctx).pop(true);
+                            } else {
+                              Navigator.of(ctx).pop(false);
+                              pinController.clear();
+                    
+                              return;
+                            }
+                          }),
+                    ))
               ],
             ));
   }
