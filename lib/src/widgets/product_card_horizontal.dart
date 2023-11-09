@@ -51,14 +51,11 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
   @override
   void dispose()
   {
-
+    super.dispose();
   }
 
-  @override
-  void didUpdateWidget(Widget oldWidget) {
 
-    print("changeeeeeeeeeeeeeeeeeeeeeeeed");
-  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -106,16 +103,13 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
                       Container(
                         width: MediaQuery.of(context).size.width / 2.25,
                         alignment: Alignment.center,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          physics: BouncingScrollPhysics(),
-                          child: Text(
+                        child:  Text(
                             widget.product.name ?? "",
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.headline6,
                           ),
-                        ),
+                       
                       ),
                       Divider(color: Colors.black54),
                       const SizedBox(height: 5),

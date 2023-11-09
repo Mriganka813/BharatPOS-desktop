@@ -245,9 +245,9 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 2, mainAxisExtent: 250),
-                          shrinkWrap: true,
+               
                           padding: EdgeInsets.all(8),
-                          physics: AlwaysScrollableScrollPhysics(),
+                   
                           itemCount: isLoadingMore
                               ? prodList.length + 1
                               : prodList.length,
@@ -350,7 +350,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                               );
                             } else {
                               return Center(
-                                child: CircularProgressIndicator(),
+                                child: Text("loading")
                               );
                             }
                           }),
