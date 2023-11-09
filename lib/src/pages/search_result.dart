@@ -261,6 +261,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                                     Stack(
                                       children: [
                                         ProductCardHorizontal(
+                                          key: ValueKey(prodList[index].id),
                                           noOfQuatityadded:
                                               countNoOfQuatityInArray(
                                                   prodList[index]),
@@ -370,10 +371,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                     onChanged: (String e) async {
                    
                       if (e.isNotEmpty) {
-                        prodList.clear();
-                        setState(() {
-                          
-                        });
+                       
                    
                     
                         prodList = await searchProductServices.searchproduct(e);
