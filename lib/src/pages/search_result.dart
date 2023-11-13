@@ -159,12 +159,11 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
   }
 
   FocusNode node = FocusNode();
-  
+
   GlobalKey widgetKey = GlobalKey();
-    
+
   @override
   Widget build(BuildContext context) {
-   
     final height = MediaQuery.of(context).size.height;
     // final width = MediaQuery.of(context).size.width;
 
@@ -245,9 +244,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 2, mainAxisExtent: 250),
-               
                           padding: EdgeInsets.all(8),
-                   
                           itemCount: isLoadingMore
                               ? prodList.length + 1
                               : prodList.length,
@@ -265,7 +262,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                                           noOfQuatityadded:
                                               countNoOfQuatityInArray(
                                                   prodList[index]),
-                                          isSelecting: true,
+                                          isSelecting: widget.args.isSelecting,
                                           onAdd: () {
                                             increaseTheQuantity(
                                                 prodList[index]);
@@ -329,7 +326,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                                         ),
                                         if (countNoOfQuatityInArray(
                                                 prodList[index]) >
-                                            0)
+                                            0&&widget.args.isSelecting)
                                           const Align(
                                             alignment: Alignment.topRight,
                                             child: Padding(
@@ -350,9 +347,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                                 ),
                               );
                             } else {
-                              return Center(
-                                child: Text("loading")
-                              );
+                              return Center(child: Text("loading"));
                             }
                           }),
                     ),
@@ -369,16 +364,11 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                     prefixIcon: const Icon(Icons.search),
                     hintText: 'Search',
                     onChanged: (String e) async {
-                   
                       if (e.isNotEmpty) {
-                       
-                   
-                    
                         prodList = await searchProductServices.searchproduct(e);
 
                         print("searchbar running");
                         setState(() {});
-                      
                       }
                     },
                     // onsubmitted: (value) {

@@ -333,7 +333,6 @@ class _CreateProductState extends State<CreateProduct> {
                         Container(
                           width: 400,
                           child: CustomTextField2(
-                         
                             controller: sellingPriceController,
                             label: "Selling Price",
                             value: _formInput.sellingPrice,
@@ -344,11 +343,15 @@ class _CreateProductState extends State<CreateProduct> {
                                 calculate();
                               }
                             },
-                            validator: (p0) {
-                              if (p0!.isEmpty) {
+                            validator: (e) {
+                                if(e!.contains(".")||e.contains(","))
+                                {
+                                  return '(. ,) characters are not allowed';
+                                }
+                              if (e.isEmpty) {
                                 return "Please enter selling price";
                               }
-                              return null;
+                               return null;
                             },
                           ),
                         ),
@@ -356,7 +359,6 @@ class _CreateProductState extends State<CreateProduct> {
                         Container(
                           width: 400,
                           child: CustomTextField2(
-             
                             controller: purchasePriceController,
                             label: "Purchase Price",
                             value: _formInput.purchasePrice != "null"
@@ -369,7 +371,13 @@ class _CreateProductState extends State<CreateProduct> {
                               print("pppppppooooppp");
                               print(gstSwitch);
                             },
-                            validator: (e) => null,
+                            validator: (e) {
+                                if(e!.contains(".")||e.contains(","))
+                                {
+                                  return '(. ,) characters are not allowed';
+                                }
+                                return null;
+                            },
                           ),
                         ),
                       ],
@@ -418,7 +426,6 @@ class _CreateProductState extends State<CreateProduct> {
                               Container(
                                 width: 400,
                                 child: CustomTextField2(
-                            
                                   controller: gstratePriceController,
                                   label: "GST Rate (%)",
                                   value: _formInput.gstRate != "null"
@@ -548,16 +555,25 @@ class _CreateProductState extends State<CreateProduct> {
                         Container(
                           width: 400,
                           child: CustomTextField(
-                            label: "Quantity",
-                            value: _formInput.quantity != null
-                                ? _formInput.quantity
-                                : "",
-                            inputType: TextInputType.number,
-                            onChanged: (e) {
-                              _formInput.quantity = e;
-                            },
-                            validator: (e) => null,
-                          ),
+                              label: "Quantity",
+                              value: _formInput.quantity != null
+                                  ? _formInput.quantity
+                                  : "",
+                              inputType: TextInputType.number,
+                              onChanged: (e) {
+                                _formInput.quantity = e;
+                              },
+                              validator: (e) {
+
+                                if(e!.contains(".")||e.contains(","))
+                                {
+                                  return '(. ,) characters are not allowed';
+                                }
+                                if (int.parse(e!) > 99999) {
+                                  return 'Maximum value is 99999';
+                                }
+                                return "asfafs";
+                              }),
                         ),
                       ],
                     ),
@@ -609,8 +625,11 @@ class _CreateProductState extends State<CreateProduct> {
                           _productCubit.createProduct(_formInput);
                           print("Barcode:");
                           print(_formInput.barCode);
+                          
+                                Navigator.pop(context);
                         }
-                        Navigator.pop(context);
+                    
+                    
                       },
                     ),
                   ],

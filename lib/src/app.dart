@@ -58,7 +58,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const SplashScreen(),
+      home: SplashScreen(context),
       onGenerateRoute: (RouteSettings settings) {
         return MaterialPageRoute<void>(
           settings: settings,
@@ -138,7 +138,7 @@ class MyApp extends StatelessWidget {
                   args: settings.arguments as tableArg,
                 );
               default:
-                return const SplashScreen();
+                return  SplashScreen(context);
             }
           },
         );

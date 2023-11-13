@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shopos/src/models/product.dart';
 import 'package:shopos/src/services/product_availability_service.dart';
+import 'package:shopos/src/widgets/custom_button.dart';
 
 class ProductCardHorizontal extends StatefulWidget {
   final Product product;
@@ -49,12 +50,9 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
   }
 
   @override
-  void dispose()
-  {
+  void dispose() {
     super.dispose();
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +69,6 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
       child: SizedBox(
         height: 250,
         child: Card(
-      
           elevation: 5,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -103,13 +100,12 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
                       Container(
                         width: MediaQuery.of(context).size.width / 2.25,
                         alignment: Alignment.center,
-                        child:  Text(
-                            widget.product.name ?? "",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.headline6,
-                          ),
-                       
+                        child: Text(
+                          widget.product.name ?? "",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.headline6,
+                        ),
                       ),
                       Divider(color: Colors.black54),
                       const SizedBox(height: 5),
@@ -151,47 +147,66 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
                           Text('₹ ${widget.product.sellingPrice}'),
                         ],
                       ),
-                
-                        Visibility(
-                          visible:(itemQuantity > 0 && widget.isSelecting == true) ,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                onPressed: () {
-                                  setState(() {
+
+                      Visibility(
+                        visible:
+                            (itemQuantity > 0 && widget.isSelecting == true),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              onPressed: () {
+                                bool flag = true;
+                                bool flag2 = true;
+                                if (widget.product.quantity! >= 99000) {
+                                     _showError(
+                                      "Maximum value of quantity is 99000");
+                               
+                                  flag = false;
+                                 
+                                } 
+
+                                if (itemQuantity >= 999) {
+                                  _showError(
+                                      "Cant purchase the item more than 999");
+                                      flag2=false;
+                                }
+
+                                if(flag&&flag2)
+                                {
+                                     setState(() {
                                     itemQuantity++;
                                   });
-                        
-                                  widget.onAdd();
-                                },
-                                icon:
-                                    const Icon(Icons.add_circle_outline_rounded),
+                                   widget.onAdd();
+                                }
+                              },
+                              icon:
+                                  const Icon(Icons.add_circle_outline_rounded),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(3.0),
+                              child: Text(
+                                "$itemQuantity",
+                                style: TextStyle(fontWeight: FontWeight.bold),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.all(3.0),
-                                child: Text(
-                                  "$itemQuantity",
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () {
-                                  if (itemQuantity == 1) {
-                                    tapflag = !tapflag;
-                                  }
-                        
-                                  setState(() {
-                                    itemQuantity--;
-                                  });
-                                  widget.onRemove();
-                                },
-                                icon: const Icon(
-                                    Icons.remove_circle_outline_rounded),
-                              ),
-                            ],
-                          ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                if (itemQuantity == 1) {
+                                  tapflag = !tapflag;
+                                }
+
+                                setState(() {
+                                  itemQuantity--;
+                                });
+                                widget.onRemove();
+                              },
+                              icon: const Icon(
+                                  Icons.remove_circle_outline_rounded),
+                            ),
+                          ],
                         ),
+                      ),
 
                       // previous version (will use after sometime)
                       // Text('${product.quantity} pcs'),
@@ -247,6 +262,38 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
       ),
     );
   }
+
+  Future<bool?> _showError(String error) {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+              content: Text(error),
+              title: Row(
+                children: [
+                  Expanded(child: Text('Alert')),
+                  GestureDetector(
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                      },
+                      child: Icon(Icons.close))
+                ],
+              ),
+              actions: [
+                Center(
+                    child: Container(
+                  width: 200,
+                  height: 40,
+                  child: CustomButton(
+                      title: 'Ok',
+                      style: TextStyle(fontSize: 20, color: Colors.white),
+                      onTap: () async {
+                        Navigator.of(ctx).pop(false);
+                      }),
+                ))
+              ],
+            ));
+  }
 }
 
 class ProductCardPurchase extends StatelessWidget {
@@ -272,7 +319,7 @@ class ProductCardPurchase extends StatelessWidget {
 
     double basePurchasePrice = 0;
     double Purchasegstvalue = 0;
-    int PurchasePrice = 0;
+    double PurchasePrice = 0;
 
     if (type == "sale") {
       if (product.gstRate != "null") {

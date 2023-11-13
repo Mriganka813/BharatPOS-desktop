@@ -23,18 +23,25 @@ class Billing with ChangeNotifier {
       _salesBilling.update(
           orderId,
           (existingOrder) => OrderInput(
+              id: input.id,
               orderItems: existingOrder.orderItems,
               modeOfPayment: existingOrder.modeOfPayment,
               party: existingOrder.party,
-              user: existingOrder.user));
+              user: existingOrder.user,
+              tableNo: input.tableNo,
+              gst: input.gst
+              ));
     } else {
       _salesBilling.putIfAbsent(
           orderId,
           () => OrderInput(
-                orderItems: input.orderItems,
-                modeOfPayment: input.modeOfPayment,
-                party: input.party,
-                user: input.user,
+              id: input.id,
+              orderItems: input.orderItems,
+              modeOfPayment: input.modeOfPayment,
+              party: input.party,
+              user: input.user,
+              tableNo: input.tableNo,
+              gst: input.gst
               ));
     }
     notifyListeners();
@@ -73,6 +80,11 @@ class Billing with ChangeNotifier {
     notifyListeners();
   }
 
+  void removeAll() {
+    _salesBilling.clear();
+    _purchaseBilling.clear();
+    notifyListeners();
+  }
   // void addOrderInputItem(OrderInput input, OrderType orderType) {
   //   _orderInput.add(input);
   //   _ordertype.add(orderType);

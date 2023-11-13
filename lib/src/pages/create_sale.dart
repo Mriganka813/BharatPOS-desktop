@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:provider/provider.dart';
+import 'package:shopos/src/models/KotModel.dart';
 import 'package:shopos/src/models/input/order_input.dart';
 import 'package:shopos/src/models/product.dart';
 import 'package:shopos/src/pages/billing_list.dart';
@@ -10,6 +11,7 @@ import 'package:shopos/src/pages/checkout.dart';
 import 'package:shopos/src/pages/search_result.dart';
 import 'package:shopos/src/pages/select_products_screen.dart';
 import 'package:shopos/src/provider/billing.dart';
+import 'package:shopos/src/services/LocalDatabase.dart';
 import 'package:shopos/src/services/global.dart';
 import 'package:shopos/src/services/locator.dart';
 import 'package:shopos/src/widgets/custom_button.dart';
@@ -40,6 +42,9 @@ class CreateSale extends StatefulWidget {
 class _CreateSaleState extends State<CreateSale> {
   late OrderInput _orderInput;
   // late final AudioCache _audioCache;
+    List<OrderItemInput>? newAddedItems = [];
+  List<Product> Kotlist = [];
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -104,6 +109,20 @@ class _CreateSaleState extends State<CreateSale> {
 
     product.salesgst = (newGst / 2).toStringAsFixed(2);
     print(product.salesgst);
+  }
+
+    void insertToDatabase(Billing provider) async {
+    int id = await DatabaseHelper()
+        .InsertOrderInput(_orderInput, provider, newAddedItems!);
+    List<KotModel> kotItemlist = [];
+    var tempMap = CountNoOfitemIsList(Kotlist);
+    Kotlist.forEach((element) {
+      var model = KotModel(id, element.name!, tempMap['${element.id}'],"no");
+      kotItemlist.add(model);
+    });
+
+
+    DatabaseHelper().insertKot(kotItemlist);
   }
 
   @override
@@ -298,7 +317,7 @@ class _CreateSaleState extends State<CreateSale> {
                                     j--;
                                
                               }
-                            }
+                            } 
                        
                             
                           }
@@ -312,7 +331,7 @@ class _CreateSaleState extends State<CreateSale> {
                               .toList();
                           setState(() {
                             _orderInput.orderItems?.addAll(orderItems);
-                           // newAddedItems!.addAll(orderItems);
+                            newAddedItems!.addAll(orderItems);
                           });
                   },
                 ),
@@ -345,12 +364,9 @@ class _CreateSaleState extends State<CreateSale> {
                     //   }
 
                     if (_orderItems.isNotEmpty) {
-                      print('orderid: ${widget.args?.orderId}');
-                      provider.addSalesBill(
-                          _orderInput,
-                          widget.args?.orderId == null
-                              ? DateTime.now().toString()
-                              : widget.args!.orderId!);
+                     print('orderid: ${widget.args?.orderId}');
+
+                          insertToDatabase(provider);
                     }
 
                     Navigator.pushNamed(context, BillingListScreen.routeName,
@@ -407,5 +423,33 @@ class _CreateSaleState extends State<CreateSale> {
       }
     } catch (_) {}
     Navigator.pop(context);
+  }
+
+    Map CountNoOfitemIsList(List<Product> temp) {
+    var tempMap = {};
+
+    for (int i = 0; i < temp.length; i++) {
+      int count = 1;
+      if (!tempMap.containsKey("${temp[i].id}")) {
+        for (int j = i + 1; j < temp.length; j++) {
+          if (temp[i].id == temp[j].id) {
+            count++;
+            print("count =$count");
+          }
+        }
+        tempMap["${temp[i].id}"] = count;
+      }
+    }
+
+    for (int i = 0; i < temp.length; i++) {
+      for (int j = i + 1; j < temp.length; j++) {
+        if (temp[i].id == temp[j].id) {
+          temp.removeAt(j);
+          j--;
+        }
+      }
+    }
+
+    return tempMap;
   }
 }

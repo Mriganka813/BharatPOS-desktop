@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:shopos/src/models/product.dart';
 import 'package:shopos/src/pages/checkout.dart';
 
@@ -6,8 +8,10 @@ import '../user.dart';
 
 class OrderInput {
   OrderInput({
+    this.id=-1,
     this.orderItems,
     this.modeOfPayment,
+
     this.party,
     this.user,
     this.createdAt,
@@ -15,8 +19,10 @@ class OrderInput {
     this.businessName,
     this.businessAddress,
     this.gst,
+    this.tableNo="-1"
   });
 
+  int ?id;
   List<OrderItemInput>? orderItems;
   String? modeOfPayment;
   Party? party;
@@ -26,8 +32,10 @@ class OrderInput {
   String? businessName;
   String? businessAddress;
   String? gst;
+  String tableNo;
 
   factory OrderInput.fromMap(Map<String, dynamic> json) => OrderInput(
+        id:json["id"],
         orderItems: List<OrderItemInput>.from(
           json["orderItems"].map(
             (x) => OrderItemInput.fromMap(x),
@@ -41,9 +49,11 @@ class OrderInput {
         businessName: json['businessName'],
         businessAddress: json['businessAddress'],
         gst: json['gst'],
+        tableNo: json['tableNo']
       );
 
   Map<String, dynamic> toMap(OrderType type) => {
+        "id":id,
         "orderItems": orderItems
             ?.map((e) =>
                 type == OrderType.sale ? e.toSaleMap() : e.toPurchaseMap())
@@ -55,7 +65,8 @@ class OrderInput {
         "reciverName": reciverName,
         "businessName": businessName,
         "businessAddress": businessAddress,
-        "gst": gst
+        "gst": gst,
+        "tableNo":tableNo
       };
 }
 
@@ -70,7 +81,7 @@ class OrderItemInput {
     this.saleIGST,
   });
 
-  int? price;
+ double? price;
   int quantity;
   Product? product;
   String? saleSGST;
@@ -79,7 +90,7 @@ class OrderItemInput {
   String? saleIGST;
 
   factory OrderItemInput.fromMap(Map<String, dynamic> json) => OrderItemInput(
-        price: json["price"],
+        price: double.parse(json["price"].toString()) ,
         quantity: json["quantity"],
         product: json["product"],
         saleCGST: json["saleCGST"].toString(),

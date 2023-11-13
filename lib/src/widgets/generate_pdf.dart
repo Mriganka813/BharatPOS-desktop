@@ -22,7 +22,7 @@ Future<void> generatePdf({
   String? gstTotal,
   String? invoiceNum,
 }) async {
-  var nettotal = 0;
+  double nettotal = 0;
   final pdf = pw.Document();
 
   List<String> address = user.address.toString().split(',');

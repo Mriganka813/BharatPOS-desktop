@@ -11,6 +11,7 @@ import 'package:shopos/src/pages/create_purchase.dart';
 import 'package:shopos/src/pages/create_sale.dart';
 import 'package:shopos/src/pages/home.dart';
 import 'package:shopos/src/provider/billing.dart';
+import 'package:shopos/src/services/LocalDatabase.dart';
 import 'package:shopos/src/services/user.dart';
 import 'package:shopos/src/widgets/custom_text_field2.dart';
 import 'package:shopos/src/widgets/pdf_kot_template.dart';
@@ -288,6 +289,14 @@ class _BillingListScreenState extends State<BillingListScreen> {
     } catch (_) {
       Navigator.pop(context);
     }
+
+    orderInput.tableNo=tableNoController.text;
+
+
+          await DatabaseHelper().updateKot(orderInput.id!);
+          await DatabaseHelper()
+              .updateTableNo(tableNoController.text, orderInput.id!);
+   
     await PdfKotUI.generate57mmKot(
         tableNo: tableNoController.text,
         user: user,
@@ -415,6 +424,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
     final provider = Provider.of<Billing>(
       context,
     );
+
+    print(provider.salesBilling);
     return WillPopScope(
       onWillPop: () async {
         Navigator.of(context)
@@ -606,7 +617,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                         padding: const EdgeInsets.all(8.0),
                         child: Column(
                           children: [
-                            // Divider(color: Colors.black54),
+                             // Divider(color: Colors.black54),
                             // Text(
                             //   "INVOICE",
                             //   style: TextStyle(
@@ -614,6 +625,21 @@ class _BillingListScreenState extends State<BillingListScreen> {
                             // ),
                             // Divider(color: Colors.black54),
                             const SizedBox(height: 10),
+                            if (provider.salesBilling.values
+                                    .toList()[index]
+                                    .tableNo !=
+                                "-1")
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('Table No'),
+                                  Text(
+                                    '${provider.salesBilling.values.toList()[index].tableNo}',
+                                  ),
+                                ],
+                              ),
+                            const SizedBox(height: 20),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -640,6 +666,9 @@ class _BillingListScreenState extends State<BillingListScreen> {
                               ],
                             ),
                             const SizedBox(height: 5),
+                            const SizedBox(height: 5),
+
+                            const SizedBox(height: 5),
                             Divider(color: Colors.black54),
                             const SizedBox(height: 5),
                             Row(
@@ -652,6 +681,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                 ),
                               ],
                             ),
+
                             const SizedBox(height: 5),
                             // Divider(color: Colors.black54),
                             // const Divider(color: Colors.transparent),
