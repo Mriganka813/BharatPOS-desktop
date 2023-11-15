@@ -278,7 +278,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
           ).toStringAsFixed(2);
   }
 
-  void _view57mmPdf(List<Map<String, dynamic>> list,int id) async {
+  void _view57mmPdf(List<Map<String, dynamic>> list, int id) async {
     User user = User();
     try {
       final res = await UserService.me();
@@ -289,11 +289,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
       Navigator.pop(context);
     }
 
-  
-
     await DatabaseHelper().updateKot(id);
-    await DatabaseHelper()
-        .updateTableNo(tableNoController.text,id);
+    await DatabaseHelper().updateTableNo(tableNoController.text, id);
 
     await PdfKotUI.generate57mmKot(
         tableNo: tableNoController.text,
@@ -304,7 +301,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
         invoiceNum: date);
   }
 
-  void _view80mmPdf(List<Map<String, dynamic>> list,int id) async {
+  void _view80mmPdf(List<Map<String, dynamic>> list, int id) async {
     User user = User();
     try {
       final res = await UserService.me();
@@ -315,10 +312,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
       Navigator.pop(context);
     }
 
-    
     await DatabaseHelper().updateKot(id);
-    await DatabaseHelper()
-        .updateTableNo(tableNoController.text,id);
+    await DatabaseHelper().updateTableNo(tableNoController.text, id);
     await PdfKotUI.generate80mmKot(
         tableNo: tableNoController.text,
         user: user,
@@ -383,14 +378,10 @@ class _BillingListScreenState extends State<BillingListScreen> {
   // }
 
   _showNewDialog(OrderInput order) async {
-
-    if(order.tableNo=="-1")
-    {
-      tableNoController.text="";
-
-    }
-    else{
-      tableNoController.text=order.tableNo;
+    if (order.tableNo == "-1") {
+      tableNoController.text = "";
+    } else {
+      tableNoController.text = order.tableNo;
     }
     List<Map<String, dynamic>> list =
         await DatabaseHelper().getKotData(order.id!);
@@ -410,20 +401,20 @@ class _BillingListScreenState extends State<BillingListScreen> {
             ),
             ListTile(
               onTap: () async {
-                   order.tableNo = tableNoController.text;
+                order.tableNo = tableNoController.text;
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 prefs.setString('default', '57mm');
-                _view57mmPdf(list,order.id!);
+                _view57mmPdf(list, order.id!);
                 Navigator.of(ctx).pop();
               },
               title: Text('58mm'),
             ),
             ListTile(
               onTap: () async {
-                   order.tableNo = tableNoController.text;
+                order.tableNo = tableNoController.text;
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 prefs.setString('default', '80mm');
-                _view80mmPdf(list,order.id!);
+                _view80mmPdf(list, order.id!);
                 Navigator.of(ctx).pop();
               },
               title: Text('80mm'),
@@ -648,10 +639,13 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Table No'),
+                                  Text('Table No',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                   Text(
-                                    '${provider.salesBilling.values.toList()[index].tableNo}',
-                                  ),
+                                      '${provider.salesBilling.values.toList()[index].tableNo}',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                 ],
                               ),
                             const SizedBox(height: 20),
