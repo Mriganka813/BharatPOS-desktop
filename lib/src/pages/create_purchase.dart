@@ -101,6 +101,7 @@ class _CreatePurchaseState extends State<CreatePurchase> {
                         arguments: ProductListPageArgs(
                           isSelecting: true,
                           orderType: OrderType.purchase,
+                          productlist: _orderInput.orderItems!
                         ),
                       );
                       if (result == null && result is! List<Product>) {

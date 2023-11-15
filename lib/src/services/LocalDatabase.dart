@@ -22,6 +22,7 @@ class DatabaseHelper {
 
   Future<Database> initDatabase() async {
     final path = join(await getDatabasesPath(), 'database.db');
+    print(path);
 
     return openDatabase(
       path,
@@ -101,6 +102,16 @@ class DatabaseHelper {
     );
   }
 
+  DeleteDatabase()async
+  {
+         final dbHelper = DatabaseHelper();
+    final db = await dbHelper.database;
+    db.execute("drop table Kot");
+     db.execute("drop table OrderInput");
+      db.execute("drop table OrderItemInput");
+       db.execute("drop table Product");
+  }
+
   Future<int> InsertOrderInput(OrderInput input, Billing provider,
       List<OrderItemInput> newAddeditems) async {
     final dbHelper = DatabaseHelper();
@@ -151,7 +162,7 @@ class DatabaseHelper {
       input.id = highestId;
       provider.addSalesBill(
         input,
-        DateTime.now().toString(),
+        input.id.toString(),
       );
     } else {
       //if we udpating alreay existing item
@@ -240,8 +251,6 @@ class DatabaseHelper {
         await db.query('OrderInput');
 
     List<OrderInput> list = [];
-    print("orderIteminputData");
-    print(OrderItemInputData);
 
     for (int j = 0; j < OrderInputData.length; j++) {
       Map<String, dynamic> t = {};
@@ -257,7 +266,6 @@ class DatabaseHelper {
             "&" +
             OrderInputData[j]['id'].toString());
         if (OrderItemInputData[i]['OIID'] == OrderInputData[j]['id']) {
-          print("flaaag");
           plist.addAll(await convertListOfMaptoListofOrderItemInput(
               OrderItemInputData[i]));
         }
@@ -270,8 +278,6 @@ class DatabaseHelper {
 
       OrderInput orderInputObject = OrderInput.fromMap(t);
       orderInputObject.orderItems = plist;
-
-      print(plist);
 
       list.add(orderInputObject);
     }
@@ -298,7 +304,6 @@ class DatabaseHelper {
         t["expiryDate"] = null;
       }
       if (ele['_id'] == Otemp['product']) {
-        print("flag2222");
         Otemp['product'] = Product.fromMap(t);
       }
     });
@@ -318,16 +323,37 @@ class DatabaseHelper {
   }
 
   insertKot(List<KotModel> list) async {
+    print("iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
     final dbHelper = DatabaseHelper();
     final db = await dbHelper.database;
-
     for (int i = 0; i < list.length; i++) {
-      var map = list[i].toMap();
-      await db.insert(
+      List<Map<String, dynamic>> result = await db.query(
         'Kot',
-        map,
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        columns: ['qty'],
+        where: 'orderId =? AND isPrinted=? AND name=?',
+        whereArgs: [list[i].orderId, "no", list[i].name],
       );
+      print(list[i].name);
+
+      print("result");
+      print(result);
+
+      if (result.isNotEmpty) {
+        int qty = result.first['qty'];
+        db.execute(
+            "update Kot set qty=${qty + list[i].qty} where orderId=${list[i].orderId} and isPrinted='no' and name='${list[i].name}'");
+        print("check qty");
+        print(list);
+      } else {
+        var map = list[i].toMap();
+        await db.insert(
+          'Kot',
+          map,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+
+        print("exception");
+      }
     }
   }
 
@@ -347,6 +373,33 @@ class DatabaseHelper {
     print(data);
 
     return data;
+  }
+
+  deleteKot(
+    int id,
+    String itemName,
+  ) async {
+    final dbHelper = DatabaseHelper();
+    final db = await dbHelper.database;
+    print("${id} and $itemName");
+
+    List<Map<String, dynamic>> result = await db.query(
+      'Kot',
+      columns: ['qty'],
+      where: 'orderId =? AND isPrinted=? AND name=?',
+      whereArgs: [id, "no", itemName],
+    );
+
+    int qty = result.first['qty'] as int;
+
+    if (qty > 1) {
+      qty = qty - 1;
+      db.execute(
+          "update Kot set qty=$qty where orderId=$id and isPrinted='no' and name='$itemName'");
+    } else {
+      db.execute(
+          "delete from Kot  where orderId=$id and isPrinted='no' and name='$itemName'");
+    }
   }
 
   updateTableNo(String tablNo, int id) async {

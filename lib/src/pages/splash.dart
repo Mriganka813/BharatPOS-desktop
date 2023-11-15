@@ -43,6 +43,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
 
   getDataFromDatabase() async {
+
+   // DatabaseHelper().DeleteDatabase();
     final provider = Provider.of<Billing>(
       widget.context,
     );

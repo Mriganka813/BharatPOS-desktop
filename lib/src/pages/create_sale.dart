@@ -24,8 +24,9 @@ import '../services/product.dart';
 class BillingPageArgs {
   final String? orderId;
   final List<OrderItemInput>? editOrders;
+  final id;
 
-  BillingPageArgs({this.orderId, this.editOrders});
+  BillingPageArgs({this.orderId, this.editOrders, this.id});
 }
 
 class CreateSale extends StatefulWidget {
@@ -42,7 +43,7 @@ class CreateSale extends StatefulWidget {
 class _CreateSaleState extends State<CreateSale> {
   late OrderInput _orderInput;
   // late final AudioCache _audioCache;
-    List<OrderItemInput>? newAddedItems = [];
+  List<OrderItemInput>? newAddedItems = [];
   List<Product> Kotlist = [];
   bool isLoading = false;
 
@@ -53,6 +54,7 @@ class _CreateSaleState extends State<CreateSale> {
     //   fixedPlayer: AudioPlayer()..setReleaseMode(ReleaseMode.STOP),
     // );
     _orderInput = OrderInput(
+     id: widget.args==null?-1:widget.args!.id,
       orderItems: widget.args == null ? [] : widget.args?.editOrders,
     );
   }
@@ -111,16 +113,17 @@ class _CreateSaleState extends State<CreateSale> {
     print(product.salesgst);
   }
 
-    void insertToDatabase(Billing provider) async {
+  void insertToDatabase(Billing provider) async {
     int id = await DatabaseHelper()
         .InsertOrderInput(_orderInput, provider, newAddedItems!);
+    print("idddddddd=$id");
     List<KotModel> kotItemlist = [];
     var tempMap = CountNoOfitemIsList(Kotlist);
+    print(Kotlist);
     Kotlist.forEach((element) {
-      var model = KotModel(id, element.name!, tempMap['${element.id}'],"no");
+      var model = KotModel(id, element.name!, tempMap['${element.id}'], "no");
       kotItemlist.add(model);
     });
-
 
     DatabaseHelper().insertKot(kotItemlist);
   }
@@ -246,18 +249,36 @@ class _CreateSaleState extends State<CreateSale> {
                             type: "sale",
                             product: product,
                             onAdd: () {
+                              print("toched");
+                              Kotlist.add(
+                                  _orderInput.orderItems![index].product!);
                               _onAdd(_orderItem);
+                              setState(() {});
                             },
                             onDelete: () {
-                              if (_orderItem.quantity == 1) {
-                                setState(() {
-                                  _orderInput.orderItems?.removeAt(index);
-                                });
-                                return;
+                              DatabaseHelper().deleteKot(
+                                  widget.args!.id!,
+                                  _orderInput
+                                      .orderItems![index].product!.name!);
+                              setState(
+                                () {
+                                  _orderItem.quantity == 1
+                                      ? _orderInput.orderItems?.removeAt(index)
+                                      : _orderItem.quantity -= 1;
+                                },
+                              );
+
+                              for (int i = 0; i < Kotlist.length; i++) {
+                                if (Kotlist[i].id ==
+                                    _orderInput
+                                        .orderItems![index].product!.id) {
+                                  Kotlist.removeAt(i);
+
+                                  break;
+                                }
                               }
-                              setState(() {
-                                _orderItem.quantity -= 1;
-                              });
+
+                              if (widget.args!.orderId == null) setState(() {});
                             },
                             productQuantity: _orderItem.quantity,
                           ),
@@ -274,65 +295,52 @@ class _CreateSaleState extends State<CreateSale> {
                   onTap: () async {
                     final result = await Navigator.pushNamed(
                       context,
-                    SearchProductListScreen.routeName,
+                      SearchProductListScreen.routeName,
                       arguments: ProductListPageArgs(
-                        isSelecting: true,
-                        orderType: OrderType.sale,
-                      ),
+                          isSelecting: true,
+                          orderType: OrderType.sale,
+                          productlist: _orderInput.orderItems!),
                     );
                     if (result == null && result is! List<Product>) {
                       return;
                     }
-                  
-                          var temp = result as List<Product>;
-                          var tempMap = {};
 
-                          for (int i = 0; i < temp.length; i++) {
-                            int count=1;
-                            if(!tempMap.containsKey("${temp[i].id}"))
-                            {
-                              for (int j = i+1; j < temp.length; j++) {
-                              if(temp[i].id==temp[j].id)
-                              {
-                                count++;
-                                print("count =$count");
-                               
-                              }
-                            }
-                            tempMap["${temp[i].id}"]=count;   
-                            }
-                            
-                          }
+                    var temp = result as List<Product>;
 
+                    Kotlist.addAll(temp);
 
+                    var tempMap = CountNoOfitemIsList(temp);
+                    final orderItems = temp
+                        .map((e) => OrderItemInput(
+                              product: e,
+                              quantity: tempMap["${e.id}"],
+                              price: 0,
+                            ))
+                        .toList();
 
-                              for (int i = 0; i < temp.length; i++) {
-                  
-                           
-                              for (int j = i+1; j < temp.length; j++) {
-                              if(temp[i].id==temp[j].id)
-                              {
-                            
-                                    temp.removeAt(j);
-                                    j--;
-                               
-                              }
-                            } 
-                       
-                            
-                          }
+                    var tempOrderitems = _orderInput.orderItems;
 
-                          final orderItems = temp
-                              .map((e) => OrderItemInput(
-                                    product: e,
-                                    quantity: tempMap["${e.id}"],
-                                    price: 0,
-                                  ))
-                              .toList();
-                          setState(() {
-                            _orderInput.orderItems?.addAll(orderItems);
-                            newAddedItems!.addAll(orderItems);
-                          });
+                    for (int i = 0; i < tempOrderitems!.length; i++) {
+                      for (int j = 0; j < orderItems.length; j++) {
+                        if (tempOrderitems[i].product!.id ==
+                            orderItems[j].product!.id) {
+                          tempOrderitems[i].product!.quantity =
+                              tempOrderitems[i].product!.quantity! -
+                                  orderItems[j].quantity;
+                          tempOrderitems[i].quantity =
+                              tempOrderitems[i].quantity +
+                                  orderItems[j].quantity;
+                          orderItems.removeAt(j);
+                        }
+                      }
+                    }
+
+                    _orderInput.orderItems = tempOrderitems;
+
+                    setState(() {
+                      _orderInput.orderItems?.addAll(orderItems);
+                      newAddedItems!.addAll(orderItems);
+                    });
                   },
                 ),
                 // const VerticalDivider(
@@ -364,9 +372,8 @@ class _CreateSaleState extends State<CreateSale> {
                     //   }
 
                     if (_orderItems.isNotEmpty) {
-                     print('orderid: ${widget.args?.orderId}');
-
-                          insertToDatabase(provider);
+                      insertToDatabase(provider);
+                      print('orderid: ${widget.args?.id}');
                     }
 
                     Navigator.pushNamed(context, BillingListScreen.routeName,
@@ -425,7 +432,7 @@ class _CreateSaleState extends State<CreateSale> {
     Navigator.pop(context);
   }
 
-    Map CountNoOfitemIsList(List<Product> temp) {
+  Map CountNoOfitemIsList(List<Product> temp) {
     var tempMap = {};
 
     for (int i = 0; i < temp.length; i++) {

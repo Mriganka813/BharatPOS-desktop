@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shopos/src/models/KotModel.dart';
 import 'package:shopos/src/models/input/order_input.dart';
 import 'package:shopos/src/models/user.dart';
 
@@ -175,15 +176,13 @@ class _BillingListScreenState extends State<BillingListScreen> {
               // }
               // else {
               double sum = 0;
-              if (curr.product!.baseSellingPriceGst! != "null")
-              {
+              if (curr.product!.baseSellingPriceGst! != "null") {
                 sum = double.parse(curr.product!.baseSellingPriceGst!);
                 print("dddsum=");
                 print(sum);
-              }
-              else {
+              } else {
                 sum = curr.product!.sellingPrice!.toDouble();
-                 print("dddsum=");
+                print("dddsum=");
                 print(sum);
               }
               return (curr.quantity * sum) + acc;
@@ -279,7 +278,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
           ).toStringAsFixed(2);
   }
 
-  void _view57mmPdf(OrderInput orderInput) async {
+  void _view57mmPdf(List<Map<String, dynamic>> list,int id) async {
     User user = User();
     try {
       final res = await UserService.me();
@@ -290,23 +289,22 @@ class _BillingListScreenState extends State<BillingListScreen> {
       Navigator.pop(context);
     }
 
-    orderInput.tableNo=tableNoController.text;
+  
 
+    await DatabaseHelper().updateKot(id);
+    await DatabaseHelper()
+        .updateTableNo(tableNoController.text,id);
 
-          await DatabaseHelper().updateKot(orderInput.id!);
-          await DatabaseHelper()
-              .updateTableNo(tableNoController.text, orderInput.id!);
-   
     await PdfKotUI.generate57mmKot(
         tableNo: tableNoController.text,
         user: user,
-        order: orderInput,
+        order: list,
         headers: ["Item", "Qty"],
         date: DateTime.now(),
         invoiceNum: date);
   }
 
-  void _view80mmPdf(OrderInput orderInput) async {
+  void _view80mmPdf(List<Map<String, dynamic>> list,int id) async {
     User user = User();
     try {
       final res = await UserService.me();
@@ -316,10 +314,15 @@ class _BillingListScreenState extends State<BillingListScreen> {
     } catch (_) {
       Navigator.pop(context);
     }
+
+    
+    await DatabaseHelper().updateKot(id);
+    await DatabaseHelper()
+        .updateTableNo(tableNoController.text,id);
     await PdfKotUI.generate80mmKot(
         tableNo: tableNoController.text,
         user: user,
-        order: orderInput,
+        order: list,
         headers: ["Item", "Qty"],
         date: DateTime.now(),
         invoiceNum: date);
@@ -380,6 +383,10 @@ class _BillingListScreenState extends State<BillingListScreen> {
   // }
 
   _showNewDialog(OrderInput order) async {
+
+      order.tableNo = tableNoController.text;
+    List<Map<String, dynamic>> list =
+        await DatabaseHelper().getKotData(order.id!);
     return showDialog(
       context: context,
       useRootNavigator: true,
@@ -387,19 +394,18 @@ class _BillingListScreenState extends State<BillingListScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-             CustomTextField2(
-           
-                  hintText: "Enter Table No (optional)",
-                  inputType: TextInputType.number,
-                  controller: tableNoController,
-                  value: "",
-                  validator: (e) => null,
-                ),
+            CustomTextField2(
+              hintText: "Enter Table No (optional)",
+              inputType: TextInputType.number,
+              controller: tableNoController,
+              value: "",
+              validator: (e) => null,
+            ),
             ListTile(
               onTap: () async {
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 prefs.setString('default', '57mm');
-                _view57mmPdf(order);
+                _view57mmPdf(list,order.id!);
                 Navigator.of(ctx).pop();
               },
               title: Text('58mm'),
@@ -408,7 +414,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
               onTap: () async {
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 prefs.setString('default', '80mm');
-                _view80mmPdf(order);
+                _view80mmPdf(list,order.id!);
                 Navigator.of(ctx).pop();
               },
               title: Text('80mm'),
@@ -464,22 +470,22 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                 ListTile(
                                   onTap: () {
                                     widget.orderType == OrderType.sale
-                                        ? Navigator.pushNamed(
-                                            context, CreateSale.routeName,
+                                        ? Navigator.pushNamed(context, CreateSale.routeName,
                                             arguments: BillingPageArgs(
                                                 orderId: provider.salesBilling.keys
                                                     .toList()[index],
-                                                editOrders: provider
-                                                    .salesBilling.values
+                                                editOrders: provider.salesBilling.values
                                                     .toList()[index]
-                                                    .orderItems))
+                                                    .orderItems,
+                                                id: provider.salesBilling.values
+                                                    .toList()[index]
+                                                    .id))
                                         : Navigator.pushNamed(
                                             context, CreatePurchase.routeName,
                                             arguments: BillingPageArgs(
                                                 orderId: provider.purchaseBilling.keys
                                                     .toList()[index],
-                                                editOrders: provider
-                                                    .purchaseBilling.values
+                                                editOrders: provider.purchaseBilling.values
                                                     .toList()[index]
                                                     .orderItems));
                                   },
@@ -516,9 +522,9 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                       //     index,
                                       //     provider);
                                       _showNewDialog(
-                                          provider.salesBilling.values
-                                              .toList()[index],
-                                        );
+                                        provider.salesBilling.values
+                                            .toList()[index],
+                                      );
 
                                       /*SharedPreferences prefs =
                                           await SharedPreferences.getInstance();
@@ -617,7 +623,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                         padding: const EdgeInsets.all(8.0),
                         child: Column(
                           children: [
-                             // Divider(color: Colors.black54),
+                            // Divider(color: Colors.black54),
                             // Text(
                             //   "INVOICE",
                             //   style: TextStyle(

@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/widgets.dart';
+import 'package:shopos/src/models/KotModel.dart';
 
 import 'package:shopos/src/models/input/order_input.dart';
 import 'package:shopos/src/models/user.dart';
@@ -15,7 +16,7 @@ class PdfKotUI {
   static Future<void> generate57mmKot({
     String tableNo="",
     required User user,
-    required OrderInput order,
+    required List<Map<String, dynamic>> order,
     required List<String> headers,
     required DateTime date,
     required String invoiceNum,
@@ -29,17 +30,17 @@ class PdfKotUI {
     String dateFormat() => DateFormat('MMM d, y hh:mm:ss a').format(date);
 
     List<pw.TableRow> itemRows() => List.generate(
-          (order.orderItems ?? []).length,
+          (order ?? []).length,
           (index) {
-            final orderItem = order.orderItems![index];
+            final orderItem = order[index];
 
             return pw.TableRow(children: [
               pw.Text(
-                '${orderItem.product!.name}',
+                '${orderItem['name']}',
                 style: TextStyle(font: ttf, fontSize: 8),
               ),
               pw.SizedBox(width: 30),
-              pw.Text('${orderItem.quantity}',
+              pw.Text('${orderItem['qty']}',
                   style: TextStyle(font: ttf, fontSize: 8))
             ]);
           },
@@ -107,7 +108,7 @@ class PdfKotUI {
   static Future<void> generate80mmKot({
      String tableNo="",
     required User user,
-    required OrderInput order,
+    required List<Map<String, dynamic>> order,
     required List<String> headers,
     required DateTime date,
     required String invoiceNum,
@@ -122,17 +123,17 @@ class PdfKotUI {
     String dateFormat() => DateFormat('MMM d, y hh:mm:ss a').format(date);
 
     List<pw.TableRow> itemRows() => List.generate(
-          (order.orderItems ?? []).length,
+          (order ?? []).length,
           (index) {
-            final orderItem = order.orderItems![index];
+            final orderItem = order[index];
 
             return pw.TableRow(children: [
               pw.Text(
-                '${orderItem.product!.name}',
+                '${orderItem['name']}',
                 style: TextStyle(font: ttf, fontSize: 8),
               ),
               pw.SizedBox(width: 30),
-              pw.Text('${orderItem.quantity}',
+              pw.Text('${orderItem['qty']}',
                   style: TextStyle(font: ttf, fontSize: 8))
             ]);
           },

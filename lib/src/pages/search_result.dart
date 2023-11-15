@@ -4,6 +4,7 @@ import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:shopos/src/blocs/product/product_cubit.dart';
 import 'package:shopos/src/blocs/report/report_cubit.dart';
 import 'package:shopos/src/config/colors.dart';
+import 'package:shopos/src/models/input/order_input.dart';
 import 'package:shopos/src/pages/checkout.dart';
 import 'package:shopos/src/pages/create_product.dart';
 import 'package:shopos/src/services/global.dart';
@@ -20,9 +21,11 @@ import '../models/product.dart';
 class ProductListPageArgs {
   bool isSelecting;
   final OrderType orderType;
+    List<OrderItemInput> productlist = [];
   ProductListPageArgs({
     this.isSelecting = true,
     required this.orderType,
+    required this.productlist
   });
 }
 
@@ -75,12 +78,20 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
     super.dispose();
   }
 
-  Future<void> fetchSearchedProducts() async {
+ Future<void> fetchSearchedProducts() async {
     var newProducts =
         await searchProductServices.allproduct(_currentPage, _limit);
     for (var product in newProducts) {
       if (!prodList.contains(product)) {
         prodList.add(product);
+      }
+    }
+
+    for (int i = 0; i < widget.args!.productlist.length; i++) {
+      for (int j = 0; j < prodList.length; j++) {
+        if (widget.args!.productlist[i].product!.id == prodList[j].id) {
+          prodList[j].quantity = widget.args!.productlist[i].product!.quantity;
+        }
       }
     }
     print("searched products: $prodList");
@@ -364,12 +375,24 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                     prefixIcon: const Icon(Icons.search),
                     hintText: 'Search',
                     onChanged: (String e) async {
-                      if (e.isNotEmpty) {
-                        prodList = await searchProductServices.searchproduct(e);
-
-                        print("searchbar running");
-                        setState(() {});
+                     if (e.isNotEmpty) {
+                  prodList.clear();
+                  setState(() {});
+                  prodList = await searchProductServices.searchproduct(e);
+                  for (int i = 0; i < widget.args!.productlist.length; i++) {
+                    for (int j = 0; j < prodList.length; j++) {
+                      if (widget.args!.productlist[i].product!.id ==
+                          prodList[j].id) {
+                        prodList[j].quantity =
+                            widget.args!.productlist[i].product!.quantity;
                       }
+                    }
+                  }
+                  print(_products);
+
+                  print("searchbar running");
+                  setState(() {});
+                }
                     },
                     // onsubmitted: (value) {
                     //   Navigator.of(context).push(MaterialPageRoute(
