@@ -269,18 +269,41 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                                     Stack(
                                       children: [
                                         ProductCardHorizontal(
+                                          type: widget.args.orderType,
                                           key: ValueKey(prodList[index].id),
                                           noOfQuatityadded:
                                               countNoOfQuatityInArray(
                                                   prodList[index]),
                                           isSelecting: widget.args.isSelecting,
                                           onAdd: () {
-                                            increaseTheQuantity(
-                                                prodList[index]);
+                                              increaseTheQuantity(prodList[index]);
+                                            if (widget.args!.orderType ==
+                                                OrderType.sale) {
+                                              prodList[index].quantity =
+                                                  prodList[index].quantity! - 1;
+                                            } else {
+                                              prodList[index].quantity =
+                                                  prodList[index].quantity! + 1;
+                                            }
+                                            setState(() {
+                                              
+                                            });
                                           },
                                           onRemove: () {
-                                            decreaseTheQuantity(
-                                                prodList[index]);
+                                            decreaseTheQuantity(prodList[index]);
+                                           itemCheckedFlag = false;
+                                            if (widget.args!.orderType ==
+                                                OrderType.sale) {
+                                              prodList[index].quantity =
+                                                  prodList[index].quantity! + 1;
+                                            } else {
+                                              prodList[index].quantity =
+                                                  prodList[index].quantity! - 1;
+                                            }
+                                            setState(() {
+                                              
+                                            });
+
                                           },
                                           onTap: (q) {
                                             if (q == 1) {

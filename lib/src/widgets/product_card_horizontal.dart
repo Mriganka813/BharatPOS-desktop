@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shopos/src/models/product.dart';
+import 'package:shopos/src/pages/checkout.dart';
 import 'package:shopos/src/services/product_availability_service.dart';
 import 'package:shopos/src/widgets/custom_button.dart';
 
@@ -12,6 +13,7 @@ class ProductCardHorizontal extends StatefulWidget {
   final VoidCallback? addQuantity;
   final int selectQuantity;
   final bool? isSelecting;
+  OrderType type;
   Function onAdd;
   Function onRemove;
   Function onTap;
@@ -23,6 +25,7 @@ class ProductCardHorizontal extends StatefulWidget {
     required this.onDelete,
     required this.onEdit,
     this.isSelecting = false,
+    required this.type,
     this.addQuantity,
     this.reduceQuantity,
     this.selectQuantity = 0,
@@ -61,7 +64,23 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
         widget.onTap(itemQuantity);
         if (tapflag) if (itemQuantity == 1) itemQuantity = 0;
 
-        if (!tapflag) if (itemQuantity == 0) itemQuantity = 1;
+        if (!tapflag) if (itemQuantity == 0) {
+          if (widget.product.quantity! >= 99000&&widget.type==OrderType.purchase) {
+               ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    backgroundColor: Colors.red,
+                                    content: Text(
+                                       "Total quantity can't exceed 99999",
+                                      style: const TextStyle(color: Colors.white),
+                                    ),
+                                  ),);
+            tapflag = !tapflag;
+            itemQuantity = 1;
+            widget.onTap(itemQuantity);
+            itemQuantity = 0;
+          } else
+            itemQuantity = 1;
+        }
 
         tapflag = !tapflag;
         setState(() {});
@@ -156,28 +175,45 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
                           children: [
                             IconButton(
                               onPressed: () {
-                                bool flag = true;
+                               bool flag = true;
                                 bool flag2 = true;
-                                if (widget.product.quantity! >= 99000) {
-                                     _showError(
-                                      "Maximum value of quantity is 99000");
-                               
-                                  flag = false;
-                                 
-                                } 
+                                if (widget.product.quantity! >= 99000&&widget.type==OrderType.purchase) {
 
-                                if (itemQuantity >= 999) {
-                                  _showError(
-                                      "Cant purchase the item more than 999");
-                                      flag2=false;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    backgroundColor: Colors.red,
+                                    content: Text(
+                                       "Total quantity can't exceed 99999",
+                                      style: const TextStyle(color: Colors.white),
+                                    ),
+                                  ),);
+                                 /* _showError(
+                                     "Total quantity can't exceed 99999");*/
+
+                                  flag = false;
                                 }
 
-                                if(flag&&flag2)
-                                {
-                                     setState(() {
+                                if (itemQuantity >= 999&&widget.type==OrderType.purchase) {
+
+                                  
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    backgroundColor: Colors.red,
+                                    content: Text(
+                                      "Total quantity can't exceed 999",
+                                      style: const TextStyle(color: Colors.white),
+                                    ),
+                                  ),);
+                                 /* _showError(
+                                      "Total quantity can't exceed 999");*/
+                                  flag2 = false;
+                                }
+
+                                if (flag && flag2) {
+                                  setState(() {
                                     itemQuantity++;
                                   });
-                                   widget.onAdd();
+                                  widget.onAdd();
                                 }
                               },
                               icon:
@@ -192,7 +228,7 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
                             ),
                             IconButton(
                               onPressed: () {
-                                if (itemQuantity == 1) {
+                                 if (itemQuantity == 1) {
                                   tapflag = !tapflag;
                                 }
 

@@ -384,7 +384,14 @@ class _BillingListScreenState extends State<BillingListScreen> {
 
   _showNewDialog(OrderInput order) async {
 
-      order.tableNo = tableNoController.text;
+    if(order.tableNo=="-1")
+    {
+      tableNoController.text="";
+
+    }
+    else{
+      tableNoController.text=order.tableNo;
+    }
     List<Map<String, dynamic>> list =
         await DatabaseHelper().getKotData(order.id!);
     return showDialog(
@@ -403,6 +410,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
             ),
             ListTile(
               onTap: () async {
+                   order.tableNo = tableNoController.text;
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 prefs.setString('default', '57mm');
                 _view57mmPdf(list,order.id!);
@@ -412,6 +420,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
             ),
             ListTile(
               onTap: () async {
+                   order.tableNo = tableNoController.text;
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 prefs.setString('default', '80mm');
                 _view80mmPdf(list,order.id!);
