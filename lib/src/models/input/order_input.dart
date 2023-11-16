@@ -8,7 +8,7 @@ import '../user.dart';
 
 class OrderInput {
   OrderInput({
-    this.id=-1,
+    this.id="-1",
     this.orderItems,
     this.modeOfPayment,
 
@@ -22,7 +22,7 @@ class OrderInput {
     this.tableNo="-1"
   });
 
-  int ?id;
+  String ?id;
   List<OrderItemInput>? orderItems;
   String? modeOfPayment;
   Party? party;

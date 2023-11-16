@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shopos/src/blocs/Kot/KotCubit.dart';
 import 'package:shopos/src/models/KotModel.dart';
 import 'package:shopos/src/models/input/order_input.dart';
 import 'package:shopos/src/models/user.dart';
@@ -278,7 +279,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
           ).toStringAsFixed(2);
   }
 
-  void _view57mmPdf(List<Map<String, dynamic>> list, int id) async {
+  void _view57mmPdf(List<Map<String, dynamic>> list, String id) async {
     User user = User();
     try {
       final res = await UserService.me();
@@ -289,8 +290,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
       Navigator.pop(context);
     }
 
-    await DatabaseHelper().updateKot(id);
-    await DatabaseHelper().updateTableNo(tableNoController.text, id);
+    context.read<KotCubit>().updateKot(id);
+    //await DatabaseHelper().updateTableNo(tableNoController.text, id);
 
     await PdfKotUI.generate57mmKot(
         tableNo: tableNoController.text,
@@ -301,7 +302,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
         invoiceNum: date);
   }
 
-  void _view80mmPdf(List<Map<String, dynamic>> list, int id) async {
+  void _view80mmPdf(List<Map<String, dynamic>> list, String id) async {
     User user = User();
     try {
       final res = await UserService.me();
@@ -312,8 +313,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
       Navigator.pop(context);
     }
 
-    await DatabaseHelper().updateKot(id);
-    await DatabaseHelper().updateTableNo(tableNoController.text, id);
+    context.read<KotCubit>().updateKot(id);
+    //  await DatabaseHelper().updateTableNo(tableNoController.text, id);
     await PdfKotUI.generate80mmKot(
         tableNo: tableNoController.text,
         user: user,
@@ -383,8 +384,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
     } else {
       tableNoController.text = order.tableNo;
     }
-    List<Map<String, dynamic>> list =
-        await DatabaseHelper().getKotData(order.id!);
+    List<Map<String, dynamic>> list = await context.read<KotCubit>().getKot();
+    print(list);
     return showDialog(
       context: context,
       useRootNavigator: true,
@@ -469,6 +470,9 @@ class _BillingListScreenState extends State<BillingListScreen> {
                               children: [
                                 ListTile(
                                   onTap: () {
+                                    print("idssss");
+                                    print(provider.salesBilling.values
+                                                    .toList()[index].id);
                                     widget.orderType == OrderType.sale
                                         ? Navigator.pushNamed(context, CreateSale.routeName,
                                             arguments: BillingPageArgs(

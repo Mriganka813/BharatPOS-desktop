@@ -23,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     authStatus();
-    getDataFromDatabase();
+ //   getDataFromDatabase();
   }
 
   Future<void> authStatus() async {
@@ -44,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   getDataFromDatabase() async {
 
-   // DatabaseHelper().DeleteDatabase();
+   /*// DatabaseHelper().DeleteDatabase();
     final provider = Provider.of<Billing>(
       widget.context,
     );
@@ -55,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     data.forEach((element) {
       provider.addSalesBill(element, element.id.toString());
-    });
+    });*/
   }
 
 

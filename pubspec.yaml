@@ -52,7 +52,18 @@ dependencies:
   ntp: ^2.0.0
   provider: ^6.0.5
   syncfusion_flutter_xlsio:
-  sqflite_common_ffi:
+  sqflite:
+ 
+ 
+
+
+msix_config:
+  display_name: Flutter App
+  publisher_display_name: Company Name
+  identity_name: company.suite.flutterapp
+  msix_version: 1.0.0.0
+  logo_path: F:\Coding\flutter\CUBE-desktop\windows\runner\resources\app_icon.ico
+  capabilities: internetClient, location
 
 dev_dependencies:
   flutter_test:

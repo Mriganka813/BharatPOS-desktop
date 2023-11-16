@@ -1,4 +1,4 @@
-import 'package:intl/intl.dart';
+/*import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'package:shopos/src/models/KotModel.dart';
 import 'package:shopos/src/models/input/order_input.dart';
@@ -24,7 +24,7 @@ class DatabaseHelper {
     final path = join(await getDatabasesPath(), 'database.db');
     print(path);
 
-    return openDatabase(
+    return await openDatabase(
       path,
       version: 1,
       onCreate: (db, version) {
@@ -408,3 +408,5 @@ class DatabaseHelper {
     db.execute("update OrderInput set tableNo='$tablNo' where id=$id");
   }
 }
+
+*/

@@ -1,8 +1,10 @@
 // import 'package:audioplayers/audioplayers.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:provider/provider.dart';
+import 'package:shopos/src/blocs/Kot/KotCubit.dart';
 import 'package:shopos/src/models/KotModel.dart';
 import 'package:shopos/src/models/input/order_input.dart';
 import 'package:shopos/src/models/product.dart';
@@ -54,7 +56,7 @@ class _CreateSaleState extends State<CreateSale> {
     //   fixedPlayer: AudioPlayer()..setReleaseMode(ReleaseMode.STOP),
     // );
     _orderInput = OrderInput(
-     id: widget.args==null?-1:widget.args!.id,
+      id: widget.args == null ? "" : widget.args!.id,
       orderItems: widget.args == null ? [] : widget.args?.editOrders,
     );
   }
@@ -114,18 +116,27 @@ class _CreateSaleState extends State<CreateSale> {
   }
 
   void insertToDatabase(Billing provider) async {
-    int id = await DatabaseHelper()
-        .InsertOrderInput(_orderInput, provider, newAddedItems!);
-    print("idddddddd=$id");
+
+ 
+    DateTime date = DateTime.now();
+    print("value of orderid=${ _orderInput.id}");
+    _orderInput.id=_orderInput.id==""?date.toString():_orderInput.id;
+    provider.addSalesBill(
+      _orderInput,
+      _orderInput.id==""?date.toString():_orderInput.id!,
+    );
+    print("idddddddd=$date");
     List<KotModel> kotItemlist = [];
     var tempMap = CountNoOfitemIsList(Kotlist);
     print(Kotlist);
     Kotlist.forEach((element) {
-      var model = KotModel(id, element.name!, tempMap['${element.id}'], "no");
+      var model = KotModel(
+         _orderInput.id==""?date.toString():_orderInput.id!, element.name!, tempMap['${element.id}'], "no");
       kotItemlist.add(model);
     });
 
-    DatabaseHelper().insertKot(kotItemlist);
+    context.read<KotCubit>().insertKot(kotItemlist);
+    //  DatabaseHelper().insertKot(kotItemlist);
   }
 
   @override
@@ -256,10 +267,11 @@ class _CreateSaleState extends State<CreateSale> {
                               setState(() {});
                             },
                             onDelete: () {
-                              DatabaseHelper().deleteKot(
-                                  widget.args!.id!,
+                              context.read<KotCubit>().deleteKot(
+                                  _orderInput.id!,
                                   _orderInput
                                       .orderItems![index].product!.name!);
+
                               setState(
                                 () {
                                   _orderItem.quantity == 1

@@ -3,7 +3,7 @@
 class KotModel
 {
 
- int orderId;
+ String orderId;
  String name;
  int qty;
  String isPrinted;
