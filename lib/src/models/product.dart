@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:pin_code_fields/pin_code_fields.dart';
 
 class Product {
@@ -50,6 +52,8 @@ class Product {
   DateTime? expiryDate;
   num i=0;
   factory Product.fromMap(Map<String, dynamic> json){ 
+
+
 
     if(json['quantity'] is int)
     {

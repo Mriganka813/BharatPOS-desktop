@@ -344,14 +344,13 @@ class _CreateProductState extends State<CreateProduct> {
                               }
                             },
                             validator: (e) {
-                                if(e!.contains(".")||e.contains(","))
-                                {
-                                  return '(. ,) characters are not allowed';
-                                }
+                              if (e!.contains(".") || e.contains(",")) {
+                                return '(. ,) characters are not allowed';
+                              }
                               if (e.isEmpty) {
                                 return "Please enter selling price";
                               }
-                               return null;
+                              return null;
                             },
                           ),
                         ),
@@ -372,11 +371,10 @@ class _CreateProductState extends State<CreateProduct> {
                               print(gstSwitch);
                             },
                             validator: (e) {
-                                if(e!.contains(".")||e.contains(","))
-                                {
-                                  return '(. ,) characters are not allowed';
-                                }
-                                return null;
+                              if (e!.contains(".") || e.contains(",")) {
+                                return '(. ,) characters are not allowed';
+                              }
+                              return null;
                             },
                           ),
                         ),
@@ -564,15 +562,15 @@ class _CreateProductState extends State<CreateProduct> {
                                 _formInput.quantity = e;
                               },
                               validator: (e) {
-
-                                if(e!.contains(".")||e.contains(","))
-                                {
+                                if (e!.contains(".") || e.contains(",")) {
                                   return '(. ,) characters are not allowed';
                                 }
-                                if (int.parse(e!) > 99999) {
+
+                                if(e.isNotEmpty)
+                                if (int.parse(e) > 99999) {
                                   return 'Maximum value is 99999';
                                 }
-                                return "asfafs";
+                                return null;
                               }),
                         ),
                       ],
@@ -607,6 +605,8 @@ class _CreateProductState extends State<CreateProduct> {
                     CustomButton(
                       title: "Save",
                       onTap: () {
+
+                      
                         _formKey.currentState?.save();
 
                         print(_formInput.purchasePrice);
@@ -622,14 +622,15 @@ class _CreateProductState extends State<CreateProduct> {
                           print(_formInput.expirydate);
                           print(_formInput.batchNumber);
 
-                          _productCubit.createProduct(_formInput);
+                        
+                          print( "quantity:${_formInput.quantity}");
+
+                         _productCubit.createProduct(_formInput);
                           print("Barcode:");
                           print(_formInput.barCode);
-                          
-                                Navigator.pop(context);
+
+                          Navigator.pop(context);
                         }
-                    
-                    
                       },
                     ),
                   ],

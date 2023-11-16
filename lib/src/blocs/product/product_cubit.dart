@@ -63,7 +63,16 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   ///
+  ///
+  bool isNumeric(String str) {
+  // Use tryParse to attempt to convert the string to a number
+  // If successful, it's a valid number; otherwise, it's not
+  return num.tryParse(str) != null;
+}
   void createProduct(ProductFormInput product) async {
+
+
+
     emit(ProductLoading());
     try {
       // print(product.id);
