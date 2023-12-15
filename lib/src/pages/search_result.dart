@@ -57,6 +57,9 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
   late final ReportCubit _reportCubit;
   final TextEditingController pinController = TextEditingController();
 
+   int expiryDaysTOSearch = 7;
+  String searchMode = "normalSearch";
+
   @override
   void initState() {
     super.initState();
@@ -77,15 +80,33 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
     super.dispose();
   }
 
+  
   Future<void> fetchSearchedProducts() async {
-    var newProducts =
-        await searchProductServices.allproduct(_currentPage, _limit);
+    List newProducts = [];
+    if (searchMode == "normalSearch") {
+      newProducts =
+          await searchProductServices.allproduct(_currentPage, _limit);
+    } else if (searchMode == "expiry") {
+      var list = await searchProductServices.searchByExpiry(expiryDaysTOSearch);
+      if (list.isEmpty) {
+        locator<GlobalServices>()
+            .errorSnackBar(" No items expiring within the specified days.");
+      } else {
+        newProducts = list;
+      }
+    }
+
     for (var product in newProducts) {
-      if (!prodList.contains(product)) {
+      bool checkFlag=false;
+      prodList.forEach((element) { if(element.id==product.id){
+          checkFlag=true;
+      }});
+      if (!checkFlag) {
         prodList.add(product);
       }
     }
 
+    // To show the same quantity selected in search page list also
     for (int i = 0; i < widget.args!.productlist.length; i++) {
       for (int j = 0; j < prodList.length; j++) {
         if (widget.args!.productlist[i].product!.id == prodList[j].id) {
@@ -188,6 +209,16 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                 fontFamily: 'GilroyBold'),
           ),
           centerTitle: true,
+            actions: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: GestureDetector(
+                  onTap: () {
+                    _showFilterDialog();
+                  },
+                  child: Icon(Icons.filter_alt)),
+            )
+          ],
         ),
         floatingActionButton: Container(
           margin: const EdgeInsets.only(
@@ -498,5 +529,145 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                 ))
               ],
             ));
+  }
+   Future<bool?> _showFilterDialog() {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+              content: Container(
+                  height: 150,
+                  child: Column(
+                    children: [
+                      ListTile(
+                        onTap: () {
+                          _showExpiryFilterDialog();
+                        },
+                        leading: Text("Expiry"),
+                        trailing: Icon(
+                          Icons.arrow_forward_ios,
+                          size: 15,
+                        ),
+                      ),
+                    ],
+                  )),
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Filter'),
+                  GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Icon(Icons.close))
+                ],
+              ),
+            ));
+  }
+
+  Future<bool?> _showExpiryFilterDialog() {
+    getData(int days) async {
+      prodList.clear();
+      expiryDaysTOSearch = days;
+      searchMode = "expiry";
+      setState(() {});
+      fetchSearchedProducts();
+
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+    }
+
+    ;
+
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+              content:
+                  Container(height: 350, child: ExpiryFilterContent(getData)),
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Select Expiry days'),
+                  GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Icon(Icons.close))
+                ],
+              ),
+            ));
+  }
+}
+class ExpiryFilterContent extends StatefulWidget {
+  var ontap;
+  ExpiryFilterContent(this.ontap);
+
+  @override
+  State<ExpiryFilterContent> createState() => _RadioButtonGroupState();
+}
+
+class _RadioButtonGroupState extends State<ExpiryFilterContent> {
+  int groupedValue = 7;
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        RadioMenuButton(
+            value: 7,
+            groupValue: groupedValue,
+            onChanged: (v) {
+              groupedValue = 7;
+              setState(() {});
+            },
+            child: Text("7")),
+        RadioMenuButton(
+            value: 15,
+            groupValue: groupedValue,
+            onChanged: (v) {
+              groupedValue = 15;
+              setState(() {});
+            },
+            child: Text("15")),
+        RadioMenuButton(
+            value: 30,
+            groupValue: groupedValue,
+            onChanged: (v) {
+              groupedValue = 30;
+              setState(() {});
+            },
+            child: Text("30")),
+        RadioMenuButton(
+            value: 90,
+            groupValue: groupedValue,
+            onChanged: (v) {
+              groupedValue = 90;
+              setState(() {});
+            },
+            child: Text("90")),
+        RadioMenuButton(
+            value: 180,
+            groupValue: groupedValue,
+            onChanged: (v) {
+              groupedValue = 180;
+              setState(() {});
+            },
+            child: Text("180")),
+            SizedBox(height: 20,),
+        CustomTextField(
+          inputType: TextInputType.number,
+          hintText: "Custom Expiry",
+          onChanged: (e) {
+            groupedValue = int.parse(e);
+          },
+        ),
+                   SizedBox(height: 20,),
+        CustomButton(
+            title: 'Submit',
+            onTap: () async {
+              widget.ontap(groupedValue);
+            }),
+      ],
+    );
   }
 }
