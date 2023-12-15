@@ -9,11 +9,14 @@ import 'package:shopos/src/blocs/specific%20party/specific_party_state.dart';
 import 'package:shopos/src/config/colors.dart';
 import 'package:shopos/src/models/order.dart';
 import 'package:shopos/src/models/party.dart';
+import 'package:shopos/src/models/user.dart';
 import 'package:shopos/src/services/global.dart';
 import 'package:shopos/src/services/locator.dart';
 import 'package:shopos/src/services/set_or_change_pin.dart';
+import 'package:shopos/src/services/user.dart';
 import 'package:shopos/src/widgets/custom_button.dart';
 import 'package:pin_code_fields/pin_code_fields.dart' as pinCode;
+import 'package:url_launcher/url_launcher.dart';
 
 class ScreenArguments {
   final String partyId;
@@ -42,6 +45,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
   PinService _pinService = PinService();
   late final ReportCubit _reportCubit;
   final TextEditingController pinController = TextEditingController();
+    User? user;
   @override
   void initState() {
     super.initState();
@@ -51,10 +55,14 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
     _reportCubit = ReportCubit();
   }
 
-  void fetchdata() {
+  void fetchdata() async{
     widget.args.tabbarNo == 0
         ? _specificpartyCubit.getInitialCreditHistory(widget.args.partyId)
         : _specificpartyCubit.getInitialpurchasedHistory(widget.args.partyId);
+
+            final response = await UserService.me();
+    user = User.fromMap(response.data['user']);
+    setState(() {});
   }
 
   @override
@@ -86,21 +94,54 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
   }
 
   TextEditingController value = TextEditingController();
-
+  String balanceToShareOnWhatsapp = "";
+  bool whatsappButtonPresssed = false;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      appBar:  AppBar(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(widget.args.partName),
-            Text(
-              widget.args.partyContactNo,
-              style: Theme.of(context).textTheme.bodyMedium,
+            Image.asset(
+              "assets/images/teamwork.png",
+              height: 30,
+            ),
+            SizedBox(
+              width: 10,
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(widget.args.partName),
+                Text(
+                  widget.args.partyContactNo,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
             ),
           ],
         ),
+        centerTitle: true,
+        actions: [
+          GestureDetector(
+              onTap: () {
+                whatsappButtonPresssed = true;
+                setState(() {});
+                Future.delayed(Duration(seconds: 3), () {
+                  _launchUrl(
+                      user!.businessName!, "+91" + widget.args.partyContactNo);
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Image.asset(
+                  "assets/images/whats.png",
+                  height: 30,
+                  width: 30,
+                ),
+              ))
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.only(left: 12, right: 12),
@@ -145,27 +186,30 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                                   context);
                             },
                             child: Card(
-                              clipBehavior: Clip.hardEdge,
-                              shape: RoundedRectangleBorder(
-                                side: const BorderSide(
-                                    color: Colors.black, width: 0.5),
-                                borderRadius: BorderRadius.circular(10.0),
-                              ),
-                              elevation: 0,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  "${order.total}",
-                                  style: TextStyle(
-                                    color: order.modeOfPayment == "Settle"
-                                        ? Colors.green
-                                        : Colors.red,
-                                    fontSize: 20,
+                                  clipBehavior: Clip.hardEdge,
+                                  shape: RoundedRectangleBorder(
+                                    side: BorderSide(
+                                        color: order.modeOfPayment == "Settle"
+                                            ? Colors.green
+                                            : Colors.red,
+                                        width: 0.5),
+                                    borderRadius: BorderRadius.circular(10.0),
                                   ),
-                                  textAlign: TextAlign.center,
+                                  elevation: 0,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      " ₹ ${order.total}",
+                                      style: TextStyle(
+                                        color: order.modeOfPayment == "Settle"
+                                            ? Colors.green
+                                            : Colors.red,
+                                        fontSize: 20,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
                           ),
                         ),
                       ),
@@ -186,7 +230,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
         elevation: 100,
         color: Theme.of(context).scaffoldBackgroundColor,
         child: Container(
-          height: 120,
+          height: 150,
           width: double.maxFinite,
           decoration: const BoxDecoration(
               border: Border(top: BorderSide(color: Colors.black12))),
@@ -203,26 +247,32 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                     int balance = 0;
                     int negbalance = 0;
                     if (state is SpecificPartyListRender) {
-                      balance = state.partyDetails.balance ?? 0;
+                      balance = state.partyDetails.balance==null?0:(state.partyDetails.balance as double).toInt() ;
                       negbalance = balance * -1;
                     }
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.only(left: 20),
                       child: balance >= 0
                           ? Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.start,
                               children: [
+                                SizedBox(
+                                  width: 10,
+                                ),
                                 const Text(
                                   "Balance Due",
-                                  textScaleFactor: 1.7,
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                                SizedBox(
+                                  width: 10,
                                 ),
                                 Text(
-                                  "$balance",
-                                  textScaleFactor: 1.7,
+                                  "₹ ${balance.toStringAsFixed(2)}",
                                   style: const TextStyle(
-                                    color: Colors.red,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20),
                                 ),
                               ],
                             )
@@ -234,7 +284,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                                   textScaleFactor: 1.7,
                                 ),
                                 Text(
-                                  "$negbalance",
+                                  "${negbalance.toStringAsFixed(2)}",
                                   textScaleFactor: 1.7,
                                   style: const TextStyle(
                                     color: Colors.green,
@@ -246,59 +296,90 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                     );
                   },
                 ),
-                Row(
+              Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    SizedBox(
-                      height: 50,
-                      width: 140,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          modelOpen(context, "Settle");
-                        },
-                        child: const Text(
-                          "Received",
-                          style: TextStyle(
-                            color: Color.fromRGBO(32, 150, 82, 100),
+                    Card(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                          side: BorderSide(color: Colors.green, width: 1)),
+                      color: Color.fromRGBO(148, 255, 194, 100),
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: TextButton(
+                          onPressed: () {
+                            modelOpen(context, "Settle");
+                          },
+                          child: Row(
+                            children: [
+                              Image.asset(
+                                "assets/images/recieve.png",
+                                height: 22,
+                              ),
+                              const Text(
+                                "Received",
+                                style: TextStyle(
+                                    color: Color.fromRGBO(32, 150, 82, 100),
+                                    fontSize: 19),
+                              ),
+                            ],
                           ),
-                          textScaleFactor: 1.7,
-                        ),
-                        style: ButtonStyle(
-                          shape:
-                              MaterialStateProperty.all<RoundedRectangleBorder>(
-                            const RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(10)),
+                          style: ButtonStyle(
+                            shape:
+                                MaterialStateProperty.all<RoundedRectangleBorder>(
+                              const RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(10)),
+                              ),
                             ),
-                          ),
-                          backgroundColor: MaterialStateProperty.all(
-                            const Color.fromRGBO(148, 255, 194, 100),
+                            backgroundColor: MaterialStateProperty.all(
+                              const Color.fromRGBO(255, 0, 0, 0),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(
-                      height: 50,
-                      width: 140,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          modelOpen(context, "Credit");
-                        },
-                        child: const Text(
-                          "Given",
-                          style: TextStyle(color: Colors.red),
-                          textScaleFactor: 1.7,
-                        ),
-                        style: ButtonStyle(
-                          shape:
-                              MaterialStateProperty.all<RoundedRectangleBorder>(
-                            const RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(10)),
-                            ),
+                    Card(
+                      color: Color.fromRGBO(255, 209, 209, 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                          side: BorderSide(color: Colors.red, width: 1)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: TextButton(
+                          onPressed: () {
+                            modelOpen(context, "Credit");
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 15,
+                              ),
+                              Image.asset(
+                                "assets/images/given.png",
+                                height: 22,
+                              ),
+                              const Text(
+                                "Given",
+                                style: TextStyle(color: Colors.red, fontSize: 19),
+                              ),
+                              SizedBox(
+                                width: 15,
+                              ),
+                            ],
                           ),
-                          backgroundColor: MaterialStateProperty.all(
-                            const Color.fromRGBO(255, 209, 209, 10),
+                          style: ButtonStyle(
+                            shape:
+                                MaterialStateProperty.all<RoundedRectangleBorder>(
+                              const RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(10)),
+                              ),
+                            ),
+                            backgroundColor: MaterialStateProperty.all(
+                              const Color.fromRGBO(255, 0, 0, 0),
+                            ),
                           ),
                         ),
                       ),
@@ -362,7 +443,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                       onTap: () {
                         setState(() {
                           _specificPartyInput.modeOfPayment = modeofPayment;
-                          _specificPartyInput.total = int.parse(value.text);
+                          _specificPartyInput.total = double.parse(value.text);
                           _specificPartyInput.id = widget.args.partyId;
                           _specificPartyInput.createdAt = DateTime.now();
 
@@ -436,7 +517,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                     ),
                     CustomButton(
                       onTap: () {
-                        int amountnew = int.parse(newtotal);
+                        double amountnew = double.parse(newtotal);
                         widget.args.tabbarNo == 0
                             ? _specificpartyCubit.updateAmountCustomer(
                                 Party(id: id, total: amountnew),
@@ -507,6 +588,19 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
             ),
           ],
         )).show();
+  }
+
+  Future<void> _launchUrl(String name, String mobile) async {
+    String Message =
+        "Dear customer, your credit balance with ${name} is rupees $balanceToShareOnWhatsapp. Please pay the amount as soon as possible. Thank you for your business.%0A%0A*Powered by BharatPOS*";
+
+    final Uri _url = Uri.parse('https://wa.me/${mobile}?text=$Message');
+
+    if (await canLaunchUrl(_url)) {
+      await launchUrl(_url, mode: LaunchMode.externalApplication);
+    } else {
+      throw Exception('Could not launch $_url');
+    }
   }
 
   currentdate(String dates) {

@@ -1,54 +1,52 @@
-// import 'package:audioplayers/audioplayers.dart';
-
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:provider/provider.dart';
-import 'package:shopos/src/blocs/Kot/KotCubit.dart';
 import 'package:shopos/src/models/KotModel.dart';
 import 'package:shopos/src/models/input/order_input.dart';
+
 import 'package:shopos/src/models/product.dart';
 import 'package:shopos/src/pages/billing_list.dart';
 import 'package:shopos/src/pages/checkout.dart';
+// import 'package:shopos/src/pages/products_list.dart';
 import 'package:shopos/src/pages/search_result.dart';
-import 'package:shopos/src/pages/select_products_screen.dart';
 import 'package:shopos/src/provider/billing.dart';
+
 import 'package:shopos/src/services/LocalDatabase.dart';
 import 'package:shopos/src/services/global.dart';
 import 'package:shopos/src/services/locator.dart';
 import 'package:shopos/src/widgets/custom_button.dart';
-import 'package:shopos/src/widgets/custom_continue_button.dart';
 import 'package:shopos/src/widgets/custom_text_field.dart';
 import 'package:shopos/src/widgets/product_card_horizontal.dart';
+import 'package:slidable_button/slidable_button.dart';
 
 import '../services/product.dart';
 
-class BillingPageArgs {
+/*class BillingPageArgs {
   final String? orderId;
   final List<OrderItemInput>? editOrders;
   final id;
 
   BillingPageArgs({this.orderId, this.editOrders, this.id});
-}
+}*/
 
-class CreateSale extends StatefulWidget {
-  static const routeName = '/create_sale';
+class CreateSaleReturn extends StatefulWidget {
+  static const routeName = '/create_sale_return';
+  CreateSaleReturn({Key? key}) : super(key: key);
 
-  CreateSale({Key? key, this.args}) : super(key: key);
-
-  BillingPageArgs? args;
+  //BillingPageArgs? args;
 
   @override
-  State<CreateSale> createState() => _CreateSaleState();
+  State<CreateSaleReturn> createState() => _CreateSaleReturnState();
 }
 
-class _CreateSaleState extends State<CreateSale> {
+class _CreateSaleReturnState extends State<CreateSaleReturn> {
   late OrderInput _orderInput;
-  // late final AudioCache _audioCache;
+  late final AudioCache _audioCache;
   List<OrderItemInput>? newAddedItems = [];
   List<Product> Kotlist = [];
   bool isLoading = false;
-    double discount = 0;
 
   @override
   void initState() {
@@ -56,14 +54,31 @@ class _CreateSaleState extends State<CreateSale> {
     // _audioCache = AudioCache(
     //   fixedPlayer: AudioPlayer()..setReleaseMode(ReleaseMode.STOP),
     // );
+
     _orderInput = OrderInput(
-      id: widget.args == null ? "" : widget.args!.id,
-      orderItems: widget.args == null ? [] : widget.args?.editOrders,
+      id:"0",
+      orderItems:  [] ,
     );
+
+    init();
+  }
+
+  List<String> sellingPriceListForShowinDiscountTextBOX = [];
+
+  void init() {
+    _orderInput.orderItems!.forEach((element) {
+      sellingPriceListForShowinDiscountTextBOX
+          .add(element.product!.baseSellingPriceGst!);
+    });
   }
 
   void _onAdd(OrderItemInput orderItem) {
     final qty = orderItem.quantity + 1;
+    double discountForOneItem =
+        double.parse(orderItem.discountAmt) / orderItem.quantity;
+    orderItem.discountAmt =
+        (double.parse(orderItem.discountAmt) + discountForOneItem)
+            .toStringAsFixed(2);
     final availableQty = orderItem.product?.quantity ?? 0;
     if (qty > availableQty) {
       locator<GlobalServices>().infoSnackBar("Quantity not available");
@@ -77,7 +92,7 @@ class _CreateSaleState extends State<CreateSale> {
   _onSubtotalChange(Product product, String? localSellingPrice) async {
     product.baseSellingPriceGst = localSellingPrice;
     double newGStRate = (double.parse(product.baseSellingPriceGst!) *
-        double.parse(product.gstRate!) /
+        double.parse(product.gstRate == 'null' ? '0' : product.gstRate!) /
         100);
     product.saleigst = newGStRate.toStringAsFixed(2);
 
@@ -88,7 +103,8 @@ class _CreateSaleState extends State<CreateSale> {
     print(product.salesgst);
 
     product.sellingPrice =
-        double.parse(product.baseSellingPriceGst!) + newGStRate;
+        double.parse(product.baseSellingPriceGst!.toString()) + newGStRate;
+    print(product.sellingPrice);
   }
 
   _onTotalChange(Product product, String? discountedPrice) {
@@ -116,53 +132,34 @@ class _CreateSaleState extends State<CreateSale> {
     print(product.salesgst);
   }
 
-  void insertToDatabase(Billing provider) async {
-
  
-    DateTime date = DateTime.now();
-    print("value of orderid=${ _orderInput.id}");
-    _orderInput.id=_orderInput.id==""?date.toString():_orderInput.id;
-    provider.addSalesBill(
-      _orderInput,
-      _orderInput.id==""?date.toString():_orderInput.id!,
-    );
-    print("idddddddd=$date");
-    List<KotModel> kotItemlist = [];
-    var tempMap = CountNoOfitemIsList(Kotlist);
-    
-    print(Kotlist);
-    Kotlist.forEach((element) {
-      var model = KotModel(
-         _orderInput.id==""?date.toString():_orderInput.id!, element.name!, tempMap['${element.id}'], "no");
-      kotItemlist.add(model);
-    });
-
-    context.read<KotCubit>().insertKot(kotItemlist);
-    //  DatabaseHelper().insertKot(kotItemlist);
-  }
-
   @override
   Widget build(BuildContext context) {
     final _orderItems = _orderInput.orderItems ?? [];
     final provider = Provider.of<Billing>(context, listen: false);
-    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sales'),
+        title: const Text('Sales Return'),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            Expanded(
-              child: _orderItems.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No products added yet',
-                      ),
-                    )
-                  : GridView.builder(
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                color: Colors.blue,
+              ),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: _orderItems.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No products added yet',
+                            ),
+                          )
+                        : GridView.builder(
                       physics: ClampingScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2, mainAxisExtent: 200),
@@ -225,16 +222,7 @@ class _CreateSaleState extends State<CreateSale> {
                                                             localSellingPrice);
                                                         print(discountedPrice);
 
-                                                        discount = 
-                                                                _orderItem
-                                                                    .product!
-                                                                    .sellingPrice! -
-                                                           
-                                                                int.parse(localSellingPrice!).toDouble();
-
-                                                        _orderItems[index].
-                                                                discountAmt =
-                                                            discount.toString();
+                                                    
                                                         setState(() {});
                                                         // if ((localSellingPrice !=
                                                         //             null ||
@@ -288,10 +276,7 @@ class _CreateSaleState extends State<CreateSale> {
                               setState(() {});
                             },
                             onDelete: () {
-                              context.read<KotCubit>().deleteKot(
-                                  _orderInput.id!,
-                                  _orderInput
-                                      .orderItems![index].product!.name!);
+                            
 
                               setState(
                                 () {
@@ -311,123 +296,121 @@ class _CreateSaleState extends State<CreateSale> {
                                 }
                               }
 
-                              if (widget.args!.orderId == null) setState(() {});
+                             setState(() {});
                             },
                             productQuantity: _orderItem.quantity,
                           ),
                         );
                       },
                     ),
-            ),
-            const Divider(color: Colors.transparent),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                CustomButton(
-                  title: "Add manually",
-                  onTap: () async {
-                    final result = await Navigator.pushNamed(
-                      context,
-                      SearchProductListScreen.routeName,
-                      arguments: ProductListPageArgs(
-                          isSelecting: true,
-                          orderType: OrderType.sale,
-                          productlist: _orderInput.orderItems!),
-                    );
-                    if (result == null && result is! List<Product>) {
-                      return;
-                    }
+                  ),
+                  const Divider(color: Colors.transparent),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      CustomButton(
+                        title: "Add manually",
+                        onTap: () async {
+                          final result = await Navigator.pushNamed(
+                            context,
+                            SearchProductListScreen.routeName,
+                            arguments: ProductListPageArgs(
+                                isSelecting: true,
+                                orderType: OrderType.saleReturn,
+                                productlist: _orderInput.orderItems!),
+                          );
+                          if (result == null && result is! List<Product>) {
+                            return;
+                          }
 
-                    var temp = result as List<Product>;
+                          var temp = result as List<Product>;
 
-                    Kotlist.addAll(temp);
+                          temp.forEach((element) {
+                            sellingPriceListForShowinDiscountTextBOX
+                                .add(element.sellingPrice.toString());
+                          });
 
-                    var tempMap = CountNoOfitemIsList(temp);
-                    final orderItems = temp
-                        .map((e) => OrderItemInput(
-                              product: e,
-                              quantity: tempMap["${e.id}"],
-                              price: 0,
-                            ))
-                        .toList();
+                          Kotlist.addAll(temp);
 
-                    var tempOrderitems = _orderInput.orderItems;
+                          var tempMap = CountNoOfitemIsList(temp);
+                          final orderItems = temp
+                              .map((e) => OrderItemInput(
+                                    product: e,
+                                    quantity: tempMap["${e.id}"],
+                                    price: 0,
+                                  ))
+                              .toList();
 
-                    for (int i = 0; i < tempOrderitems!.length; i++) {
-                      for (int j = 0; j < orderItems.length; j++) {
-                        if (tempOrderitems[i].product!.id ==
-                            orderItems[j].product!.id) {
-                          tempOrderitems[i].product!.quantity =
-                              tempOrderitems[i].product!.quantity! -
-                                  orderItems[j].quantity;
-                          tempOrderitems[i].quantity =
-                              tempOrderitems[i].quantity +
-                                  orderItems[j].quantity;
-                          orderItems.removeAt(j);
+                          var tempOrderitems = _orderInput.orderItems;
+
+                          for (int i = 0; i < tempOrderitems!.length; i++) {
+                            for (int j = 0; j < orderItems.length; j++) {
+                              if (tempOrderitems[i].product!.id ==
+                                  orderItems[j].product!.id) {
+                                tempOrderitems[i].product!.quantity =
+                                    tempOrderitems[i].product!.quantity! -
+                                        orderItems[j].quantity;
+                                tempOrderitems[i].quantity =
+                                    tempOrderitems[i].quantity +
+                                        orderItems[j].quantity;
+                                orderItems.removeAt(j);
+                              }
+                            }
+                          }
+
+                          _orderInput.orderItems = tempOrderitems;
+
+                          setState(() {
+                            _orderInput.orderItems?.addAll(orderItems);
+                            newAddedItems!.addAll(orderItems);
+                          });
+                        },
+                      ),
+                      CustomButton(title: "Continue", onTap: (){
+                        
+                        if (_orderItems.isNotEmpty) {
+                       
+
+                          // insertToDatabase(provider);
+                          provider.addSalesBill(
+                            _orderInput,
+                            _orderInput.id.toString(),
+                          );
                         }
-                      }
-                    }
 
-                    _orderInput.orderItems = tempOrderitems;
+                       Navigator.pushNamed(
+                      context,
+                      CheckoutPage.routeName,
+                      arguments: CheckoutPageArgs(
+                        invoiceType: OrderType.saleReturn,
+                        orderId: "0",
+                        orderInput: _orderInput
+                      ),
+                    );
 
-                    setState(() {
-                      _orderInput.orderItems?.addAll(orderItems);
-                      newAddedItems!.addAll(orderItems);
-                    });
-                  },
-                ),
-                // const VerticalDivider(
-                //   color: Colors.transparent,
-                //   width: 10,
-                // ),
-                CustomContinueButton(
-                  title: "Continue",
-                  onTap: () {
-                    //   if (_orderItems.isEmpty) {
-                    //     ScaffoldMessenger.of(context).showSnackBar(
-                    //       const SnackBar(
-                    //         backgroundColor: Colors.red,
-                    //         content: Text(
-                    //           "Please select products before continuing",
-                    //           style: TextStyle(color: Colors.white),
-                    //         ),
-                    //       ),
-                    //     );
-                    //   } else {
-                    //     Navigator.pushNamed(
-                    //       context,
-                    //       CheckoutPage.routeName,
-                    //       arguments: CheckoutPageArgs(
-                    //         invoiceType: OrderType.sale,
-                    //         orderInput: _orderInput,
-                    //       ),
-                    //     );
-                    //   }
-
-                    if (_orderItems.isNotEmpty) {
-                      insertToDatabase(provider);
-                      print('orderid: ${widget.args?.id}');
-                    }
-
-                    Navigator.pushNamed(context, BillingListScreen.routeName,
-                        arguments: OrderType.sale);
-                  },
-                ),
-                CustomButton(
-                  title: "Scan barcode",
-                  onTap: () async {},
-                  type: ButtonType.outlined,
-                ),
-              ],
+                      }),
+                      // const VerticalDivider(
+                      //   color: Colors.transparent,
+                      //   width: 10,
+                      // ),
+                      CustomButton(
+                        title: "Scan barcode",
+                        onTap: () async {
+                          _searchProductByBarcode();
+                        },
+                        type: ButtonType.outlined,
+                      ),
+                    ],
+                  ),
+                  const Divider(color: Color.fromRGBO(0, 0, 0, 0)),
+                
+                ],
+              ),
             ),
-            const Divider(color: Colors.transparent),
-          ],
-        ),
-      ),
     );
   }
 
-  //
+  ///
   Future<void> _searchProductByBarcode() async {
     locator<GlobalServices>().showBottomSheetLoader();
     final barcode = await FlutterBarcodeScanner.scanBarcode(
@@ -438,7 +421,7 @@ class _CreateSaleState extends State<CreateSale> {
     );
     const _type = FeedbackType.success;
     Vibrate.feedback(_type);
-    // await _audioCache.play('audio/beep.mp3');
+    //await _audioCache.play('audio/beep.mp3');
     try {
       /// Fetch product by barcode
       final res = await const ProductService().getProductByBarcode(barcode);

@@ -42,6 +42,7 @@ class _ExpensePageState extends State<ExpensePage> {
     return Scaffold(
         appBar: AppBar(
           title: const Text("Expense"),
+          centerTitle: true,
         ),
         floatingActionButton: Container(
           margin: const EdgeInsets.only(
@@ -53,7 +54,7 @@ class _ExpensePageState extends State<ExpensePage> {
               await Navigator.pushNamed(context, CreateExpensePage.routeName);
               _expenseCubit.getExpense();
             },
-            backgroundColor: ColorsConst.primaryColor,
+            backgroundColor: Colors.green,
             child: const Icon(
               Icons.add,
               color: Colors.white,
@@ -70,7 +71,7 @@ class _ExpensePageState extends State<ExpensePage> {
                 return GridView.builder(
                   itemCount: state.expense.length,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, mainAxisExtent: 160),
+                      crossAxisCount: 2, mainAxisExtent: 227,),
                   itemBuilder: (context, index) {
                     return ExpenseCardHorizontal(
                       expense: state.expense[index],

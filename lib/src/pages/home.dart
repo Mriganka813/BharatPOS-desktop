@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:new_version/new_version.dart';
+import 'package:provider/provider.dart';
 import 'package:shopos/src/blocs/home/home_cubit.dart';
 import 'package:shopos/src/config/colors.dart';
+import 'package:shopos/src/pages/AboutOptionPage.dart';
+import 'package:shopos/src/pages/CreateSalesReturn.dart';
+import 'package:shopos/src/pages/SwitchAccountPage.dart';
 import 'package:shopos/src/pages/checkout.dart';
 import 'package:shopos/src/pages/create_purchase.dart';
 import 'package:shopos/src/pages/create_sale.dart';
@@ -12,6 +16,8 @@ import 'package:shopos/src/pages/reports.dart';
 import 'package:shopos/src/pages/search_result.dart';
 import 'package:shopos/src/pages/set_pin.dart';
 import 'package:shopos/src/pages/sign_in.dart';
+import 'package:shopos/src/provider/billing.dart';
+import 'package:shopos/src/services/auth.dart';
 import 'package:shopos/src/services/set_or_change_pin.dart';
 import 'package:shopos/src/widgets/custom_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -64,25 +70,25 @@ class _HomePageState extends State<HomePage> {
             return Scaffold(
               appBar: AppBar(
                 title: Text(state.user.businessName ?? ""),
+                centerTitle: true,
               ),
               drawer: Drawer(
                 child: SafeArea(
                   child: Column(
                     children: [
                       ListTile(
-                        leading: Icon(
-                          Icons.business_outlined,
-                          color: Colors.black,
+                        leading: Image.asset(
+                          "assets/images/bharat.png",
+                          height: 30,
                         ),
                         title: Title(
                           color: Colors.black,
                           child: Text(
-                            state.user.businessName ?? "",
+                            "",
                             textScaleFactor: 1.4,
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
-                        subtitle: Text(state.user.email ?? ""),
                       ),
                       Divider(),
                       /*   ListTile(
@@ -97,7 +103,30 @@ class _HomePageState extends State<HomePage> {
                         },
                       ),*/
                       ListTile(
-                        leading: Icon(Icons.security_outlined),
+                        leading: Image.asset(
+                          "assets/images/shop.png",
+                          height: 30,
+                        ),
+                        title: Title(
+                          color: Colors.black,
+                          child: Text(
+                            state.user.businessName ?? "",
+                          ),
+                        ),
+                        subtitle: Text(
+                          state.user.email ?? "",
+                          textScaleFactor: 1.2,
+                        ),
+                        onTap: () async {
+                          Navigator.pushNamed(
+                              context, SwitchAccountPage.rountName); //
+                        },
+                      ),
+                      ListTile(
+                        leading: Image.asset(
+                          "assets/images/lock.png",
+                          height: 30,
+                        ),
                         title: Title(
                             color: Colors.black,
                             child: Text("Change Password")),
@@ -111,6 +140,19 @@ class _HomePageState extends State<HomePage> {
                         color: Colors.transparent,
                       ),
                       ListTile(
+                        leading: Image.asset(
+                          "assets/images/about.png",
+                          height: 30,
+                        ),
+                        title: Title(color: Colors.black, child: Text("About")),
+                        onTap: () {
+                          Navigator.pushNamed(
+                              context,
+                              AboutOptionPage
+                                  .routeName); // Navigate to the PrivacyPolicyPage
+                        },
+                      ),
+                      /* ListTile(
                         leading: Icon(Icons.policy_outlined),
                         title: Title(
                             color: Colors.black, child: Text("Privacy Policy")),
@@ -122,11 +164,11 @@ class _HomePageState extends State<HomePage> {
                           );
                           Navigator.pop(context);
                         },
-                      ),
+                      ),*/
                       Divider(
                         color: Colors.transparent,
                       ),
-                      ListTile(
+                      /*  ListTile(
                         leading: Icon(Icons.control_point),
                         title: Title(
                             color: Colors.black,
@@ -139,16 +181,20 @@ class _HomePageState extends State<HomePage> {
                           );
                           Navigator.pop(context);
                         },
-                      ),
-                      Divider(
-                        color: Colors.transparent,
-                      ),
+                      ),*/
+
                       ListTile(
-                        leading: Icon(Icons.logout),
+                        leading: Image.asset(
+                          "assets/images/logout.png",
+                          height: 30,
+                        ),
                         title:
                             Title(color: Colors.black, child: Text("Logout")),
                         onTap: () async {
-                          //await const AuthService().signOut();
+                           await const AuthService().signOut();
+                           final provider =
+                              Provider.of<Billing>(context, listen: false);
+                         provider.removeAll();
                           Navigator.pushNamedAndRemoveUntil(
                             context,
                             SignInPage.routeName,
@@ -170,34 +216,28 @@ class _HomePageState extends State<HomePage> {
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 4,
                         childAspectRatio: 2,
+                        mainAxisExtent: 166,
                       ),
                       padding: const EdgeInsets.all(10),
                       children: [
                         HomeCard(
-                          icon: const Icon(
-                            CustomIcons.product,
-                            size: 50,
-                            color: ColorsConst.primaryColor,
-                          ),
+                          color: 0XFF48AFFF,
+                          icon: 'assets/images/products.png',
                           title: "Products",
                           onTap: () {
                             Navigator.pushNamed(
                               context,
                               SearchProductListScreen.routeName,
                               arguments: ProductListPageArgs(
-                                isSelecting: false,
-                                orderType: OrderType.sale,
-                                productlist: []
-                              ),
+                                  isSelecting: false,
+                                  orderType: OrderType.sale,
+                                  productlist: []),
                             );
                           },
                         ),
                         HomeCard(
-                          icon: const Icon(
-                            CustomIcons.person,
-                            size: 50,
-                            color: ColorsConst.primaryColor,
-                          ),
+                          color: 0XFFFFC700,
+                          icon: 'assets/images/party.png',
                           title: "Party",
                           onTap: () {
                             Navigator.pushNamed(
@@ -207,11 +247,8 @@ class _HomePageState extends State<HomePage> {
                           },
                         ),
                         HomeCard(
-                          icon: const Icon(
-                            CustomIcons.report_svg,
-                            color: ColorsConst.primaryColor,
-                            size: 50,
-                          ),
+                          color: 0XFFFF5959,
+                          icon: 'assets/images/expense.png',
                           title: "Expense",
                           onTap: () {
                             Navigator.pushNamed(
@@ -221,16 +258,14 @@ class _HomePageState extends State<HomePage> {
                           },
                         ),
                         HomeCard(
-                          icon: const Icon(
-                            CustomIcons.growth_graph,
-                            color: ColorsConst.primaryColor,
-                            size: 50,
-                          ),
+                          color: 0XFF5642A6,
+                          icon: 'assets/images/reports.png',
                           title: "Reports",
                           onTap: () {
                             Navigator.pushNamed(context, ReportsPage.routeName);
                           },
                         ),
+
                         // OnlineStoreWidget(
                         //   activeOrders: 5,
                         //   onTap: () {
@@ -249,75 +284,85 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Container(
-                          width: media.size.width * 0.15,
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                CreatePurchase.routeName,
-                              );
-                            },
-                            child: Card(
-                              elevation: 5,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(15.0),
-                                child: Column(
-                                  children: [
-                                    const Icon(
-                                      CustomIcons.arrow_down,
-                                      color: Colors.red,
-                                      size: 40,
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      "Purchase",
-                                      style:
-                                          Theme.of(context).textTheme.headline6,
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              CreatePurchase.routeName,
+                            );
+                          },
+                          child: Column(
+                            children: [
+                              Card(
+                                color: Color.fromARGB(255, 255, 101, 122)
+                                    .withOpacity(0.5),
+                                elevation: 5,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                    color: Color.fromARGB(255, 175, 76,
+                                        76), // Set the border color
+                                    width: 2.0, // Set the border width
+                                  ),
                                 ),
+                                child: Padding(
+                                    padding: const EdgeInsets.all(8),
+                                    child: Image.asset(
+                                      "assets/images/purchase.png",
+                                      height: 100,
+                                      width: 110,
+                                    )),
                               ),
-                            ),
+                              Text(
+                                "Purchasee",
+                                style: TextStyle(fontSize: 20),
+                              )
+                            ],
                           ),
                         ),
-                        Container(
-                          width: media.size.width * 0.15,
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.pushNamed(
-                                  context, CreateSale.routeName);
-                            },
-                            child: Card(
-                              elevation: 5,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(15.0),
-                                child: Column(
-                                  children: [
-                                    const Icon(
-                                      CustomIcons.arrow_up,
-                                      color: ColorsConst.primaryColor,
-                                      size: 40,
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      "Sale",
-                                      style:
-                                          Theme.of(context).textTheme.headline6,
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
+                        SizedBox(
+                          width: 50,
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(context, CreateSale.routeName,
+                                arguments: BillingPageArgs(
+                                    id: "-1", orderId: "", editOrders: []));
+                          },
+                          onLongPress: () {
+                            Navigator.pushNamed(
+                              context,
+                              CreateSaleReturn.routeName,
+                            );
+                          },
+                          child: Column(
+                            children: [
+                              Card(
+                                color: const Color.fromARGB(255, 101, 255, 106)
+                                    .withOpacity(0.5),
+                                elevation: 5,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                    color: Colors.green, // Set the border color
+                                    width: 2.0, // Set the border width
+                                  ),
                                 ),
+                                child: Padding(
+                                    padding: const EdgeInsets.all(8),
+                                    child: Image.asset(
+                                      "assets/images/sale.png",
+                                      height: 100,
+                                      width: 110,
+                                    )),
                               ),
-                            ),
+                              Text(
+                                "Sale",
+                                style: TextStyle(fontSize: 20),
+                              )
+                            ],
                           ),
                         ),
                       ],
@@ -384,13 +429,15 @@ class _HomePageState extends State<HomePage> {
 // }
 
 class HomeCard extends StatelessWidget {
-  final Widget icon;
+  final String icon;
   final VoidCallback onTap;
   final String title;
+  final int color;
   const HomeCard({
     Key? key,
     required this.icon,
     required this.title,
+    required this.color,
     required this.onTap,
   }) : super(key: key);
 
@@ -400,27 +447,34 @@ class HomeCard extends StatelessWidget {
       onTap: () {
         onTap();
       },
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        elevation: 5,
-        child: Padding(
-          padding: const EdgeInsets.all(15.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: icon,
+      child: Column(
+        children: [
+          Card(
+            color: Color(color),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 5,
+            child: Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    icon,
+                    height: 100,
+                    width: 200,
+                  ),
+                ],
               ),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.headline6,
-                textAlign: TextAlign.center,
-              ),
-            ],
+            ),
           ),
-        ),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.headline6,
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

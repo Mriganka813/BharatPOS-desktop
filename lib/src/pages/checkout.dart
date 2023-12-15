@@ -35,7 +35,7 @@ import 'package:provider/provider.dart';
 
 import '../models/party.dart';
 
-enum OrderType { purchase, sale }
+enum OrderType { purchase, sale,saleReturn  }
 
 class CheckoutPageArgs {
   final OrderType invoiceType;
@@ -737,7 +737,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             ),
                             //const Divider(color: Colors.transparent),
                             Container(
-                              height: media.size.height * 0.5,
+                              
                               width: media.size.width * 0.4,
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -865,7 +865,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                     ),
                                   ),
                                   const Divider(
-                                      color: Colors.transparent, height: 50),
+                                      color: Colors.transparent, height: 30),
 
                                   CustomButton(
                                     title: "Save",
@@ -873,21 +873,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                       _onTapSubmit();
                                     },
                                   ),
+                                  SizedBox(height: 100,),
 
-                                  // TextButton(
-                                  //   onPressed: () {
-                                  //     _onTapSubmit();
-                                  //   },
-                                  //   style: TextButton.styleFrom(
-                                  //     backgroundColor: ColorsConst.primaryColor,
-                                  //     shape: const CircleBorder(),
-                                  //   ),
-                                  //   child: const Icon(
-                                  //     Icons.arrow_forward_rounded,
-                                  //     size: 40,
-                                  //     color: Colors.white,
-                                  //   )
-                                  // )
+                                  CustomButton(title: "Checkout", onTap: (){_onTapSubmit();})
+
+                               
                                 ],
                               ),
                             ),
@@ -996,8 +986,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
     _formKey.currentState?.save();
     if (_formKey.currentState?.validate() ?? false) {
       widget.args.invoiceType == OrderType.purchase
-          ? _checkoutCubit.createPurchaseOrder(widget.args.orderInput, date!)
+          ? _checkoutCubit.createPurchaseOrder(widget.args.orderInput, date!): widget.args.invoiceType == OrderType.saleReturn?_checkoutCubit.createSalesReturn(widget.args.orderInput, date!,totalPrice()!)
           : _checkoutCubit.createSalesOrder(widget.args.orderInput, date!);
+
       final provider = Provider.of<Billing>(context, listen: false);
       widget.args.invoiceType == OrderType.purchase
           ? provider.removePurchaseBillItems(widget.args.orderId)

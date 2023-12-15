@@ -187,6 +187,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                 fontSize: height / 45,
                 fontFamily: 'GilroyBold'),
           ),
+          centerTitle: true,
         ),
         floatingActionButton: Container(
           margin: const EdgeInsets.only(
@@ -229,7 +230,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                   await Navigator.pushNamed(context, '/create-product');
                   _productCubit.getProducts(_currentPage, _limit);
                 },
-                backgroundColor: ColorsConst.primaryColor,
+                backgroundColor: Colors.green,
                 child: const Icon(
                   Icons.add,
                   color: Colors.white,

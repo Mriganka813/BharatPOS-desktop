@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:pin_code_fields/pin_code_fields.dart';
 
 class Product {
@@ -16,6 +14,7 @@ class Product {
     this.v,
     this.salecgst,
     this.saleigst,
+    this.hsn,
     this.salesgst,
     this.purchasecgst,
     this.purchaseigst,
@@ -26,6 +25,7 @@ class Product {
     this.sellerName,
     this.batchNumber,
     this.expiryDate,
+    
   });
 
   String? name;
@@ -37,6 +37,7 @@ class Product {
   String? id;
   DateTime? createdAt;
   int? v;
+  String? hsn;
   double purchasePrice;
   String? gstRate;
   String? salesgst;
@@ -51,9 +52,9 @@ class Product {
   String? batchNumber;
   DateTime? expiryDate;
   num i=0;
+  
   factory Product.fromMap(Map<String, dynamic> json){ 
-
-
+    
 
     if(json['quantity'] is int)
     {
@@ -63,17 +64,20 @@ class Product {
     {
       print("${json["name"]} have double quantity(${json['quantity']})");
     }
+    print('hsn =${json['hsn']}');
     
     
     return Product(
       name: json["name"],
       sellingPrice:json["sellingPrice"]==null?0.0: double.parse(json["sellingPrice"].toString()) ,
       barCode: json["barCode"],
-      quantity:  json['quantity'],
+      quantity:  json['quantity']??0,
       purchasePrice:json['purchasePrice']==null?0.0: double.parse(json['purchasePrice'].toString()),
       user: json["user"],
       image: json['image'],
       id: json["_id"],
+      hsn: json["hsn"],
+      
       createdAt: DateTime.parse(json["createdAt"]),
       v: json["__v"],
       gstRate: json['GSTRate'].toString(),
@@ -85,6 +89,7 @@ class Product {
       purchaseigst: json['purchaseIGST'].toString(),
       purchasesgst: json['purchaseSGST'].toString(),
       basePurchasePriceGst: json['basePurchasePrice'].toString(),
+     
       sellerName: json['sellerName'].toString(),
       batchNumber: json['batchNumber'] ?? null,
       expiryDate: json['expiryDate'] != null
@@ -94,7 +99,10 @@ class Product {
           
       }
 
-  Map<String, dynamic> toMap() => {
+  Map<String, dynamic> toMap() { 
+        print('hsn =$hsn');
+    return
+    {
         
         "name": name,
         "sellingPrice": sellingPrice,
@@ -102,6 +110,7 @@ class Product {
         "image": image,
         "quantity": quantity,
         "user": user,
+        "hsn":hsn,
         "_id": id,
         'purchasePrice': purchasePrice,
         "createdAt": createdAt?.toIso8601String(),
@@ -118,5 +127,8 @@ class Product {
         "sellerName": sellerName,
         "batchNumber": batchNumber,
         "expiryDate": expiryDate,
+        
       };
+
+  }
 }

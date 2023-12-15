@@ -47,6 +47,7 @@ class _CreatePurchaseState extends State<CreatePurchase> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Purchase'),
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),

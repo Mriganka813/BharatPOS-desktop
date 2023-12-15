@@ -42,8 +42,6 @@ class CustomTextField extends StatefulWidget {
 }
 
 class _CustomTextFieldState extends State<CustomTextField> {
-
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -59,6 +57,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           ),
         if (widget.label != null) const SizedBox(height: 5),
         TextFormField(
+          
           readOnly: widget.readonly,
           obscureText: widget.obsecureText,
           inputFormatters: widget.inputFormatters,
@@ -88,17 +87,23 @@ class _CustomTextFieldState extends State<CustomTextField> {
           },
           keyboardType: widget.inputType,
           decoration: InputDecoration(
-            prefixIcon: widget.prefixIcon,
-            hintText: widget.hintText,
-            suffixIcon: widget.suffixIcon,
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 2,
-              horizontal: 10,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),constraints: BoxConstraints(maxWidth: 400)
-          ),
+               fillColor:      widget.prefixIcon!=null? Color(0xffEAEAEA):Colors.transparent,
+              filled: true,
+              prefixIcon: widget.prefixIcon,
+              hintText: widget.hintText,
+              suffixIcon: widget.suffixIcon,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 2,
+                horizontal: 10,
+              ),
+              border:widget.prefixIcon==null? OutlineInputBorder(
+            
+                      borderRadius: BorderRadius.circular(10),
+                    ): OutlineInputBorder(
+                borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+              constraints: BoxConstraints(maxWidth: 400)),
         ),
       ],
     );

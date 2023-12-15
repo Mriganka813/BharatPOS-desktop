@@ -102,6 +102,8 @@ class _CustomTextFieldState extends State<CustomTextField2> {
           },
           keyboardType: widget.inputType,
           decoration: InputDecoration(
+               fillColor:      widget.prefixIcon!=null? Color(0xffEAEAEA):Colors.transparent,
+              filled: true,
             prefixIcon: widget.prefixIcon,
             hintText: widget.hintText,
             suffixIcon: widget.suffixIcon,
@@ -109,9 +111,13 @@ class _CustomTextFieldState extends State<CustomTextField2> {
               vertical: 2,
               horizontal: 10,
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+           border:widget.prefixIcon==null? OutlineInputBorder(
+            
+                      borderRadius: BorderRadius.circular(10),
+                    ): OutlineInputBorder(
+                borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
           ),
         ),
       ],

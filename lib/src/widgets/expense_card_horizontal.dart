@@ -31,21 +31,23 @@ class ExpenseCardHorizontal extends StatelessWidget {
         children: [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 5),
                   Text(
                     expense.header ?? "",
                     style: Theme.of(context).textTheme.headline6,
                   ),
-                  const SizedBox(height: 2),
+                      const SizedBox(height: 5),
+                  Divider(),
+                  const SizedBox(height: 5),
                   Text('Date : $date'),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 5),
                   Text('Time : $time'),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 5),
                   Row(
                     children: [
                       const Text('Net Amount :'),
@@ -55,11 +57,11 @@ class ExpenseCardHorizontal extends StatelessWidget {
                           )),
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 5),
                   Text('Payment Method : ${expense.modeOfPayment}'),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 5),
                   Text('${expense.description}'),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 5),
                 ],
               ),
             ),

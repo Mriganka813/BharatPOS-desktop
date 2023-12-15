@@ -45,6 +45,9 @@ class _CreateProductState extends State<CreateProduct> {
   TextEditingController sellingPriceController = TextEditingController();
   TextEditingController purchasePriceController = TextEditingController();
   TextEditingController gstratePriceController = TextEditingController();
+  TextEditingController baseSellingPriceController = TextEditingController();
+
+  int includedExcludedRadioButton = 1;
 
   ///
   @override
@@ -79,6 +82,14 @@ class _CreateProductState extends State<CreateProduct> {
       _formInput = productInput!;
     });
 
+    if (_formInput.GSTincluded != null) if (_formInput.GSTincluded!) {
+      includedExcludedRadioButton = 1;
+      print("it is 1");
+    } else {
+      includedExcludedRadioButton = 2;
+      print("it is 2");
+    }
+
     print("gstttt");
     print(_formInput.gstRate);
     print(_formInput.gst);
@@ -91,6 +102,8 @@ class _CreateProductState extends State<CreateProduct> {
       gstSwitch = true;
     }
     sellingPriceController.text = _formInput.sellingPrice as String;
+    print("testttt=${_formInput.sellingPrice}");
+
     purchasePriceController.text = _formInput.purchasePrice != "null"
         ? _formInput.purchasePrice as String
         : "";
@@ -98,6 +111,23 @@ class _CreateProductState extends State<CreateProduct> {
 
     gstratePriceController.text =
         _formInput.gstRate != "null" ? _formInput.gstRate as String : "";
+    purchasePriceController.text =
+        _formInput.purchasePrice != "null" && _formInput.purchasePrice != ""
+            ? _formInput.purchasePrice!
+            : "0";
+
+    baseSellingPriceController.text =
+        _formInput.baseSellingPriceGst != "null" &&
+                _formInput.baseSellingPriceGst != ""
+            ? _formInput.baseSellingPriceGst!
+            : "0";
+    if (_formInput.purchasePrice != "null" && _formInput.purchasePrice != "") {
+      purchasePriceController.text = _formInput.purchasePrice!;
+    } else {
+      purchasePriceController.text = "0";
+      _formInput.purchasePrice = "0";
+      setState(() {});
+    }
 
     calculate();
   }
@@ -187,24 +217,51 @@ class _CreateProductState extends State<CreateProduct> {
   }
 
   void calculate() {
-    print("gggggggggg");
     if (_formInput.gstRate != null && _formInput.gst) {
       int rate = int.parse(_formInput.gstRate!);
 
 // selling price
-      if (_formInput.sellingPrice != null) {
-        int oldsp = int.parse(_formInput.sellingPrice!);
+      if (_formInput.sellingPrice != null && includedExcludedRadioButton == 1) {
+        print("gggggggggg");
+        double oldsp = double.parse(_formInput.sellingPrice!);
         double basesp = (oldsp * 100 / (100 + rate));
+
         String salesgst = ((oldsp - basesp) / 2).toStringAsFixed(2);
         String salecgst = ((oldsp - basesp) / 2).toStringAsFixed(2);
         String saleigst = (oldsp - basesp).toStringAsFixed(2);
-
         setState(() {
           _formInput.salesgst = salesgst.toString();
           _formInput.salecgst = salecgst.toString();
           _formInput.saleigst = saleigst.toString();
           _formInput.baseSellingPriceGst = basesp.toStringAsFixed(2).toString();
         });
+
+        baseSellingPriceController.text = basesp.toStringAsFixed(2).toString();
+      }
+      if (includedExcludedRadioButton == 2) {
+        double bsp = double.parse(_formInput.baseSellingPriceGst!);
+        double gstRate = double.parse(_formInput.gstRate!);
+
+        double gstAmt = (bsp * (gstRate / 100));
+        _formInput.sellingPrice = (bsp + gstAmt).toString();
+
+        double oldsp = double.parse(_formInput.sellingPrice!);
+
+        String salesgst = ((oldsp - bsp) / 2).toStringAsFixed(2);
+        String salecgst = ((oldsp - bsp) / 2).toStringAsFixed(2);
+        String saleigst = (oldsp - bsp).toStringAsFixed(2);
+
+        _formInput.salesgst = salesgst.toString();
+        _formInput.salecgst = salecgst.toString();
+        _formInput.saleigst = saleigst.toString();
+
+        print(
+            "Seeling price changed by changing bsp:${_formInput.sellingPrice}");
+
+        sellingPriceController.text =
+            (bsp + gstAmt).toStringAsFixed(2).toString();
+
+        setState(() {});
       }
 
 // purchase price
@@ -240,6 +297,7 @@ class _CreateProductState extends State<CreateProduct> {
     return Scaffold(
         appBar: AppBar(
           title: const Text('Create Product'),
+          centerTitle: true,
         ),
         body: SingleChildScrollView(
             padding: const EdgeInsets.all(10.0),
@@ -308,44 +366,42 @@ class _CreateProductState extends State<CreateProduct> {
                       ),
                     ),
                     const Divider(color: Colors.transparent),
-                    Row(
-                      children: [
-                        CustomTextField(
-                          label: "Name",
-                          value: _formInput.name,
-                          onChanged: (e) {
-                            _formInput.name = e;
-                          },
-                        ),
-                        const VerticalDivider(color: Colors.transparent),
-                        CustomTextField(
-                          label: "Batch number",
-                          value: _formInput.batchNumber,
-                          onChanged: (e) {
-                            _formInput.batchNumber = e;
-                          },
-                        ),
-                      ],
+                    CustomTextField(
+                      label: "Name",
+                      value: _formInput.name,
+                      onChanged: (e) {
+                        _formInput.name = e;
+                      },
+                    ),
+                    const Divider(color: Colors.transparent),
+                    CustomTextField(
+                      label: "Batch number",
+                      value: _formInput.batchNumber,
+                      onChanged: (e) {
+                        _formInput.batchNumber = e;
+                      },
                     ),
                     const Divider(color: Colors.transparent),
                     Row(
                       children: [
-                        Container(
-                          width: 400,
+                        Expanded(
                           child: CustomTextField2(
+                            readonly:
+                                includedExcludedRadioButton == 2 ? true : false,
                             controller: sellingPriceController,
                             label: "Selling Price",
                             value: _formInput.sellingPrice,
                             inputType: TextInputType.number,
                             onChanged: (e) {
-                              if (e.isNotEmpty) {
+                              if (e.isNotEmpty &&
+                                  includedExcludedRadioButton == 1) {
                                 _formInput.sellingPrice = e;
                                 calculate();
                               }
                             },
                             validator: (e) {
-                              if (e!.contains(".") || e.contains(",")) {
-                                return '(. ,) characters are not allowed';
+                              if (e!.contains(",")) {
+                                return '(,) characters are not allowed';
                               }
                               if (e.isEmpty) {
                                 return "Please enter selling price";
@@ -355,14 +411,14 @@ class _CreateProductState extends State<CreateProduct> {
                           ),
                         ),
                         const VerticalDivider(color: Colors.transparent),
-                        Container(
-                          width: 400,
+                        Expanded(
                           child: CustomTextField2(
                             controller: purchasePriceController,
                             label: "Purchase Price",
-                            value: _formInput.purchasePrice != "null"
+                            value: _formInput.purchasePrice != "null" &&
+                                    _formInput.purchasePrice != ""
                                 ? _formInput.purchasePrice
-                                : "",
+                                : "0",
                             inputType: TextInputType.number,
                             onChanged: (e) {
                               _formInput.purchasePrice = e;
@@ -371,8 +427,8 @@ class _CreateProductState extends State<CreateProduct> {
                               print(gstSwitch);
                             },
                             validator: (e) {
-                              if (e!.contains(".") || e.contains(",")) {
-                                return '(. ,) characters are not allowed';
+                              if (e!.contains(",")) {
+                                return '(,) characters are not allowed';
                               }
                               return null;
                             },
@@ -418,31 +474,65 @@ class _CreateProductState extends State<CreateProduct> {
                       visible: gstSwitch,
                       child: Column(
                         children: [
-                          const Divider(color: Colors.transparent),
+                          const Divider(color: Color.fromRGBO(0, 0, 0, 0)),
                           Row(
                             children: [
-                              Container(
-                                width: 400,
-                                child: CustomTextField2(
-                                  controller: gstratePriceController,
-                                  label: "GST Rate (%)",
-                                  value: _formInput.gstRate != "null"
-                                      ? _formInput.gstRate
-                                      : "0",
-                                  inputType: TextInputType.number,
-                                  onChanged: (e) {
-                                    _formInput.gstRate = e;
+                              RadioMenuButton(
+                                  value: 1,
+                                  groupValue: includedExcludedRadioButton,
+                                  onChanged: (val) {
+                                    _formInput.GSTincluded = true;
+                                    sellingPriceController.text =
+                                        baseSellingPriceController.text;
+                                    _formInput.sellingPrice =
+                                        baseSellingPriceController.text;
 
-                                    setState(() {});
+                                    baseSellingPriceController.text = "";
+                                    setState(() {
+                                      includedExcludedRadioButton = 1;
+                                    });
                                     calculate();
                                   },
-                                  validator: (e) {
-                                    if (!gstSwitch && e == "")
-                                      return "Enter Rate";
+                                  child: Text("Included")),
+                              RadioMenuButton(
+                                  value: 2,
+                                  groupValue: includedExcludedRadioButton,
+                                  onChanged: (val) {
+                                    _formInput.GSTincluded = false;
+                                    baseSellingPriceController.text =
+                                        sellingPriceController.text;
+                                    _formInput.baseSellingPriceGst =
+                                        sellingPriceController.text;
+                                    //  sellingPriceController.text="";
+
+                                    setState(() {
+                                      includedExcludedRadioButton = 2;
+                                    });
+                                    calculate();
                                   },
-                                ),
-                              ),
+                                  child: Text("Excluded"))
                             ],
+                          ),
+                          SizedBox(
+                            height: 50,
+                          ),
+
+                          CustomTextField2(
+                            controller: gstratePriceController,
+                            label: "GST Rate (%)",
+                            value: _formInput.gstRate != "null"
+                                ? _formInput.gstRate
+                                : "0",
+                            inputType: TextInputType.number,
+                            onChanged: (e) {
+                              _formInput.gstRate = e;
+
+                              setState(() {});
+                              calculate();
+                            },
+                            validator: (e) {
+                              if (!gstSwitch && e == "") return "Enter Rate";
+                            },
                           ),
                           const Divider(color: Colors.transparent),
                           Row(
@@ -485,95 +575,85 @@ class _CreateProductState extends State<CreateProduct> {
                             ],
                           ),
                           // const Divider(color: Colors.transparent),
+                          CustomTextField2(
+                            controller: baseSellingPriceController,
+                            readonly:
+                                includedExcludedRadioButton == 1 ? true : false,
+                            label: "Base Selling Price",
+                            value: _formInput.baseSellingPriceGst == "null"
+                                ? "0"
+                                : _formInput.baseSellingPriceGst,
+                            onChanged: (e) {
+                              if (includedExcludedRadioButton == 2) {
+                                _formInput.baseSellingPriceGst = e;
 
+                                setState(() {});
+                                calculate();
+                              }
+                            },
+                            validator: (e) => null,
+                          ),
                           const Divider(color: Colors.transparent),
-                          Row(
-                            children: [
-                              Container(
-                                width: 400,
-                                child: CustomTextField(
-                                  readonly: true,
-                                  label: "Base Purchase Price",
-                                  value:
-                                      _formInput.basePurchasePriceGst == "null"
-                                          ? "0"
-                                          : _formInput.basePurchasePriceGst,
-                                  onChanged: (e) {
-                                    _formInput.basePurchasePriceGst = e;
-                                  },
-                                  validator: (e) => null,
-                                ),
-                              ),
-                              const VerticalDivider(color: Colors.transparent),
-                              Container(
-                                width: 400,
-                                child: CustomTextField(
-                                  readonly: true,
-                                  label: "Base Selling Price",
-                                  value:
-                                      _formInput.baseSellingPriceGst == "null"
-                                          ? "0"
-                                          : _formInput.baseSellingPriceGst,
-                                  onChanged: (e) {
-                                    _formInput.baseSellingPriceGst = e;
-                                  },
-                                  validator: (e) => null,
-                                ),
-                              ),
-                            ],
+                          CustomTextField(
+                            readonly: true,
+                            label: "Base Purchase Price",
+                            value: _formInput.basePurchasePriceGst == "null"
+                                ? "0"
+                                : _formInput.basePurchasePriceGst,
+                            onChanged: (e) {
+                              _formInput.basePurchasePriceGst = e;
+                            },
+                            validator: (e) => null,
                           ),
                         ],
                       ),
                     ),
                     const Divider(color: Colors.transparent),
-                    Row(
-                      children: [
-                        Container(
-                          width: 400,
-                          child: CustomDatePicker(
-                            label: 'Expiry Date',
-                            hintText: 'Select expiry date',
-                            onChanged: (DateTime value) {
-                              setState(() {
-                                _formInput.expirydate = value;
-                                print(value);
-                              });
-                            },
-                            onSave: (DateTime? value) {},
-                            value: _formInput.expirydate != null
-                                ? _formInput.expirydate
-                                : null,
-                            validator: (DateTime? value) => null,
-                            firstDate: DateTime.now(),
-                            lastDate:
-                                DateTime.now().add(Duration(days: 365 * 3)),
-                          ),
-                        ),
-                        const VerticalDivider(color: Colors.transparent),
-                        Container(
-                          width: 400,
-                          child: CustomTextField(
-                              label: "Quantity",
-                              value: _formInput.quantity != null
-                                  ? _formInput.quantity
-                                  : "",
-                              inputType: TextInputType.number,
-                              onChanged: (e) {
-                                _formInput.quantity = e;
-                              },
-                              validator: (e) {
-                                if (e!.contains(".") || e.contains(",")) {
-                                  return '(. ,) characters are not allowed';
-                                }
-
-                                if(e.isNotEmpty)
-                                if (int.parse(e) > 99999) {
-                                  return 'Maximum value is 99999';
-                                }
-                                return null;
-                              }),
-                        ),
-                      ],
+                    CustomDatePicker(
+                      label: 'Expiry Date',
+                      hintText: 'Select expiry date',
+                      onChanged: (DateTime value) {
+                        setState(() {
+                          _formInput.expiryDate = value;
+                          print(value);
+                        });
+                      },
+                      onSave: (DateTime? value) {},
+                      value: _formInput.expiryDate != null
+                          ? _formInput.expiryDate
+                          : null,
+                      validator: (DateTime? value) => null,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(Duration(days: 365 * 3)),
+                    ),
+                    const Divider(color: Colors.transparent),
+                    CustomTextField(
+                      label: "HSN",
+                      value: _formInput.hsn == "null" ? " " : _formInput.hsn,
+                      onChanged: (e) {
+                        _formInput.hsn = e;
+                      },
+                      validator: (e) => null,
+                    ),
+                    const Divider(color: Colors.transparent),
+                    CustomTextField(
+                      label: "Quantity",
+                      value: _formInput.quantity != null
+                          ? _formInput.quantity
+                          : "",
+                      inputType: TextInputType.number,
+                      onChanged: (e) {
+                        _formInput.quantity = e;
+                      },
+                      validator: (e) {
+                        if (e!.contains(".") || e.contains(",")) {
+                          return '(. ,) characters are not allowed';
+                        }
+                        if (e.isNotEmpty) if (int.parse(e) > 99999) {
+                          return 'Maximum value is 99999';
+                        }
+                        return null;
+                      },
                     ),
                     const Divider(color: Colors.transparent),
                     Row(
@@ -605,8 +685,6 @@ class _CreateProductState extends State<CreateProduct> {
                     CustomButton(
                       title: "Save",
                       onTap: () {
-
-                      
                         _formKey.currentState?.save();
 
                         print(_formInput.purchasePrice);
@@ -619,16 +697,12 @@ class _CreateProductState extends State<CreateProduct> {
 
                         if (_formKey.currentState?.validate() ?? false) {
                           print(_formInput.available);
-                          print(_formInput.expirydate);
+                          print(_formInput.expiryDate);
                           print(_formInput.batchNumber);
 
-                        
-                          print( "quantity:${_formInput.quantity}");
-
-                         _productCubit.createProduct(_formInput);
+                          _productCubit.createProduct(_formInput);
                           print("Barcode:");
                           print(_formInput.barCode);
-
                           Navigator.pop(context);
                         }
                       },

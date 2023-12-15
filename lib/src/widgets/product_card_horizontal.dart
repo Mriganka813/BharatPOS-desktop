@@ -338,12 +338,14 @@ class ProductCardPurchase extends StatelessWidget {
   final VoidCallback onAdd;
   final VoidCallback onDelete;
   final String? type;
-  const ProductCardPurchase(
+  String discount;
+  ProductCardPurchase(
       {Key? key,
       required this.product,
       required this.onAdd,
       required this.productQuantity,
       required this.onDelete,
+      this.discount="",
       this.type})
       : super(key: key);
 
@@ -500,8 +502,8 @@ class ProductCardPurchase extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Discount @0%'),
-                        Text('₹ 0'),
+                         Text('Discount @0%'),
+                        Text('₹ ${discount}'),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -515,11 +517,11 @@ class ProductCardPurchase extends StatelessWidget {
                         Text('Item Total'),
                         type == "sale"
                             ? Text(
-                                '₹ ${SellingPrice}',
+                                '₹ ${SellingPrice.toStringAsFixed(2)}',
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               )
                             : Text(
-                                '₹ ${PurchasePrice}',
+                                '₹ ${PurchasePrice.toStringAsFixed(2)}',
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               )
                       ],

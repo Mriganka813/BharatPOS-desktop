@@ -156,7 +156,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
               //         (curr.product?.sellingPrice ?? 1.0)) +
               //     acc;
             },
-          ).toString();
+          ).toStringAsFixed(2);
   }
 
   ///
@@ -443,6 +443,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text('Billing orders'),
+          centerTitle: true,
         ),
         body: (widget.orderType == OrderType.sale &&
                     provider.salesBilling.length == 0) ||

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shopos/src/models/user.dart';
+import 'package:shopos/src/pages/AboutOptionPage.dart';
+import 'package:shopos/src/pages/CreateSalesReturn.dart';
+import 'package:shopos/src/pages/SwitchAccountPage.dart';
 import 'package:shopos/src/pages/billing_list.dart';
 import 'package:shopos/src/pages/change_password.dart';
 import 'package:shopos/src/pages/checkout.dart';
@@ -82,7 +85,8 @@ class MyApp extends StatelessWidget {
               case SearchProductListScreen.routeName:
                 return SearchProductListScreen(  args: settings.arguments as ProductListPageArgs);
 
-          
+           case AboutOptionPage.routeName:
+                return AboutOptionPage();
               case ReportsPage.routeName:
                 return const ReportsPage();
               case ExpensePage.routeName:
@@ -105,6 +109,12 @@ class MyApp extends StatelessWidget {
                 return CheckoutPage(
                   args: settings.arguments as CheckoutPageArgs,
                 );
+                 case CreateSaleReturn.routeName:
+                return CreateSaleReturn(
+                 
+                );
+                 case SwitchAccountPage.rountName:
+                return SwitchAccountPage();
               case PartyCreditPage.routeName:
                 return PartyCreditPage(
                   args: settings.arguments as ScreenArguments,

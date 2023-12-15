@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:new_version/new_version.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shopos/src/blocs/auth/auth_cubit.dart';
 import 'package:shopos/src/config/colors.dart';
 import 'package:shopos/src/pages/home.dart';
@@ -36,6 +37,8 @@ class _SignInPageState extends State<SignInPage> {
           context: context, versionStatus: status, allowDismissal: false);
     }
   }
+
+
 
   @override
   void dispose() {
@@ -223,6 +226,7 @@ class _SignInPageState extends State<SignInPage> {
                                   }
                                   _authCubit.signIn(
                                       _email, _password, _rememberMe);
+                              
                                 },
                                 title: 'Login',
                               ),

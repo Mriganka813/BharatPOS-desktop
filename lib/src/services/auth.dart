@@ -66,8 +66,13 @@ class AuthService {
     if ((response.statusCode ?? 400) > 300) {
       return null;
     }
+       print('res = ${response.data}');
     await saveCookie(response);
     return User.fromMap(response.data['user']);
+  }
+  Future<void> signOut() async {
+    await clearCookies();
+    //await fb.FirebaseAuth.instance.signOut();
   }
 
   ///password change request
