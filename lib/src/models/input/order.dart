@@ -1,29 +1,28 @@
-import 'dart:ffi';
-
 import 'package:shopos/src/models/product.dart';
 import 'package:shopos/src/pages/checkout.dart';
 
 import '../party.dart';
 import '../user.dart';
 
-class OrderInput {
-  OrderInput({
-    this.id="-1",
-    this.orderItems,
-    this.modeOfPayment,
+class Order {
+  Order(
+      {this.id = "",
+      this.orderItems,
+      this.total,
+      this.modeOfPayment,
+      this.party,
+      this.user,
+      this.createdAt,
+      this.reciverName,
+      this.businessName,
+      this.businessAddress,
+      this.gst,
+      this.invoiceNum,
+      this.tableNo = "-1"});
 
-    this.party,
-    this.user,
-    this.createdAt,
-    this.reciverName,
-    this.businessName,
-    this.businessAddress,
-    this.gst,
-    this.tableNo="-1"
-  });
-
-  String ?id;
+  String? id;
   List<OrderItemInput>? orderItems;
+  String? total;
   String? modeOfPayment;
   Party? party;
   User? user;
@@ -32,28 +31,27 @@ class OrderInput {
   String? businessName;
   String? businessAddress;
   String? gst;
+  String? invoiceNum;
   String tableNo;
 
-  factory OrderInput.fromMap(Map<String, dynamic> json) => OrderInput(
-        id:json["id"],
+  factory Order.fromMap(Map<String, dynamic> json) => Order(
         orderItems: List<OrderItemInput>.from(
           json["orderItems"].map(
             (x) => OrderItemInput.fromMap(x),
           ),
         ),
-        modeOfPayment: json["modeOfPayment"],
-        party: json["party"],
-        user: json["user"],
-        createdAt: json["createdAt"],
-        reciverName: json['reciverName'],
-        businessName: json['businessName'],
-        businessAddress: json['businessAddress'],
-        gst: json['gst'],
-        tableNo: json['tableNo']
+        modeOfPayment: json["modeOfPayment"] ?? "",
+        id: " ",
+        party: json["party"] is Map ? Party.fromMap(json["party"]) : null,
+        user: json["user"] is Map ? User.fromMMap(json["user"]) : null,
+        createdAt: json["createdAt"] == null
+            ? DateTime.now()
+            : DateTime.parse(json["createdAt"]),
+        total: json['total'].toString() ?? " ",
       );
 
   Map<String, dynamic> toMap(OrderType type) => {
-        "id":id,
+        "id": id,
         "orderItems": orderItems
             ?.map((e) =>
                 type == OrderType.sale ? e.toSaleMap() : e.toPurchaseMap())
@@ -66,40 +64,42 @@ class OrderInput {
         "businessName": businessName,
         "businessAddress": businessAddress,
         "gst": gst,
-        "tableNo":tableNo
+        "tableNo": tableNo
       };
 }
 
 class OrderItemInput {
-  OrderItemInput({
-    this.price = 0,
-    this.quantity = 0,
-    this.product,
-    this.saleSGST,
-    this.saleCGST,
-    this.baseSellingPrice,
-    this.saleIGST,
-    this.discountAmt = "0",
-  });
+  OrderItemInput(
+      {this.price = 0,
+      this.quantity = 0,
+      this.product,
+      this.saleSGST,
+      this.saleCGST,
+      this.baseSellingPrice,
+      this.saleIGST,
+      this.discountAmt = "0",
+      this.originalbaseSellingPrice = ""});
 
- double? price;
+  double? price;
   int quantity;
   Product? product;
   String? saleSGST;
   String? saleCGST;
   String? baseSellingPrice;
   String? saleIGST;
-    String discountAmt = "0";
+  String discountAmt = "0";
+  String originalbaseSellingPrice = "";
 
   factory OrderItemInput.fromMap(Map<String, dynamic> json) => OrderItemInput(
-        price: double.parse(json["price"].toString()) ,
+        price: double.parse(json['price'].toString()) ?? 0,
         quantity: json["quantity"],
-        product: json["product"],
+        product:
+            json["product"] is Map ? Product.fromMap(json["product"]) : null,
         saleCGST: json["saleCGST"].toString(),
         saleSGST: json["saleSGST"].toString(),
         baseSellingPrice: json["baseSellingPrice"].toString(),
         saleIGST: json["saleIGST"].toString(),
-             discountAmt: json['discountAmt'].toString(),
+        discountAmt: json['discountAmt'].toString(),
       );
 
   Map<String, dynamic> toSaleMap() => {
@@ -112,18 +112,20 @@ class OrderItemInput {
             ? '0'
             : product!.baseSellingPriceGst,
         "saleIGST": product?.saleigst == 'null' ? '0' : product!.saleigst,
-            "discountAmt": discountAmt,
-              "originalbaseSellingPrice":
-            (double.parse(product!.baseSellingPriceGst!) +
-                    double.parse(discountAmt!))
-                .toString()
+        "discountAmt": discountAmt,
+        "originalbaseSellingPrice": (double.parse(
+                    product!.baseSellingPriceGst! == "null"
+                        ? '0'
+                        : product!.baseSellingPriceGst!) +
+                double.parse(discountAmt!))
+            .toString()
       };
-       Map<String, dynamic> toSaleReturnMap() => {
+
+  Map<String, dynamic> toSaleReturnMap() => {
         "price": (product?.sellingPrice ?? 1),
         "quantity": quantity,
         "product": product?.id,
         "_id": "657442744ee866a10928da95",
-     
       };
   Map<String, dynamic> toPurchaseMap() => {
         "price": (product?.purchasePrice ?? 1),

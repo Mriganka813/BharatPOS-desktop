@@ -6,7 +6,7 @@ import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:provider/provider.dart';
 import 'package:shopos/src/blocs/Kot/KotCubit.dart';
 import 'package:shopos/src/models/KotModel.dart';
-import 'package:shopos/src/models/input/order_input.dart';
+import 'package:shopos/src/models/input/order.dart';
 import 'package:shopos/src/models/product.dart';
 import 'package:shopos/src/pages/billing_list.dart';
 import 'package:shopos/src/pages/checkout.dart';
@@ -43,7 +43,7 @@ class CreateSale extends StatefulWidget {
 }
 
 class _CreateSaleState extends State<CreateSale> {
-  late OrderInput _orderInput;
+  late Order _Order;
   // late final AudioCache _audioCache;
   List<OrderItemInput>? newAddedItems = [];
   List<Product> Kotlist = [];
@@ -56,7 +56,7 @@ class _CreateSaleState extends State<CreateSale> {
     // _audioCache = AudioCache(
     //   fixedPlayer: AudioPlayer()..setReleaseMode(ReleaseMode.STOP),
     // );
-    _orderInput = OrderInput(
+    _Order = Order(
       id: widget.args == null ? "" : widget.args!.id,
       orderItems: widget.args == null ? [] : widget.args?.editOrders,
     );
@@ -120,11 +120,11 @@ class _CreateSaleState extends State<CreateSale> {
 
  
     DateTime date = DateTime.now();
-    print("value of orderid=${ _orderInput.id}");
-    _orderInput.id=_orderInput.id==""?date.toString():_orderInput.id;
+    print("value of orderid=${ _Order.id}");
+    _Order.id=_Order.id==""?date.toString():_Order.id.toString();
     provider.addSalesBill(
-      _orderInput,
-      _orderInput.id==""?date.toString():_orderInput.id!,
+      _Order,
+      _Order.id==""?date.toString():_Order.id!,
     );
     print("idddddddd=$date");
     List<KotModel> kotItemlist = [];
@@ -133,7 +133,7 @@ class _CreateSaleState extends State<CreateSale> {
     print(Kotlist);
     Kotlist.forEach((element) {
       var model = KotModel(
-         _orderInput.id==""?date.toString():_orderInput.id!, element.name!, tempMap['${element.id}'], "no");
+         _Order.id==""?date.toString():_Order.id!, element.name!, tempMap['${element.id}'], "no");
       kotItemlist.add(model);
     });
 
@@ -143,7 +143,7 @@ class _CreateSaleState extends State<CreateSale> {
 
   @override
   Widget build(BuildContext context) {
-    final _orderItems = _orderInput.orderItems ?? [];
+    final _orderItems = _Order.orderItems ?? [];
     final provider = Provider.of<Billing>(context, listen: false);
     
     return Scaffold(
@@ -283,27 +283,27 @@ class _CreateSaleState extends State<CreateSale> {
                             onAdd: () {
                               print("toched");
                               Kotlist.add(
-                                  _orderInput.orderItems![index].product!);
+                                  _Order.orderItems![index].product!);
                               _onAdd(_orderItem);
                               setState(() {});
                             },
                             onDelete: () {
                               context.read<KotCubit>().deleteKot(
-                                  _orderInput.id!,
-                                  _orderInput
+                                  _Order.id.toString(),
+                                  _Order
                                       .orderItems![index].product!.name!);
 
                               setState(
                                 () {
                                   _orderItem.quantity == 1
-                                      ? _orderInput.orderItems?.removeAt(index)
+                                      ? _Order.orderItems?.removeAt(index)
                                       : _orderItem.quantity -= 1;
                                 },
                               );
 
                               for (int i = 0; i < Kotlist.length; i++) {
                                 if (Kotlist[i].id ==
-                                    _orderInput
+                                    _Order
                                         .orderItems![index].product!.id) {
                                   Kotlist.removeAt(i);
 
@@ -332,7 +332,7 @@ class _CreateSaleState extends State<CreateSale> {
                       arguments: ProductListPageArgs(
                           isSelecting: true,
                           orderType: OrderType.sale,
-                          productlist: _orderInput.orderItems!),
+                          productlist: _Order.orderItems!),
                     );
                     if (result == null && result is! List<Product>) {
                       return;
@@ -351,7 +351,7 @@ class _CreateSaleState extends State<CreateSale> {
                             ))
                         .toList();
 
-                    var tempOrderitems = _orderInput.orderItems;
+                    var tempOrderitems = _Order.orderItems;
 
                     for (int i = 0; i < tempOrderitems!.length; i++) {
                       for (int j = 0; j < orderItems.length; j++) {
@@ -368,10 +368,10 @@ class _CreateSaleState extends State<CreateSale> {
                       }
                     }
 
-                    _orderInput.orderItems = tempOrderitems;
+                    _Order.orderItems = tempOrderitems;
 
                     setState(() {
-                      _orderInput.orderItems?.addAll(orderItems);
+                      _Order.orderItems?.addAll(orderItems);
                       newAddedItems!.addAll(orderItems);
                     });
                   },
@@ -399,7 +399,7 @@ class _CreateSaleState extends State<CreateSale> {
                     //       CheckoutPage.routeName,
                     //       arguments: CheckoutPageArgs(
                     //         invoiceType: OrderType.sale,
-                    //         orderInput: _orderInput,
+                    //         Order: _Order,
                     //       ),
                     //     );
                     //   }
@@ -445,20 +445,20 @@ class _CreateSaleState extends State<CreateSale> {
       final product = Product.fromMap(res.data['inventory']);
       final order = OrderItemInput(product: product, quantity: 1, price: 0);
       final hasProduct =
-          _orderInput.orderItems?.any((e) => e.product?.id == product.id);
+          _Order.orderItems?.any((e) => e.product?.id == product.id);
 
       /// Check if product already exists
       if (hasProduct ?? false) {
-        final i = _orderInput.orderItems
+        final i = _Order.orderItems
             ?.indexWhere((e) => e.product?.id == product.id);
 
         /// Increase quantity if product already exists
         setState(() {
-          _orderInput.orderItems![i!].quantity += 1;
+          _Order.orderItems![i!].quantity += 1;
         });
       } else {
         setState(() {
-          _orderInput.orderItems?.add(order);
+          _Order.orderItems?.add(order);
         });
       }
     } catch (_) {}

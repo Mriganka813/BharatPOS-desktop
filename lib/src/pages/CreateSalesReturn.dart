@@ -4,7 +4,7 @@ import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:provider/provider.dart';
 import 'package:shopos/src/models/KotModel.dart';
-import 'package:shopos/src/models/input/order_input.dart';
+import 'package:shopos/src/models/input/order.dart';
 
 import 'package:shopos/src/models/product.dart';
 import 'package:shopos/src/pages/billing_list.dart';
@@ -42,7 +42,7 @@ class CreateSaleReturn extends StatefulWidget {
 }
 
 class _CreateSaleReturnState extends State<CreateSaleReturn> {
-  late OrderInput _orderInput;
+  late Order _Order;
   late final AudioCache _audioCache;
   List<OrderItemInput>? newAddedItems = [];
   List<Product> Kotlist = [];
@@ -55,7 +55,7 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
     //   fixedPlayer: AudioPlayer()..setReleaseMode(ReleaseMode.STOP),
     // );
 
-    _orderInput = OrderInput(
+    _Order = Order(
       id:"0",
       orderItems:  [] ,
     );
@@ -66,7 +66,7 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
   List<String> sellingPriceListForShowinDiscountTextBOX = [];
 
   void init() {
-    _orderInput.orderItems!.forEach((element) {
+    _Order.orderItems!.forEach((element) {
       sellingPriceListForShowinDiscountTextBOX
           .add(element.product!.baseSellingPriceGst!);
     });
@@ -135,7 +135,7 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
  
   @override
   Widget build(BuildContext context) {
-    final _orderItems = _orderInput.orderItems ?? [];
+    final _orderItems = _Order.orderItems ?? [];
     final provider = Provider.of<Billing>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
@@ -271,7 +271,7 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                             onAdd: () {
                               print("toched");
                               Kotlist.add(
-                                  _orderInput.orderItems![index].product!);
+                                  _Order.orderItems![index].product!);
                               _onAdd(_orderItem);
                               setState(() {});
                             },
@@ -281,14 +281,14 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                               setState(
                                 () {
                                   _orderItem.quantity == 1
-                                      ? _orderInput.orderItems?.removeAt(index)
+                                      ? _Order.orderItems?.removeAt(index)
                                       : _orderItem.quantity -= 1;
                                 },
                               );
 
                               for (int i = 0; i < Kotlist.length; i++) {
                                 if (Kotlist[i].id ==
-                                    _orderInput
+                                    _Order
                                         .orderItems![index].product!.id) {
                                   Kotlist.removeAt(i);
 
@@ -317,7 +317,7 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                             arguments: ProductListPageArgs(
                                 isSelecting: true,
                                 orderType: OrderType.saleReturn,
-                                productlist: _orderInput.orderItems!),
+                                productlist: _Order.orderItems!),
                           );
                           if (result == null && result is! List<Product>) {
                             return;
@@ -341,7 +341,7 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                                   ))
                               .toList();
 
-                          var tempOrderitems = _orderInput.orderItems;
+                          var tempOrderitems = _Order.orderItems;
 
                           for (int i = 0; i < tempOrderitems!.length; i++) {
                             for (int j = 0; j < orderItems.length; j++) {
@@ -358,10 +358,10 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                             }
                           }
 
-                          _orderInput.orderItems = tempOrderitems;
+                          _Order.orderItems = tempOrderitems;
 
                           setState(() {
-                            _orderInput.orderItems?.addAll(orderItems);
+                            _Order.orderItems?.addAll(orderItems);
                             newAddedItems!.addAll(orderItems);
                           });
                         },
@@ -373,8 +373,8 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
 
                           // insertToDatabase(provider);
                           provider.addSalesBill(
-                            _orderInput,
-                            _orderInput.id.toString(),
+                            _Order,
+                            _Order.id.toString(),
                           );
                         }
 
@@ -384,7 +384,7 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                       arguments: CheckoutPageArgs(
                         invoiceType: OrderType.saleReturn,
                         orderId: "0",
-                        orderInput: _orderInput
+                        order: _Order
                       ),
                     );
 
@@ -428,20 +428,20 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
       final product = Product.fromMap(res.data['inventory']);
       final order = OrderItemInput(product: product, quantity: 1, price: 0);
       final hasProduct =
-          _orderInput.orderItems?.any((e) => e.product?.id == product.id);
+          _Order.orderItems?.any((e) => e.product?.id == product.id);
 
       /// Check if product already exists
       if (hasProduct ?? false) {
-        final i = _orderInput.orderItems
+        final i = _Order.orderItems
             ?.indexWhere((e) => e.product?.id == product.id);
 
         /// Increase quantity if product already exists
         setState(() {
-          _orderInput.orderItems![i!].quantity += 1;
+          _Order.orderItems![i!].quantity += 1;
         });
       } else {
         setState(() {
-          _orderInput.orderItems?.add(order);
+          _Order.orderItems?.add(order);
         });
       }
     } catch (_) {}

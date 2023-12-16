@@ -10,12 +10,12 @@ import 'package:pdf/widgets.dart';
 
 import 'package:shopos/src/models/user.dart';
 
-import '../models/input/order_input.dart';
+import '../models/input/order.dart';
 
 class PdfUI {
   static Future<void> generate80mmPdf({
     required User user,
-    required OrderInput order,
+    required Order order,
     required List<String> headers,
     required DateTime date,
     required String invoiceNum,
@@ -284,7 +284,7 @@ class PdfUI {
 
   static Future<void> generate57mmPdf({
     required User user,
-    required OrderInput order,
+    required Order order,
     required List<String> headers,
     required DateTime date,
     required String invoiceNum,

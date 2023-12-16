@@ -7,7 +7,8 @@ import 'package:shopos/src/blocs/report/report_cubit.dart';
 import 'package:shopos/src/blocs/specific%20party/specific_party_cubit.dart';
 import 'package:shopos/src/blocs/specific%20party/specific_party_state.dart';
 import 'package:shopos/src/config/colors.dart';
-import 'package:shopos/src/models/order.dart';
+import 'package:shopos/src/models/input/order.dart';
+
 import 'package:shopos/src/models/party.dart';
 import 'package:shopos/src/models/user.dart';
 import 'package:shopos/src/services/global.dart';
@@ -76,11 +77,11 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
     for (int i = 0; i < o.length; i++) {
       for (int j = i + 1; j < o.length; j++) {
         print(o[i].createdAt.toString());
-        String dateString = o[i].createdAt!=""&& o[i].createdAt!="null" && o[i].createdAt!=" "?o[i].createdAt:DateTime.now().toString();
+        String dateString = o[i].createdAt!=""&& o[i].createdAt!="null" && o[i].createdAt!=" "?o[i].createdAt.toString():DateTime.now().toString();
 
         DateTime dateTimei = DateTime.parse(dateString);
 
-        String dateStringj = o[j].createdAt!=""&& o[j].createdAt!="null"&& o[j].createdAt!=" "?o[j].createdAt:DateTime.now().toString();
+        String dateStringj = o[j].createdAt!=""&& o[j].createdAt!="null"&& o[j].createdAt!=" "?o[j].createdAt.toString():DateTime.now().toString();
 
         DateTime dateTimej = DateTime.parse(dateStringj);
 
@@ -165,7 +166,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 15, bottom: 15),
-                          child: currentdate(order.createdAt!),
+                          child: currentdate(order.createdAt.toString()),
                         ),
                       ),
                       Align(
@@ -179,9 +180,9 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                             onLongPress: () async {
                               HapticFeedback.vibrate();
                               await openEditModal(
-                                  order.id!,
-                                  order.total!,
-                                  order.createdAt!,
+                                  order.id!.toString(),
+                                  /*order.total!*/100,
+                                  order.createdAt.toString(),
                                   order.modeOfPayment!,
                                   context);
                             },

@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shopos/src/blocs/Kot/KotCubit.dart';
 import 'package:shopos/src/models/KotModel.dart';
-import 'package:shopos/src/models/input/order_input.dart';
+import 'package:shopos/src/models/input/order.dart';
 import 'package:shopos/src/models/user.dart';
 
 import 'package:shopos/src/pages/checkout.dart';
@@ -30,7 +30,7 @@ enum billType {
 
 class BluetoothArgs {
   // final User user;
-  // final OrderInput order;
+  // final Order order;
   // final List<String> headers;
   // final DateTime date;
   // final String invoiceNum;
@@ -38,12 +38,12 @@ class BluetoothArgs {
   // final String subtotal;
   // final String gst;
 
-  final OrderInput orderInput;
+  final Order order;
   final DateTime dateTime;
   kotType type;
 
   BluetoothArgs(
-      {required this.orderInput, required this.dateTime, required this.type});
+      {required this.order, required this.dateTime, required this.type});
 }
 
 class BillingListScreen extends StatefulWidget {
@@ -58,14 +58,14 @@ class BillingListScreen extends StatefulWidget {
 }
 
 class _BillingListScreenState extends State<BillingListScreen> {
-  // List<OrderInput> _orderInput = [];
+  // List<Order> _Order = [];
   // List<OrderType> _orderType = [];
 
   // bool _isEdit = false;
 
-  // getAllOrderInputList() async {
+  // getAllOrderList() async {
   //   final provider = Provider.of<Billing>(context, listen: false);
-  //   _orderInput = provider.getAllOrderInput();
+  //   _Order = provider.getAllOrder();
   //   _orderType = provider.getAllOrderType();
   // }
 
@@ -74,7 +74,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
   TextEditingController tableNoController = TextEditingController();
   @override
   void initState() {
-    // getAllOrderInputList();
+    // getAllOrderList();
     super.initState();
     fetchNTPTime();
   }
@@ -324,7 +324,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
         invoiceNum: date);
   }
 
-  // void _viewSmallKot(OrderInput orderInput, int index, Billing provider) async {
+  // void _viewSmallKot(Order Order, int index, Billing provider) async {
   //   User user = User();
   //   final targetPath = await getExternalCacheDirectories();
   //   const targetFileName = "Invoice";
@@ -342,7 +342,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
   //   //     invoiceNum: date,
   //   //     user: user,
   //   //     date: DateTime.now(),
-  //   //     order: orderInput,
+  //   //     order: Order,
   //   //     headers: [
   //   //       "Invoice 0000000",
   //   //       "${DateFormat('dd/MM/yyyy').format(DateTime.now())}"
@@ -358,7 +358,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
 
   //   PdfUI.generate80mmPdf(
   //     user: user,
-  //     order: orderInput,
+  //     order: Order,
   //     headers: [
   //       "Invoice 0000000",
   //       "${DateFormat('dd/MM/yyyy').format(DateTime.now())}"
@@ -378,7 +378,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
   //   // }
   // }
 
-  _showNewDialog(OrderInput order) async {
+  _showNewDialog(Order order) async {
     if (order.tableNo == "-1") {
       tableNoController.text = "";
     } else {
@@ -405,7 +405,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                 order.tableNo = tableNoController.text;
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 prefs.setString('default', '57mm');
-                _view57mmPdf(list, order.id!);
+                _view57mmPdf(list, order.id.toString());
                 Navigator.of(ctx).pop();
               },
               title: Text('58mm'),
@@ -579,7 +579,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                         orderId: widget.orderType == OrderType.sale
                             ? provider.salesBilling.keys.toList()[index]
                             : provider.purchaseBilling.keys.toList()[index],
-                        orderInput: widget.orderType == OrderType.sale
+                        order: widget.orderType == OrderType.sale
                             ? provider.salesBilling.values.toList()[index]
                             : provider.purchaseBilling.values.toList()[index],
                       ),

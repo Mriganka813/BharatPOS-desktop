@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:shopos/src/models/input/order_input.dart';
+import 'package:shopos/src/models/input/order.dart';
 import 'package:shopos/src/models/user.dart';
 import 'package:shopos/src/pages/checkout.dart';
 import 'package:shopos/src/services/api_v1.dart';
@@ -7,12 +7,12 @@ import 'package:url_launcher/url_launcher.dart';
 
 class Openpdffrombackend {
   Future<void> getpdf(
-    OrderInput input,
+    Order input,
     User user,
     String invoiceNum,
   ) async {
     final Response response = await ApiV1Service.postRequest("/invoice", data: {
-      "orderInput": input.toMap(OrderType.sale),
+      "Order": input.toMap(OrderType.sale),
       "invoice": invoiceNum,
       "address": user.address,
       "companyName": user.businessName,

@@ -1,14 +1,14 @@
 import 'package:dio/dio.dart';
 import 'package:shopos/src/services/api_v1.dart';
 
-import '../models/input/order_input.dart';
+import '../models/input/order.dart';
 
 class PurchaseService {
   const PurchaseService();
 
   ///
   static Future<Response> createPurchaseOrder(
-      OrderInput orderItemInput, String date) async {
+      Order orderItemInput, String date) async {
     final response = await ApiV1Service.postRequest(
       '/purchaseOrder/new',
       data: {

@@ -3,7 +3,8 @@ import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shopos/src/blocs/specific%20party/specific_party_state.dart';
-import 'package:shopos/src/models/order.dart';
+import 'package:shopos/src/models/input/order.dart';
+
 import 'package:shopos/src/models/party.dart';
 import 'package:shopos/src/services/specific_party.dart';
 

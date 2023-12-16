@@ -74,7 +74,7 @@ class DatabaseHelper {
         ''');
 
         db.execute('''
-          CREATE TABLE OrderInput(
+          CREATE TABLE Order(
             id INTEGER PRIMARY KEY,
             
              
@@ -107,12 +107,12 @@ class DatabaseHelper {
          final dbHelper = DatabaseHelper();
     final db = await dbHelper.database;
     db.execute("drop table Kot");
-     db.execute("drop table OrderInput");
+     db.execute("drop table Order");
       db.execute("drop table OrderItemInput");
        db.execute("drop table Product");
   }
 
-  Future<int> InsertOrderInput(OrderInput input, Billing provider,
+  Future<int> InsertOrder(Order input, Billing provider,
       List<OrderItemInput> newAddeditems) async {
     final dbHelper = DatabaseHelper();
     final db = await dbHelper.database;
@@ -128,7 +128,7 @@ class DatabaseHelper {
         " "; //  given Empty String because we do not want to store it actually and its a Party type cant store it so replaced with  " "
     tempMap['user'] = " "; //   same reason as above
 
-    //First time all OrderInput will have id -1 when we enter that into table only it changes
+    //First time all Order will have id -1 when we enter that into table only it changes
     if (input.id == -1) {
       tempMap.remove(
           "id"); // It is removed becasue, when inserting the item it should autoincrement the id, but we give id in the map, it will ovverrite and id  will be -1
@@ -141,18 +141,18 @@ class DatabaseHelper {
       }
     });
 
-    //Insert if the OrderInput is new and else update
+    //Insert if the Order is new and else update
     if (input.id == -1) {
       await db.insert(
-        'OrderInput',
+        'Order',
         tempMap,
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     } else {
-      db.update('OrderInput', tempMap, where: 'id = ?', whereArgs: [input.id]);
+      db.update('Order', tempMap, where: 'id = ?', whereArgs: [input.id]);
     }
 
-    final result = await db.rawQuery('SELECT MAX(id) as maxId FROM OrderInput');
+    final result = await db.rawQuery('SELECT MAX(id) as maxId FROM Order');
     int highestId;
 
     //get Highest id that meanse id of the last entered item to store that in OrderitemInput as OIID
@@ -188,9 +188,9 @@ class DatabaseHelper {
 
       //case when we dont add new product but incresed the quatitiy so we just update
       //so when OrderItemsData is empty that means we increased or decresed the quatity oru such updates
-      //of current OrderInput
+      //of current Order
 
-      // so when  there is items in newOrderItemsData that means new OrderInput are there to input
+      // so when  there is items in newOrderItemsData that means new Order are there to input
       if (!newOrderItemsData.isEmpty) {
         await db.insert(
           'OrderItemInput',
@@ -208,10 +208,10 @@ class DatabaseHelper {
       await insertProductItems(data[i].product!);
     }
 
-    // this for loop is implemented to work in a situation like when we  both increase the qty and added new product to OrderInput
+    // this for loop is implemented to work in a situation like when we  both increase the qty and added new product to Order
     //so in above code we only insert the new items as newOrderItemInput have some contents( because variable data becomes newOrderIteminput)
 
-    // so in order to update all entire data of the OrderInput we do this
+    // so in order to update all entire data of the Order we do this
     for (int i = 0; i < curr.length; i++) {
       var map = curr[i].toSaleMap();
       map['product'] = curr[i].product!.id;
@@ -241,21 +241,21 @@ class DatabaseHelper {
     );
   }
 
-  Future<List<OrderInput>> getOrderItems() async {
+  Future<List<Order>> getOrderItems() async {
     final dbHelper = DatabaseHelper();
     final db = await dbHelper.database;
 
     final List<Map<String, dynamic>> OrderItemInputData =
         await db.query('OrderItemInput');
-    final List<Map<String, dynamic>> OrderInputData =
-        await db.query('OrderInput');
+    final List<Map<String, dynamic>> OrderData =
+        await db.query('Order');
 
-    List<OrderInput> list = [];
+    List<Order> list = [];
 
-    for (int j = 0; j < OrderInputData.length; j++) {
+    for (int j = 0; j < OrderData.length; j++) {
       Map<String, dynamic> t = {};
 
-      t.addAll(OrderInputData[j]);
+      t.addAll(OrderData[j]);
       print("data=");
       print(t);
 
@@ -264,8 +264,8 @@ class DatabaseHelper {
       for (int i = 0; i < OrderItemInputData.length; i++) {
         print(OrderItemInputData[i]['OIID'].toString() +
             "&" +
-            OrderInputData[j]['id'].toString());
-        if (OrderItemInputData[i]['OIID'] == OrderInputData[j]['id']) {
+            OrderData[j]['id'].toString());
+        if (OrderItemInputData[i]['OIID'] == OrderData[j]['id']) {
           plist.addAll(await convertListOfMaptoListofOrderItemInput(
               OrderItemInputData[i]));
         }
@@ -276,10 +276,10 @@ class DatabaseHelper {
       t['user'] = User();
       t['createdAt'] = DateTime.now();
 
-      OrderInput orderInputObject = OrderInput.fromMap(t);
-      orderInputObject.orderItems = plist;
+      Order OrderObject = Order.fromMap(t);
+      OrderObject.orderItems = plist;
 
-      list.add(orderInputObject);
+      list.add(OrderObject);
     }
 
     return list;
@@ -315,10 +315,10 @@ class DatabaseHelper {
     return list;
   }
 
-  deleteOrderItemInput(OrderInput input) async {
+  deleteOrderItemInput(Order input) async {
     final dbHelper = DatabaseHelper();
     final db = await dbHelper.database;
-    await db.delete("OrderInput", where: "id = ?", whereArgs: [input.id]);
+    await db.delete("Order", where: "id = ?", whereArgs: [input.id]);
     await db.delete("OrderItemInput", where: "OIID = ?", whereArgs: [input.id]);
   }
 
@@ -405,7 +405,7 @@ class DatabaseHelper {
   updateTableNo(String tablNo, int id) async {
     final dbHelper = DatabaseHelper();
     final db = await dbHelper.database;
-    db.execute("update OrderInput set tableNo='$tablNo' where id=$id");
+    db.execute("update Order set tableNo='$tablNo' where id=$id");
   }
 }
 

@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
-import 'package:shopos/src/models/order.dart';
-import 'package:shopos/src/models/order_item.dart';
+import 'package:shopos/src/models/input/order.dart';
+
 
 String reportsOrderTemplate({
   required List<Order> orders,
@@ -32,11 +32,11 @@ String reportsOrderTemplate({
     return orders
         .map((Order e) {
           return (e.orderItems ?? [])
-              .map((OrderItem item) {
+              .map((OrderItemInput item) {
                 final date = DateFormat('dd MMM, yyyy')
-                    .format(DateTime.tryParse(e.createdAt)!);
+                    .format(DateTime.tryParse(e.createdAt.toString())!);
                 final time = DateFormat('hh:mm a')
-                    .format(DateTime.tryParse(e.createdAt)!);
+                    .format(DateTime.tryParse(e.createdAt.toString())!);
                 return '<tr>'
                     '<td class="left">$date</td>'
                     '<td class="left">$time</td>'
@@ -60,7 +60,7 @@ String reportsOrderTemplate({
 
   ///
   String total() {
-    return orders.fold<double>(0, (acc, e) => acc += e.total ?? 0).toString();
+    return orders.fold<double>(0, (acc, e) => acc += e.total as int ?? 0).toString();
   }
 
   ///

@@ -5,7 +5,7 @@ import 'package:open_app_file/open_app_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/widgets.dart';
-import 'package:shopos/src/models/input/order_input.dart';
+import 'package:shopos/src/models/input/order.dart';
 import 'package:shopos/src/models/user.dart';
 import 'package:shopos/src/pages/checkout.dart';
 
@@ -13,7 +13,7 @@ Future<void> generatePdf({
   required String fileName,
   required String date,
   required String companyName,
-  required OrderInput orderInput,
+  required Order Order,
   required User user,
   String? totalPrice,
   required String gstType,
@@ -29,7 +29,7 @@ Future<void> generatePdf({
 
   final List<pw.Row> tableRows = [];
 
-  for (var data in orderInput.orderItems!) {
+  for (var data in Order.orderItems!) {
     double basePrice = 0.0;
     String gstrate = '';
 
@@ -164,34 +164,34 @@ Future<void> generatePdf({
                     style: TextStyle(font: ttf)),
               ]),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                if ((orderInput.reciverName != "" &&
-                        orderInput.reciverName != null) ||
-                    (orderInput.businessName != "" &&
-                        orderInput.businessName != null) ||
-                    (orderInput.businessAddress != "" &&
-                        orderInput.businessAddress != null) ||
-                    orderInput.gst != "" && orderInput.gst != null)
+                if ((Order.reciverName != "" &&
+                        Order.reciverName != null) ||
+                    (Order.businessName != "" &&
+                        Order.businessName != null) ||
+                    (Order.businessAddress != "" &&
+                        Order.businessAddress != null) ||
+                    Order.gst != "" && Order.gst != null)
                   pw.Text('Billed to:                        ',
                       style: TextStyle(
                         font: ttf,
                       )),
                 pw.SizedBox(height: 10),
-                if (orderInput.reciverName != "" &&
-                    orderInput.reciverName != null)
-                  pw.Text(orderInput.reciverName.toString(),
+                if (Order.reciverName != "" &&
+                    Order.reciverName != null)
+                  pw.Text(Order.reciverName.toString(),
                       style:
                           TextStyle(font: ttf, fontWeight: pw.FontWeight.bold)),
-                if (orderInput.businessName != "" &&
-                    orderInput.businessName != null)
-                  pw.Text(orderInput.businessName.toString(),
+                if (Order.businessName != "" &&
+                    Order.businessName != null)
+                  pw.Text(Order.businessName.toString(),
                       style:
                           TextStyle(font: ttf, fontWeight: pw.FontWeight.bold)),
-                if (orderInput.businessAddress != "" &&
-                    orderInput.businessAddress != null)
-                  pw.Text(orderInput.businessAddress.toString(),
+                if (Order.businessAddress != "" &&
+                    Order.businessAddress != null)
+                  pw.Text(Order.businessAddress.toString(),
                       style: TextStyle(font: ttf)),
-                if (orderInput.gst != "" && orderInput.gst != null)
-                  pw.Text(orderInput.gst.toString(),
+                if (Order.gst != "" && Order.gst != null)
+                  pw.Text(Order.gst.toString(),
                       style: TextStyle(font: ttf)),
               ])
             ]),

@@ -3,7 +3,8 @@ import 'dart:io';
 import 'package:flutter_html_to_pdf/flutter_html_to_pdf.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shopos/src/models/expense.dart';
-import 'package:shopos/src/models/order.dart';
+import 'package:shopos/src/models/input/order.dart';
+
 import 'package:shopos/src/pdf_templates/expense_template.dart';
 import 'package:shopos/src/pdf_templates/orders_template.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shopos/src/models/input/order_input.dart';
+import 'package:shopos/src/models/input/order.dart';
 import 'package:shopos/src/models/product.dart';
 import 'package:shopos/src/pages/billing_list.dart';
 import 'package:shopos/src/pages/checkout.dart';
@@ -25,12 +25,12 @@ class CreatePurchase extends StatefulWidget {
 }
 
 class _CreatePurchaseState extends State<CreatePurchase> {
-  late OrderInput _orderInput;
+  late Order _Order;
 
   @override
   void initState() {
     super.initState();
-    _orderInput = OrderInput(
+    _Order = Order(
       orderItems: [],
     );
   }
@@ -43,7 +43,7 @@ class _CreatePurchaseState extends State<CreatePurchase> {
 
   @override
   Widget build(BuildContext context) {
-    final _orderItems = _orderInput.orderItems ?? [];
+    final _orderItems = _Order.orderItems ?? [];
     return Scaffold(
       appBar: AppBar(
         title: const Text('Purchase'),
@@ -78,7 +78,7 @@ class _CreatePurchaseState extends State<CreatePurchase> {
                             setState(
                               () {
                                 _orderItem.quantity == 1
-                                    ? _orderInput.orderItems?.removeAt(index)
+                                    ? _Order.orderItems?.removeAt(index)
                                     : _orderItem.quantity -= 1;
                               },
                             );
@@ -102,7 +102,7 @@ class _CreatePurchaseState extends State<CreatePurchase> {
                         arguments: ProductListPageArgs(
                           isSelecting: true,
                           orderType: OrderType.purchase,
-                          productlist: _orderInput.orderItems!
+                          productlist: _Order.orderItems!
                         ),
                       );
                       if (result == null && result is! List<Product>) {
@@ -116,7 +116,7 @@ class _CreatePurchaseState extends State<CreatePurchase> {
                               ))
                           .toList();
                       setState(() {
-                        _orderInput.orderItems = orderItems;
+                        _Order.orderItems = orderItems;
                       });
                     },
                   ),
@@ -143,7 +143,7 @@ class _CreatePurchaseState extends State<CreatePurchase> {
                       //     CheckoutPage.routeName,
                       //     arguments: CheckoutPageArgs(
                       //       invoiceType: OrderType.purchase,
-                      //       orderInput: _orderInput,
+                      //       Order: _Order,
                       //     ),
                       //   );
                       // }
@@ -152,7 +152,7 @@ class _CreatePurchaseState extends State<CreatePurchase> {
                           Provider.of<Billing>(context, listen: false);
                       if (_orderItems.isNotEmpty) {
                         provider.addPurchaseBill(
-                            _orderInput,
+                            _Order,
                             widget.args?.orderId == null
                                 ? DateTime.now().toString()
                                 : widget.args!.orderId!);
