@@ -100,7 +100,8 @@ class OrderItemInput {
         baseSellingPrice: json["baseSellingPrice"].toString(),
         saleIGST: json["saleIGST"].toString(),
         discountAmt: json['discountAmt'].toString(),
-      );
+          originalbaseSellingPrice: json["originalbaseSellingPrice"] == null || json["originalbaseSellingPrice"] == "null" ? "0.0" : double.parse(json["originalbaseSellingPrice"].toString()).toStringAsFixed(2) );
+
 
   Map<String, dynamic> toSaleMap() => {
         "price": (product?.sellingPrice ?? 1),

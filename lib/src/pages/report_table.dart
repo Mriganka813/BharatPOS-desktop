@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:cookie_jar/cookie_jar.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:intl/intl.dart';
@@ -101,15 +101,15 @@ class _ReportTableState extends State<ReportTable> {
       'Party',
       'M.O.P.',
       'Product',
-      'Amount/Unit',
-      'GST Rate/Unit',
-      'CGST/Unit',
-      'SGST/Unit',
-      'GST/Unit',
       'Hsn',
-      "Discount Amount",
-      'Invoice Number',
-      'MRP/Unit',
+      "Rate",
+      "Discount",
+      "Taxable value", // 'Amount/Unit',
+      'GST Rate',
+      'CGST',
+      'SGST',
+      'GST/Unit',
+      'Amount',
       'Total',
     ];
 
@@ -250,14 +250,14 @@ class _ReportTableState extends State<ReportTable> {
             DataCell(Text(partynamelist[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(moplist[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(productnamelist[i], style: TextStyle(fontSize: 6))),
+            DataCell(Text(hsn[i], style: TextStyle(fontSize: 6))),
+            DataCell(Text(orginalbasePurchasePrice[i], style: TextStyle(fontSize: 6))),
+            DataCell(Text(discountAmt[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(i == datelist.length - 1 ? basesplitTotal.toString() : basesplist[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(i == datelist.length - 1 ? gstrateTotal.toString() : gstratelist[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(i == datelist.length - 1 ? cgstTotal.toString() : cgstlist[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(i == datelist.length - 1 ? sgstTotal.toString() : sgstlist[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(i == datelist.length - 1 ? igstTotal.toString() : igstlist[i], style: TextStyle(fontSize: 6))),
-            DataCell(Text(hsn[i], style: TextStyle(fontSize: 6))),
-            DataCell(Text(discountAmt[i], style: TextStyle(fontSize: 6))),
-            DataCell(Text(invoiceNum[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(i == datelist.length - 1 ? mrpTotal.toString() : mrplist[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(totalsplist[i], style: TextStyle(fontSize: 6))),
           ]));
@@ -310,14 +310,14 @@ class _ReportTableState extends State<ReportTable> {
           DataCell(Text(partynamelist[index], style: TextStyle(fontSize: 6))),
           DataCell(Text(moplist[index], style: TextStyle(fontSize: 6))),
           DataCell(Text(productnamelist[index], style: TextStyle(fontSize: 6))),
+          DataCell(Text(hsn[index], style: TextStyle(fontSize: 6))),
+          DataCell(Text(orginalbasePurchasePrice[index], style: TextStyle(fontSize: 6))),
+          DataCell(Text(discountAmt[index], style: TextStyle(fontSize: 6))),
           DataCell(Text(index == datelist.length - 1 ? basesplitTotal.toString() : basesplist[index], style: TextStyle(fontSize: 6))),
           DataCell(Text(index == datelist.length - 1 ? gstrateTotal.toString() : gstratelist[index], style: TextStyle(fontSize: 6))),
           DataCell(Text(index == datelist.length - 1 ? cgstTotal.toString() : cgstlist[index], style: TextStyle(fontSize: 6))),
           DataCell(Text(index == datelist.length - 1 ? sgstTotal.toString() : sgstlist[index], style: TextStyle(fontSize: 6))),
           DataCell(Text(index == datelist.length - 1 ? igstTotal.toString() : igstlist[index], style: TextStyle(fontSize: 6))),
-          DataCell(Text(hsn[index], style: TextStyle(fontSize: 6))),
-          DataCell(Text(discountAmt[index], style: TextStyle(fontSize: 6))),
-          DataCell(Text(invoiceNum[index], style: TextStyle(fontSize: 6))),
           DataCell(Text(index == datelist.length - 1 ? mrpTotal.toString() : mrplist[index], style: TextStyle(fontSize: 6))),
           DataCell(Text(totalsplist[index], style: TextStyle(fontSize: 6))),
         ]));
@@ -434,6 +434,7 @@ class _ReportTableState extends State<ReportTable> {
           hsn.add("");
           invoiceNum.add("");
           discountAmt.add("");
+          orginalbasePurchasePrice.add("");
           moplist.add("");
         }
         datelist.add(DateFormat('dd MMM, yyyy').format(DateTime.tryParse(e.createdAt.toString())!));
@@ -459,6 +460,7 @@ class _ReportTableState extends State<ReportTable> {
         discountAmt.add("${item.discountAmt == "null" ? "N/A" : item.discountAmt}");
 
         invoiceNum.add("${e.invoiceNum == null ? "N/A" : e.invoiceNum}");
+        orginalbasePurchasePrice.add("${item.originalbaseSellingPrice}");
         widget.args.type == "ReportType.sale" ? totalsplist.add("${(item.quantity) * (item.price ?? 0)}") : totalsplist.add("${(item.quantity) * (item.product?.purchasePrice ?? 0)}");
 
         moplist.add("${e.modeOfPayment ?? "N/A"}");
@@ -581,13 +583,15 @@ class _ReportTableState extends State<ReportTable> {
       'Party',
       'M.O.P.',
       'Product',
-      'Amount/Unit',
-      'GST Rate/Unit',
-      'CGST/Unit',
-      'SGST/Unit',
+      'Hsn',
+      "Rate",
+      "Discount",
+      "Taxable value", // 'Amount/Unit',
+      'GST Rate',
+      'CGST',
+      'SGST',
       'GST/Unit',
-      "Hsn"
-          'MRP/Unit',
+      'Amount',
       'Total',
     ];
 
@@ -614,13 +618,16 @@ class _ReportTableState extends State<ReportTable> {
         sheet.getRangeByIndex(i + 2, 3).setText(partynamelist[i]);
         sheet.getRangeByIndex(i + 2, 4).setText(moplist[i]);
         sheet.getRangeByIndex(i + 2, 5).setText(productnamelist[i]);
-        sheet.getRangeByIndex(i + 2, 6).setText(basesplist[i]);
-        sheet.getRangeByIndex(i + 2, 7).setText(gstratelist[i]);
-        sheet.getRangeByIndex(i + 2, 8).setText(cgstlist[i]);
-        sheet.getRangeByIndex(i + 2, 9).setText(sgstlist[i]);
-        sheet.getRangeByIndex(i + 2, 10).setText(igstlist[i]);
-        sheet.getRangeByIndex(i + 2, 11).setText(mrplist[i]);
-        sheet.getRangeByIndex(i + 2, 12).setText(totalsplist[i]);
+        sheet.getRangeByIndex(i + 2, 6).setText(hsn[i]);
+        sheet.getRangeByIndex(i + 2, 7).setText(orginalbasePurchasePrice[i]);
+        sheet.getRangeByIndex(i + 2, 8).setText(discountAmt[i]);
+        sheet.getRangeByIndex(i + 2, 9).setText(basesplist[i]);
+        sheet.getRangeByIndex(i + 2, 10).setText(gstratelist[i]);
+        sheet.getRangeByIndex(i + 2, 11).setText(cgstlist[i]);
+        sheet.getRangeByIndex(i + 2, 12).setText(sgstlist[i]);
+        sheet.getRangeByIndex(i + 2, 13).setText(igstlist[i]);
+        sheet.getRangeByIndex(i + 2, 14).setText(mrplist[i]);
+        sheet.getRangeByIndex(i + 2, 15).setText(totalsplist[i]);
       }
     }
 
@@ -644,12 +651,15 @@ class _ReportTableState extends State<ReportTable> {
       'Party',
       'M.O.P.',
       'Product',
-      'Amount/Unit',
-      'GST Rate/Unit',
-      'CGST/Unit',
-      'SGST/Unit',
+      'Hsn',
+      "Rate",
+      "Discount",
+      "Taxable value", // 'Amount/Unit',
+      'GST Rate',
+      'CGST',
+      'SGST',
       'GST/Unit',
-      'MRP/Unit',
+      'Amount',
       'Total',
     ];
     final xcel.Workbook workbook = xcel.Workbook();
@@ -670,18 +680,21 @@ class _ReportTableState extends State<ReportTable> {
         sheet.getRangeByIndex(i + 2, 6).setText(mrplist[i]);
         sheet.getRangeByIndex(i + 2, 7).setText(totalsplist[i]);
       } else {
-        sheet.getRangeByIndex(i + 2, 1).setText(datelist[i] ?? '');
+       sheet.getRangeByIndex(i + 2, 1).setText(datelist[i] ?? '');
         sheet.getRangeByIndex(i + 2, 2).setText(timelist[i]);
         sheet.getRangeByIndex(i + 2, 3).setText(partynamelist[i]);
         sheet.getRangeByIndex(i + 2, 4).setText(moplist[i]);
         sheet.getRangeByIndex(i + 2, 5).setText(productnamelist[i]);
-        sheet.getRangeByIndex(i + 2, 6).setText(basesplist[i]);
-        sheet.getRangeByIndex(i + 2, 7).setText(gstratelist[i]);
-        sheet.getRangeByIndex(i + 2, 8).setText(cgstlist[i]);
-        sheet.getRangeByIndex(i + 2, 9).setText(sgstlist[i]);
-        sheet.getRangeByIndex(i + 2, 10).setText(igstlist[i]);
-        sheet.getRangeByIndex(i + 2, 11).setText(mrplist[i]);
-        sheet.getRangeByIndex(i + 2, 12).setText(totalsplist[i]);
+        sheet.getRangeByIndex(i + 2, 6).setText(hsn[i]);
+        sheet.getRangeByIndex(i + 2, 7).setText(orginalbasePurchasePrice[i]);
+        sheet.getRangeByIndex(i + 2, 8).setText(discountAmt[i]);
+        sheet.getRangeByIndex(i + 2, 9).setText(basesplist[i]);
+        sheet.getRangeByIndex(i + 2, 10).setText(gstratelist[i]);
+        sheet.getRangeByIndex(i + 2, 11).setText(cgstlist[i]);
+        sheet.getRangeByIndex(i + 2, 12).setText(sgstlist[i]);
+        sheet.getRangeByIndex(i + 2, 13).setText(igstlist[i]);
+        sheet.getRangeByIndex(i + 2, 14).setText(mrplist[i]);
+        sheet.getRangeByIndex(i + 2, 15).setText(totalsplist[i]);
       }
     }
 
