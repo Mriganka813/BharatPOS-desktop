@@ -25,8 +25,7 @@ class ScreenArguments {
   final String partyContactNo;
   final int tabbarNo;
 
-  ScreenArguments(
-      this.partyId, this.partName, this.partyContactNo, this.tabbarNo);
+  ScreenArguments(this.partyId, this.partName, this.partyContactNo, this.tabbarNo);
 }
 
 class PartyCreditPage extends StatefulWidget {
@@ -46,7 +45,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
   PinService _pinService = PinService();
   late final ReportCubit _reportCubit;
   final TextEditingController pinController = TextEditingController();
-    User? user;
+  User? user;
   @override
   void initState() {
     super.initState();
@@ -56,12 +55,10 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
     _reportCubit = ReportCubit();
   }
 
-  void fetchdata() async{
-    widget.args.tabbarNo == 0
-        ? _specificpartyCubit.getInitialCreditHistory(widget.args.partyId)
-        : _specificpartyCubit.getInitialpurchasedHistory(widget.args.partyId);
+  void fetchdata() async {
+    widget.args.tabbarNo == 0 ? _specificpartyCubit.getInitialCreditHistory(widget.args.partyId) : _specificpartyCubit.getInitialpurchasedHistory(widget.args.partyId);
 
-            final response = await UserService.me();
+    final response = await UserService.me();
     user = User.fromMap(response.data['user']);
     setState(() {});
   }
@@ -77,11 +74,11 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
     for (int i = 0; i < o.length; i++) {
       for (int j = i + 1; j < o.length; j++) {
         print(o[i].createdAt.toString());
-        String dateString = o[i].createdAt!=""&& o[i].createdAt!="null" && o[i].createdAt!=" "?o[i].createdAt.toString():DateTime.now().toString();
+        String dateString = o[i].createdAt != "" && o[i].createdAt != "null" && o[i].createdAt != " " ? o[i].createdAt.toString() : DateTime.now().toString();
 
         DateTime dateTimei = DateTime.parse(dateString);
 
-        String dateStringj = o[j].createdAt!=""&& o[j].createdAt!="null"&& o[j].createdAt!=" "?o[j].createdAt.toString():DateTime.now().toString();
+        String dateStringj = o[j].createdAt != "" && o[j].createdAt != "null" && o[j].createdAt != " " ? o[j].createdAt.toString() : DateTime.now().toString();
 
         DateTime dateTimej = DateTime.parse(dateStringj);
 
@@ -100,7 +97,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:  AppBar(
+      appBar: AppBar(
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -130,8 +127,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                 whatsappButtonPresssed = true;
                 setState(() {});
                 Future.delayed(Duration(seconds: 3), () {
-                  _launchUrl(
-                      user!.businessName!, "+91" + widget.args.partyContactNo);
+                  _launchUrl(user!.businessName!, "+91" + widget.args.partyContactNo);
                 });
               },
               child: Padding(
@@ -158,7 +154,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                 reverse: true,
                 itemCount: orders.length,
                 itemBuilder: (BuildContext context, int index) {
-                 sort(orders);
+                  sort(orders);
                   final order = orders[index];
 
                   return Column(
@@ -170,47 +166,34 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                         ),
                       ),
                       Align(
-                        alignment: order.modeOfPayment == "Settle"
-                            ? Alignment.centerLeft
-                            : Alignment.centerRight,
+                        alignment: order.modeOfPayment == "Settle" ? Alignment.centerLeft : Alignment.centerRight,
                         child: SizedBox(
                           height: 50,
                           width: 111,
                           child: GestureDetector(
                             onLongPress: () async {
                               HapticFeedback.vibrate();
-                              await openEditModal(
-                                  order.id!.toString(),
-                                  /*order.total!*/100,
-                                  order.createdAt.toString(),
-                                  order.modeOfPayment!,
-                                  context);
+                              await openEditModal(order.party!.id!, int.parse(order.total!), order.createdAt.toString(), order.modeOfPayment!, context);
                             },
                             child: Card(
-                                  clipBehavior: Clip.hardEdge,
-                                  shape: RoundedRectangleBorder(
-                                    side: BorderSide(
-                                        color: order.modeOfPayment == "Settle"
-                                            ? Colors.green
-                                            : Colors.red,
-                                        width: 0.5),
-                                    borderRadius: BorderRadius.circular(10.0),
+                              clipBehavior: Clip.hardEdge,
+                              shape: RoundedRectangleBorder(
+                                side: BorderSide(color: order.modeOfPayment == "Settle" ? Colors.green : Colors.red, width: 0.5),
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              elevation: 0,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  " ₹ ${order.total}",
+                                  style: TextStyle(
+                                    color: order.modeOfPayment == "Settle" ? Colors.green : Colors.red,
+                                    fontSize: 20,
                                   ),
-                                  elevation: 0,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      " ₹ ${order.total}",
-                                      style: TextStyle(
-                                        color: order.modeOfPayment == "Settle"
-                                            ? Colors.green
-                                            : Colors.red,
-                                        fontSize: 20,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -233,8 +216,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
         child: Container(
           height: 150,
           width: double.maxFinite,
-          decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: Colors.black12))),
+          decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.black12))),
           child: SingleChildScrollView(
             reverse: true,
             padding: const EdgeInsets.only(bottom: 20),
@@ -248,7 +230,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                     int balance = 0;
                     int negbalance = 0;
                     if (state is SpecificPartyListRender) {
-                      balance = state.partyDetails.balance==null?0:(state.partyDetails.balance as double).toInt() ;
+                      balance = state.partyDetails.balance == null ? 0 : (state.partyDetails.balance as double).toInt();
                       negbalance = balance * -1;
                     }
                     return Padding(
@@ -270,10 +252,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                                 ),
                                 Text(
                                   "₹ ${balance.toStringAsFixed(2)}",
-                                  style: const TextStyle(
-                                      color: Colors.red,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20),
+                                  style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 20),
                                 ),
                               ],
                             )
@@ -297,13 +276,11 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                     );
                   },
                 ),
-              Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Card(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(10)),
-                          side: BorderSide(color: Colors.green, width: 1)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10)), side: BorderSide(color: Colors.green, width: 1)),
                       color: Color.fromRGBO(148, 255, 194, 100),
                       child: Padding(
                         padding: const EdgeInsets.all(10),
@@ -319,18 +296,14 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                               ),
                               const Text(
                                 "Received",
-                                style: TextStyle(
-                                    color: Color.fromRGBO(32, 150, 82, 100),
-                                    fontSize: 19),
+                                style: TextStyle(color: Color.fromRGBO(32, 150, 82, 100), fontSize: 19),
                               ),
                             ],
                           ),
                           style: ButtonStyle(
-                            shape:
-                                MaterialStateProperty.all<RoundedRectangleBorder>(
+                            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                               const RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10)),
+                                borderRadius: BorderRadius.all(Radius.circular(10)),
                               ),
                             ),
                             backgroundColor: MaterialStateProperty.all(
@@ -342,9 +315,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                     ),
                     Card(
                       color: Color.fromRGBO(255, 209, 209, 10),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(10)),
-                          side: BorderSide(color: Colors.red, width: 1)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10)), side: BorderSide(color: Colors.red, width: 1)),
                       child: Padding(
                         padding: const EdgeInsets.all(10),
                         child: TextButton(
@@ -371,11 +342,9 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                             ],
                           ),
                           style: ButtonStyle(
-                            shape:
-                                MaterialStateProperty.all<RoundedRectangleBorder>(
+                            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                               const RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10)),
+                                borderRadius: BorderRadius.all(Radius.circular(10)),
                               ),
                             ),
                             backgroundColor: MaterialStateProperty.all(
@@ -405,26 +374,20 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
           return SingleChildScrollView(
             reverse: true,
             child: Padding(
-              padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom),
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
               child: Container(
-                decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: Colors.black12))),
+                decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.black12))),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const SizedBox(
                       height: 20,
                     ),
-                    const Text("Add Amount",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 20)),
+                    const Text("Add Amount", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                     Padding(
                       padding: const EdgeInsets.all(30),
                       child: Container(
-                        decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black38),
-                            borderRadius: BorderRadius.circular(10)),
+                        decoration: BoxDecoration(border: Border.all(color: Colors.black38), borderRadius: BorderRadius.circular(10)),
                         child: TextField(
                           textAlign: TextAlign.center,
                           keyboardType: TextInputType.number,
@@ -451,11 +414,9 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                           value.clear();
                         });
                         if (widget.args.tabbarNo == 0) {
-                          _specificpartyCubit
-                              .updateCreditHistory(_specificPartyInput);
+                          _specificpartyCubit.updateCreditHistory(_specificPartyInput);
                         } else {
-                          _specificpartyCubit
-                              .updatepurchaseHistory(_specificPartyInput);
+                          _specificpartyCubit.updatepurchaseHistory(_specificPartyInput);
                         }
                         Navigator.pop(context);
                       },
@@ -483,25 +444,20 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
           return SingleChildScrollView(
             reverse: true,
             child: Padding(
-              padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom),
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
               child: Container(
-                decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: Colors.black12))),
+                decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.black12))),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const SizedBox(
                       height: 20,
                     ),
-                    const Text("Enter Amount",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 25)),
+                    const Text("Enter Amount", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25)),
                     Padding(
                       padding: const EdgeInsets.all(30),
                       child: Container(
-                        decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black)),
+                        decoration: BoxDecoration(border: Border.all(color: Colors.black)),
                         child: TextFormField(
                             textAlign: TextAlign.center,
                             keyboardType: TextInputType.number,
@@ -520,12 +476,8 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                       onTap: () {
                         double amountnew = double.parse(newtotal);
                         widget.args.tabbarNo == 0
-                            ? _specificpartyCubit.updateAmountCustomer(
-                                Party(id: id, total: amountnew),
-                                widget.args.partyId)
-                            : _specificpartyCubit.updateAmountSupplier(
-                                Party(id: id, total: amountnew),
-                                widget.args.partyId);
+                            ? _specificpartyCubit.updateAmountCustomer(Party(id: id, total: amountnew), widget.args.partyId)
+                            : _specificpartyCubit.updateAmountSupplier(Party(id: id, total: amountnew), widget.args.partyId);
 
                         Navigator.pop(context);
                       },
@@ -554,7 +506,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
               onTap: () async {
                 var result = true;
 
-                if (await _pinService.pinStatus()==true) {
+                if (await _pinService.pinStatus() == true) {
                   result = await _showPinDialog() as bool;
                 }
                 if (result!) {
@@ -571,15 +523,13 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
               onTap: () async {
                 var result = true;
 
-                if (await _pinService.pinStatus()==true) {
+                if (await _pinService.pinStatus() == true) {
                   result = await _showPinDialog() as bool;
                 }
                 if (result!) {
                   widget.args.tabbarNo == 0
-                      ? _specificpartyCubit.deleteCustomerExpense(
-                          Party(id: id), widget.args.partyId)
-                      : _specificpartyCubit.deleteSupplierExpense(
-                          Party(id: id), widget.args.partyId);
+                      ? _specificpartyCubit.deleteCustomerExpense(Party(id: id), widget.args.partyId)
+                      : _specificpartyCubit.deleteSupplierExpense(Party(id: id), widget.args.partyId);
                   Navigator.pop(context);
                 } else {
                   Navigator.pop(context);
@@ -605,7 +555,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
   }
 
   currentdate(String dates) {
-    dates=dates!=""?dates:DateTime.now().toString();
+    dates = dates != "" ? dates : DateTime.now().toString();
     DateTime d = DateTime.parse(dates);
     var datereq = DateFormat.MMMM().format(d);
     return Text(
@@ -620,7 +570,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
               content: pinCode.PinCodeTextField(
-                onChanged: (v){},
+                onChanged: (v) {},
                 autoDisposeControllers: false,
                 appContext: context,
                 length: 6,
@@ -650,37 +600,35 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                 children: [
                   Expanded(child: Text('Enter your pin')),
                   GestureDetector(
-                    onTap: (){
+                      onTap: () {
                         Navigator.of(ctx).pop();
-                               Navigator.of(ctx).pop();
-                    },
-                    child: Icon(Icons.close))
+                        Navigator.of(ctx).pop();
+                      },
+                      child: Icon(Icons.close))
                 ],
               ),
               actions: [
                 Center(
                     child: Container(
-                      width: 200,
-                      height: 40,
-                      child: CustomButton(
-                                     
-                          title: 'Verify',
-                          style: TextStyle(fontSize: 20,color: Colors.white),
-                          onTap: () async {
-                            bool status = await _pinService.verifyPin(
-                                int.parse(pinController.text.toString()));
-                            print(status);
-                            if (status) {
-                              pinController.clear();
-                              Navigator.of(ctx).pop(true);
-                            } else {
-                              Navigator.of(ctx).pop(false);
-                              pinController.clear();
-                    
-                              return;
-                            }
-                          }),
-                    ))
+                  width: 200,
+                  height: 40,
+                  child: CustomButton(
+                      title: 'Verify',
+                      style: TextStyle(fontSize: 20, color: Colors.white),
+                      onTap: () async {
+                        bool status = await _pinService.verifyPin(int.parse(pinController.text.toString()));
+                        print(status);
+                        if (status) {
+                          pinController.clear();
+                          Navigator.of(ctx).pop(true);
+                        } else {
+                          Navigator.of(ctx).pop(false);
+                          pinController.clear();
+
+                          return;
+                        }
+                      }),
+                ))
               ],
             ));
   }

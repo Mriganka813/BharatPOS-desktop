@@ -18,6 +18,8 @@ class Billing with ChangeNotifier {
   }
 
   void addSalesBill(Order input, String orderId) {
+
+     
     if (_salesBilling.containsKey(orderId)) {
       //.... change quantity
       _salesBilling.update(
@@ -32,6 +34,7 @@ class Billing with ChangeNotifier {
               gst: input.gst
               ));
     } else {
+        
       _salesBilling.putIfAbsent(
           orderId,
           () => Order(

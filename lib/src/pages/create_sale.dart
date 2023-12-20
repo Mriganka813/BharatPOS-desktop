@@ -159,9 +159,9 @@ class _CreateSaleState extends State<CreateSale> {
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisExtent: 200),
                       itemCount: _orderItems.length,
                       itemBuilder: (context, index) {
-                        final basesellingprice = 0.0;
+                        var basesellingprice = 0.0;
                         if (_orderItems[index].product!.baseSellingPriceGst != null && _orderItems[index].product!.baseSellingPriceGst != "null")
-                          final basesellingprice = double.parse(_orderItems[index].product!.baseSellingPriceGst ?? "0.0");
+                         basesellingprice = double.parse(_orderItems[index].product!.baseSellingPriceGst ?? "0.0");
                         return GestureDetector(
                           onLongPress: () {
                             showaddDiscountDialouge(basesellingprice, _orderItems, index);
@@ -217,10 +217,11 @@ class _CreateSaleState extends State<CreateSale> {
              
                       final provider =
                           Provider.of<Billing>(context, listen: false);
+                            print("jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj ${_Order.id}");
                       if (_orderItems.isNotEmpty) {
                         provider.addSalesBill(
                             _Order,
-                            widget.args?.orderId == null
+                            widget.args?.orderId == ""
                                 ? DateTime.now().toString()
                                 : widget.args!.orderId!);
                       }
@@ -350,6 +351,7 @@ class _CreateSaleState extends State<CreateSale> {
 
     setState(() {
       _Order.orderItems?.addAll(orderItems);
+ 
       newAddedItems!.addAll(orderItems);
     });
   }
