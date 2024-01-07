@@ -49,19 +49,27 @@ class _ReportsPageState extends State<ReportsPage> {
   ///
   void _toggleReportType(ReportType type) {
     setState(() {
-      _reportInput.type == type ? _reportInput.type = null : _reportInput.type = type;
+      _reportInput.type == type
+          ? _reportInput.type = null
+          : _reportInput.type = type;
     });
   }
 
   void _handleReportsView(ReportsView state) async {
     if (state.expenses != null) {
-      Navigator.pushNamed(context, ReportTable.routeName, arguments: tableArg(expenses: state.expenses, type: _reportInput.type.toString()));
+      Navigator.pushNamed(context, ReportTable.routeName,
+          arguments: tableArg(
+              expenses: state.expenses, type: _reportInput.type.toString()));
     }
     if (state.orders != null) {
-      Navigator.pushNamed(context, ReportTable.routeName, arguments: tableArg(orders: state.orders, type: _reportInput.type.toString()));
+      Navigator.pushNamed(context, ReportTable.routeName,
+          arguments: tableArg(
+              orders: state.orders, type: _reportInput.type.toString()));
     }
     if (state.product != null) {
-      Navigator.pushNamed(context, ReportTable.routeName, arguments: tableArg(products: state.product, type: _reportInput.type.toString()));
+      Navigator.pushNamed(context, ReportTable.routeName,
+          arguments: tableArg(
+              products: state.product, type: _reportInput.type.toString()));
     }
   }
 
@@ -172,7 +180,8 @@ class _ReportsPageState extends State<ReportsPage> {
                             });
                           },
                           validator: (DateTime? value) {
-                            if (value == null && _reportInput.type != ReportType.stock) {
+                            if (value == null &&
+                                _reportInput.type != ReportType.stock) {
                               return 'Please select start date';
                             }
                             return null;
@@ -194,7 +203,8 @@ class _ReportsPageState extends State<ReportsPage> {
                             });
                           },
                           validator: (DateTime? value) {
-                            if (value == null && _reportInput.type != ReportType.stock) {
+                            if (value == null &&
+                                _reportInput.type != ReportType.stock) {
                               return 'Please select end date';
                             }
                             return null;
@@ -207,12 +217,20 @@ class _ReportsPageState extends State<ReportsPage> {
                 ),
                 const SizedBox(height: 40),
                 const Spacer(),
-                CustomButton(
-                  title: "View",
-                  style: Theme.of(context).textTheme.headline6?.copyWith(color: Colors.white, fontSize: 18),
-                  onTap: () {
-                    _onSubmit();
-                  },
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CustomButton(
+                      title: "View",
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline6
+                          ?.copyWith(color: Colors.white, fontSize: 18),
+                      onTap: () {
+                        _onSubmit();
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -233,9 +251,9 @@ class _ReportsPageState extends State<ReportsPage> {
       // });
       // locator<GlobalServices>().showBottomSheetLoader();
       bool status = await _pinService.pinStatus();
-       
+
       if (!status) {
-      _reportCubit.getReport(_reportInput);
+        _reportCubit.getReport(_reportInput);
       } else {
         bool? checkPin = await _showPinDialog();
         if (checkPin!) {
@@ -244,10 +262,7 @@ class _ReportsPageState extends State<ReportsPage> {
             backgroundColor: Colors.red,
           ));
           return;
-        } else {
-           
-        
-        }
+        } else {}
       }
     }
   }
@@ -303,7 +318,8 @@ class _ReportsPageState extends State<ReportsPage> {
                       title: 'Verify',
                       style: TextStyle(fontSize: 20, color: Colors.white),
                       onTap: () async {
-                        bool status = await _pinService.verifyPin(int.parse(pinController.text.toString()));
+                        bool status = await _pinService.verifyPin(
+                            int.parse(pinController.text.toString()));
                         print(status);
                         if (status) {
                           pinController.clear();

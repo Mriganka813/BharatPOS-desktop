@@ -682,30 +682,35 @@ class _CreateProductState extends State<CreateProduct> {
                       ],
                     ),
                     const Divider(color: Colors.transparent, height: 40),
-                    CustomButton(
-                      title: "Save",
-                      onTap: () {
-                        _formKey.currentState?.save();
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CustomButton(
+                          title: "Save",
+                          onTap: () {
+                            _formKey.currentState?.save();
 
-                        print(_formInput.purchasePrice);
+                            print(_formInput.purchasePrice);
 
-                        if (_formInput.purchasePrice == null ||
-                            _formInput.purchasePrice == "null" ||
-                            _formInput.purchasePrice == "") {
-                          _formInput.purchasePrice = "0";
-                        }
+                            if (_formInput.purchasePrice == null ||
+                                _formInput.purchasePrice == "null" ||
+                                _formInput.purchasePrice == "") {
+                              _formInput.purchasePrice = "0";
+                            }
 
-                        if (_formKey.currentState?.validate() ?? false) {
-                          print(_formInput.available);
-                          print(_formInput.expiryDate);
-                          print(_formInput.batchNumber);
+                            if (_formKey.currentState?.validate() ?? false) {
+                              print(_formInput.available);
+                              print(_formInput.expiryDate);
+                              print(_formInput.batchNumber);
 
-                          _productCubit.createProduct(_formInput);
-                          print("Barcode:");
-                          print(_formInput.barCode);
-                          Navigator.pop(context);
-                        }
-                      },
+                              _productCubit.createProduct(_formInput);
+                              print("Barcode:");
+                              print(_formInput.barCode);
+                              Navigator.pop(context);
+                            }
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ))));
