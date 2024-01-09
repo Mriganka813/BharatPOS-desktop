@@ -311,40 +311,53 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                                                   prodList[index]),
                                           isSelecting: widget.args.isSelecting,
                                           onAdd: () {
-                                            increaseTheQuantity(
-                                                prodList[index]);
-                                            if (widget.args!.orderType ==
-                                                OrderType.sale) {
-                                              prodList[index].quantity =
-                                                  prodList[index].quantity! - 1;
-                                            } else {
-                                              prodList[index].quantity =
-                                                  prodList[index].quantity! + 1;
+                                            increaseTheQuantity(prodList[index]);
+                                            if (widget.args!.orderType == OrderType.sale) {
+                                              prodList[index].quantity = prodList[index].quantity! - 1;
+                                            }else if(widget.args!.orderType == OrderType.estimate){
+
+                                            }else {
+                                              prodList[index].quantity = prodList[index].quantity! + 1;
                                             }
                                             setState(() {});
                                           },
                                           onRemove: () {
-                                            decreaseTheQuantity(
-                                                prodList[index]);
+                                            decreaseTheQuantity(prodList[index]);
                                             itemCheckedFlag = false;
-                                            if (widget.args!.orderType ==
-                                                OrderType.sale) {
-                                              prodList[index].quantity =
-                                                  prodList[index].quantity! + 1;
+                                            if (widget.args!.orderType == OrderType.sale) {
+                                              prodList[index].quantity = prodList[index].quantity! + 1;
+                                            } else if(widget.args!.orderType == OrderType.estimate){
+
                                             } else {
-                                              prodList[index].quantity =
-                                                  prodList[index].quantity! - 1;
+                                              prodList[index].quantity = prodList[index].quantity! - 1;
                                             }
                                             setState(() {});
                                           },
                                           onTap: (q) {
                                             if (q == 1) {
-                                              decreaseTheQuantity(
-                                                  prodList[index]);
+                                              decreaseTheQuantity(prodList[index]);
                                               itemCheckedFlag = false;
+                                              if (widget.args!.orderType == OrderType.sale) {
+                                                prodList[index].quantity = prodList[index].quantity! + 1;
+                                              } else if(widget.args!.orderType == OrderType.none){
+
+                                              }else if(widget.args!.orderType == OrderType.estimate){
+
+                                              }else{
+                                                prodList[index].quantity = prodList[index].quantity! - 1;
+                                              }
                                             } else if (q == 0) {
                                               _selectProduct(prodList[index]);
                                               itemCheckedFlag = true;
+                                              if (widget.args!.orderType == OrderType.sale) {
+                                                prodList[index].quantity = prodList[index].quantity! - 1;
+                                              } else if(widget.args!.orderType == OrderType.none){
+
+                                              } else if(widget.args!.orderType == OrderType.estimate){
+
+                                              } else {
+                                                prodList[index].quantity = prodList[index].quantity! + 1;
+                                              }
                                             }
 
                                             setState(() {});

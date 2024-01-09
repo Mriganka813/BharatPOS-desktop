@@ -31,7 +31,7 @@ class PdfUI {
     final ttf = await Font.ttf(font);
 
     String dateFormat() => DateFormat('dd/MM/yy').format(date);
-
+    String time = DateTime.now().toString();
     List<String>? addressRows() => user.address
         ?.toString()
         .split(',')
@@ -175,7 +175,7 @@ class PdfUI {
                 pw.Table(
                   children: [
                     pw.TableRow(children: [
-                      pw.Text('Invoice ',
+                      pw.Text('Invoice No:',
                           style: TextStyle(font: ttf, fontSize: 10)),
                       pw.Text('$invoiceNum',
                           style: TextStyle(font: ttf, fontSize: 10)),
@@ -189,7 +189,7 @@ class PdfUI {
                       pw.Text(''),
                       pw.SizedBox(width: 40),
                       pw.Text(
-                          '${invoiceNum.substring(8, 10)}:${invoiceNum.substring(10, 12)}',
+                          '${time.substring(11,16)}',
                           style: TextStyle(font: ttf, fontSize: 10))
                     ])
 
@@ -300,7 +300,7 @@ class PdfUI {
     final ttf = await Font.ttf(font);
 
     String dateFormat() => DateFormat('dd/MM/yy').format(date);
-
+    String time = DateTime.now().toString();
     List<String>? addressRows() => user.address
         ?.toString()
         .split(',')
@@ -451,7 +451,7 @@ class PdfUI {
                 pw.Table(
                   children: [
                     pw.TableRow(children: [
-                      pw.Text('Invoice ',
+                      pw.Text('Invoice No:',
                           style: TextStyle(font: ttf, fontSize: 6)),
                       pw.Text('$invoiceNum',
                           style: TextStyle(font: ttf, fontSize: 6)),
@@ -464,7 +464,7 @@ class PdfUI {
                       pw.Text(''),
                       pw.SizedBox(width: 40),
                       pw.Text(
-                          '${invoiceNum.substring(8, 10)}:${invoiceNum.substring(10, 12)}',
+                          '${time.substring(11,16)}',
                           style: TextStyle(font: ttf, fontSize: 7))
                     ])
                   ],

@@ -82,7 +82,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
 
         DateTime dateTimej = DateTime.parse(dateStringj);
 
-        if (dateTimej.isBefore(dateTimei)) {
+        if (dateTimej.isAfter(dateTimei)) {
           var temp = o[i];
           o[i] = o[j];
           o[j] = temp;
@@ -162,11 +162,11 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 15, bottom: 15),
-                          child: currentdate(order.createdAt.toString()),
+                          child: currentdate(order.createdAt!),
                         ),
                       ),
                       Align(
-                        alignment: order.modeOfPayment == "Settle" ? Alignment.centerLeft : Alignment.centerRight,
+                        alignment: order.modeOfPayment?[0]["mode"] == "Settle" ? Alignment.centerLeft : Alignment.centerRight,
                         child: SizedBox(
                           height: 50,
                           width: 111,
@@ -178,16 +178,16 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                             child: Card(
                               clipBehavior: Clip.hardEdge,
                               shape: RoundedRectangleBorder(
-                                side: BorderSide(color: order.modeOfPayment == "Settle" ? Colors.green : Colors.red, width: 0.5),
+                                side: BorderSide(color: order.modeOfPayment?[0]['mode'] == "Settle" ? Colors.green : Colors.red, width: 0.5),
                                 borderRadius: BorderRadius.circular(10.0),
                               ),
                               elevation: 0,
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Text(
-                                  " ₹ ${order.total}",
+                                  " ₹ ${order.modeOfPayment?.firstWhere((mode) => mode['mode'] == 'Credit', orElse: () => {'amount': order.total})['amount']}",
                                   style: TextStyle(
-                                    color: order.modeOfPayment == "Settle" ? Colors.green : Colors.red,
+                                    color: order.modeOfPayment?[0]['mode'] == "Settle" ? Colors.green : Colors.red,
                                     fontSize: 20,
                                   ),
                                   textAlign: TextAlign.center,
@@ -434,7 +434,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
   }
 
 // update settle and credit model
-  modelOpenUpdate(context, String id, int amount, String type) {
+  modelOpenUpdate(context, String id, int amount, List<Map<String,dynamic>> type) {
     String newtotal = amount.toString();
     return showModalBottomSheet(
         barrierColor: Colors.transparent,
@@ -492,7 +492,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
   }
 
 // edit credit or settle
-  openEditModal(String id, int total, String createdAt, String type, context) {
+  openEditModal(String id, int total, String createdAt, List<Map<String,dynamic>> type, context) {
     Alert(
         style: const AlertStyle(
           animationType: AnimationType.grow,
@@ -554,13 +554,26 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
     }
   }
 
-  currentdate(String dates) {
-    dates = dates != "" ? dates : DateTime.now().toString();
-    DateTime d = DateTime.parse(dates);
-    var datereq = DateFormat.MMMM().format(d);
+  Widget currentdate(DateTime createdAt) {
+    var datereq = DateFormat.MMMM().format(createdAt);
+
+    final String _inputTime = '${createdAt.hour}:${createdAt.minute}';
+    final DateFormat _inputFormat = DateFormat('HH:mm');
+    final DateFormat _outputFormat = DateFormat('h:mm a');
+
+    DateTime inputDateTime = _inputFormat.parse(_inputTime);
+    String outputTime = _outputFormat.format(inputDateTime);
+
+    String pmAmFlag = "AM";
+
+    if (createdAt.hour >= 13) {
+      pmAmFlag = "PM";
+    } else {
+      pmAmFlag = "AM";
+    }
     return Text(
-      d.day.toString() + " " + datereq + ", " + d.year.toString(),
-      style: const TextStyle(color: Colors.black45),
+      '${createdAt.day.toString()}.${createdAt.month.toString()}.${createdAt.year.toString()} | $outputTime',
+      style: const TextStyle(color: Colors.black45, fontSize: 13),
     );
   }
 

@@ -8,7 +8,7 @@ class PurchaseService {
 
   ///
   static Future<Response> createPurchaseOrder(
-      Order orderItemInput, String date) async {
+      Order orderItemInput, String invoiceNum) async {
     final response = await ApiV1Service.postRequest(
       '/purchaseOrder/new',
       data: {
@@ -16,10 +16,14 @@ class PurchaseService {
             orderItemInput.orderItems?.map((e) => e.toPurchaseMap()).toList(),
         'modeOfPayment': orderItemInput.modeOfPayment,
         'party': orderItemInput.party?.id,
-        'invoiceNum': date
+        'invoiceNum': invoiceNum
       },
     );
     return response;
+  }
+  static Future<Map<String, dynamic>> getNumberOfPurchases() async {
+    final response = await ApiV1Service.getRequest('/purchasesNum');
+    return response.data;
   }
 
   ///

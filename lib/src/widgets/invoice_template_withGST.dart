@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:shopos/src/models/input/order.dart';
 import 'package:shopos/src/models/user.dart';
 
@@ -7,14 +8,25 @@ String invoiceTemplatewithGST({
   required User user,
   required List<String> headers,
   required String total,
+  String? dlNum,
   String? subtotal,
   String? gsttotal,
-  required DateTime date,
+  required String date,
   required String type,
-  required String invoiceNum,
+  String? invoiceNum,
 }) {
   ///
-  String dateFormat() => '${date.day}/${date.month}/${date.year}';
+  String dateFormat(){
+    if(date != "null" && date!= ""){
+      date = date.substring(0, 10);
+      DateTime dateTime = DateTime.parse(date);
+      String formattedDate = DateFormat('dd/MM/yyyy').format(dateTime);
+      return formattedDate;
+    }else{
+      DateTime dateTime = DateTime.now();
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    }
+  }
 
   ///
   String? addressRows() => user.address
@@ -68,9 +80,36 @@ String invoiceTemplatewithGST({
     }
     return '';
   }
-
+  String userdlNum() {
+    if ( dlNum != null && dlNum!="") {
+      return '<div><strong>DL Number: </strong>${dlNum}</div>';
+    }
+    return '';
+  }
+  bool expirydateAvailableFlag = false;
+  bool hsnAvailableFlag = false;
+  order.orderItems!.forEach((element) {
+    if (element.product!.expiryDate != null &&
+        element.product!.expiryDate != "null" &&
+        element.product!.expiryDate != "") {
+      expirydateAvailableFlag = true;
+    }
+    if (element.product!.hsn != null &&
+        element.product!.hsn != "null" &&
+        element.product!.hsn != "") {
+      hsnAvailableFlag = true;
+    }
+  });
   String shopkeepergstin() {
-    if (user.GstIN != null && user.GstIN!.isNotEmpty) {
+    bool atleastOneItemhaveGST = false;
+    print("Value OF GST");
+    order.orderItems!.forEach((element) {
+      print(element.product!.gstRate);
+      if (element.product!.gstRate != "null") {
+        atleastOneItemhaveGST = true;
+      }
+    });
+    if (user.GstIN != null && user.GstIN!.isNotEmpty&&atleastOneItemhaveGST) {
       return '<div> GSTIN ${user.GstIN!.toUpperCase()} </div>';
     }
     return '';
@@ -84,7 +123,7 @@ String invoiceTemplatewithGST({
           double baseprice = 0;
           String gstrate = "";
 
-          if (type == "OrderType.sale") {
+          if (type == "OrderType.sale" || type == "OrderType.estimate") {
             if (orderItem.product!.gstRate == "null") {
               baseprice = orderItem.product!.sellingPrice!.toDouble();
               gstrate = "NA";
@@ -94,20 +133,43 @@ String invoiceTemplatewithGST({
             }
             if (gstrate != "NA")
               return '<tr>'
-                  '<td class="left">${orderItem.product?.name}</td>'
-                  '<td class="left">${orderItem.quantity}</td>'
-                  '<td class="left">₹ ${baseprice}</td>'
-                  '<td class="left">${orderItem.product?.saleigst}<p style="text-align:left"><small>${gstrate}%</small></p></td>'
-                  '<td class="left">₹ ${(orderItem.quantity) * (orderItem.product?.sellingPrice ?? 0)}</td>'
-                  '</tr>';
+                  '<td class="left product-name">${orderItem.product?.name}</td>'
+                  '<td class="left">${orderItem.quantity}</td>' +
+                  (expirydateAvailableFlag
+                      ? orderItem.product!.expiryDate != null
+                      ? '<td class="left">${orderItem.product!.expiryDate!.day}/${orderItem.product!.expiryDate!.month}/${orderItem.product!.expiryDate!.year}</td>'
+                      : '<td class="left"> </td>'
+                      : '') +
+                  (hsnAvailableFlag
+                      ? orderItem.product!.hsn != null
+                      ? '<td class="left"> ${orderItem.product!.hsn}</td>'
+                      : '<td class="left"></td>'
+                      : '') +
+                  '<td class="left">₹ ${baseprice.toStringAsFixed(2)}</td>'
+                      '<td class="left">${orderItem.product?.saleigst}<p style="text-align:left"><small>(${gstrate}%)</small></p></td>'
+                      '<td class="left">₹ ${(orderItem.quantity) * (orderItem.product?.sellingPrice ?? 0)}</td>'
+                      '</tr>';
             else {
+              print("llll");
+              print(hsnAvailableFlag);
               return '<tr>'
-                  '<td class="left">${orderItem.product?.name}</td>'
-                  '<td class="left">${orderItem.quantity}</td>'
-                  '<td class="left">₹ ${baseprice}</td>'
-                  '<td class="left">NA<p style="text-align:left"><small>NA%</small></p></td>'
-                  '<td class="left">₹ ${(orderItem.quantity) * (orderItem.product?.sellingPrice ?? 1)}</td>'
-                  '</tr>';
+                  '<td class="left product-name">${orderItem.product?.name}</td>'
+                  '<td class="left">${orderItem.quantity}</td>'+
+
+                  (expirydateAvailableFlag
+                      ? orderItem.product!.expiryDate != null
+                      ? '<td class="left">${orderItem.product!.expiryDate!.day}/${orderItem.product!.expiryDate!.month}/${orderItem.product!.expiryDate!.year}</td>'
+                      : '<td class="left"></td>'
+                      : '') +
+                  (hsnAvailableFlag
+                      ? orderItem.product!.hsn != null
+                      ? '<td class="left"> ${orderItem.product!.hsn}</td>'
+                      : '<td class="left"></td>'
+                      : '') +
+                  '<td class="left">₹ ${baseprice.toStringAsFixed(2)}</td>' +
+                  '<td class="left">NA<p style="text-align:left"><small>(NA%)</small></p></td>'
+                      '<td class="left">₹ ${(orderItem.quantity) * (orderItem.product?.sellingPrice ?? 1)}</td>'
+                      '</tr>';
             }
           } else {
             if (orderItem.product!.gstRate == "null" &&
@@ -129,26 +191,26 @@ String invoiceTemplatewithGST({
             }
             if (gstrate != "NA" && baseprice != 0) {
               return '<tr>'
-                  '<td class="left">${orderItem.product?.name}</td>'
+                  '<td class="left product-name">${orderItem.product?.name}</td>'
                   '<td class="left">${orderItem.quantity}</td>'
-                  '<td class="left">₹ ${baseprice}</td>'
-                  '<td class="left">${orderItem.product?.purchaseigst}<p style="text-align:left"><small>${gstrate}%</small></p></td>'
+                  '<td class="left">₹ ${baseprice.toStringAsFixed(2)}</td>'
+                  '<td class="left">${orderItem.product?.purchaseigst}<p style="text-align:left"><small>(${gstrate}%)</small></p></td>'
                   '<td class="left">₹ ${(orderItem.quantity) * (orderItem.product?.purchasePrice ?? 0)}</td>'
                   '</tr>';
             } else if (gstrate != "NA" && baseprice == 0) {
               return '<tr>'
-                  '<td class="left">${orderItem.product?.name}</td>'
+                  '<td class="left product-name">${orderItem.product?.name}</td>'
                   '<td class="left">${orderItem.quantity}</td>'
-                  '<td class="left">₹ ${baseprice}</td>'
-                  '<td class="left">NA<p style="text-align:left"><small>NA%</small></p></td>'
+                  '<td class="left">₹ ${baseprice.toStringAsFixed(2)}</td>'
+                  '<td class="left">NA<p style="text-align:left"><small>(NA%)</small></p></td>'
                   '<td class="left">₹ 0</td>'
                   '</tr>';
             } else {
               return '<tr>'
-                  '<td class="left">${orderItem.product?.name}</td>'
+                  '<td class="left product-name">${orderItem.product?.name}</td>'
                   '<td class="left">${orderItem.quantity}</td>'
-                  '<td class="left">₹ ${baseprice}</td>'
-                  '<td class="left">NA<p style="text-align:left"><small>NA%</small></p></td>'
+                  '<td class="left">₹ ${baseprice.toStringAsFixed(2)}</td>'
+                  '<td class="left">NA<p style="text-align:left"><small>(NA%)</small></p></td>'
                   '<td class="left">₹ ${(orderItem.quantity) * (orderItem.product?.purchasePrice ?? 0)}</td>'
                   '</tr>';
             }
@@ -164,8 +226,17 @@ String invoiceTemplatewithGST({
     <meta charset="UTF-8" />
     <title>Shopos - Invoice</title>
     <style>
+    .table td.product-name {
+        white-space: normal;
+      }
+      .table {
+        width: 100%;
+      }
+      .table th, .table td {
+        white-space: nowrap;
+      }
     .receiver {
-              width: 200px;
+              width: 250px;
               height: 100px;
               position: absolute;
               top: 50px;
@@ -182,7 +253,7 @@ String invoiceTemplatewithGST({
     <div class="container">
       <div class="card">
         <div class="card-header">
-          Invoice $invoiceNum
+          $invoiceNum
           <span class="float-right"> <strong>Date:</strong>${dateFormat()}</span>
         </div>
         <div class="card-body">
@@ -203,7 +274,7 @@ String invoiceTemplatewithGST({
               ${businessName()}
               ${businessAddress()}
               ${usergstin()}
-              
+              ${userdlNum()}
              
               
             </div>

@@ -334,7 +334,7 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
 
 class ProductCardPurchase extends StatelessWidget {
   final Product product;
-  final int productQuantity;
+  final double productQuantity;
   final VoidCallback onAdd;
   final VoidCallback onDelete;
   final String? type;
@@ -359,7 +359,7 @@ class ProductCardPurchase extends StatelessWidget {
     double Purchasegstvalue = 0;
     double PurchasePrice = 0;
 
-    if (type == "sale") {
+    if (type == "sale" || type == "estimate") {
       if (product.gstRate != "null") {
         baseSellingPrice = double.parse(
             (double.parse(product.baseSellingPriceGst!) * productQuantity)
@@ -482,7 +482,7 @@ class ProductCardPurchase extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Item Subtotal'),
-                        type == "sale"
+                        type == "sale" || type == "estimate"
                             ? Text('₹ ${baseSellingPrice}')
                             : Text('₹ ${basePurchasePrice}'),
                       ],
@@ -493,7 +493,7 @@ class ProductCardPurchase extends StatelessWidget {
                       children: [
                         Text(
                             'Tax GST @${product.gstRate == "null" ? "0" : product.gstRate}%'),
-                        type == "sale"
+                        type == "sale" || type == "estimate"
                             ? Text('₹ ${Sellinggstvalue}')
                             : Text('₹ ${Purchasegstvalue}'),
                       ],
@@ -515,7 +515,7 @@ class ProductCardPurchase extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Item Total'),
-                        type == "sale"
+                        type == "sale" || type == "estimate"
                             ? Text(
                                 '₹ ${SellingPrice.toStringAsFixed(2)}',
                                 style: TextStyle(fontWeight: FontWeight.bold),

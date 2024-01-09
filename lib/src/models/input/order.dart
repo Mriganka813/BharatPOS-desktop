@@ -6,7 +6,8 @@ import '../user.dart';
 
 class Order {
   Order(
-      {this.id ,
+      {this.id,
+        this.objId,
       this.orderItems,
       this.total,
       this.modeOfPayment,
@@ -18,12 +19,14 @@ class Order {
       this.businessAddress,
       this.gst,
       this.invoiceNum,
+        this.estimateNum,
       this.tableNo = "-1"});
 
   String? id;
+  String? objId;
   List<OrderItemInput>? orderItems;
   String? total;
-  String? modeOfPayment;
+  List<Map<String,dynamic>>? modeOfPayment;
   Party? party;
   User? user;
   DateTime? createdAt;
@@ -32,32 +35,41 @@ class Order {
   String? businessAddress;
   String? gst;
   String? invoiceNum;
+  String? estimateNum;
   String tableNo;
 
   factory Order.fromMap(Map<String, dynamic> json) => Order(
-        orderItems: List<OrderItemInput>.from(
-          json["orderItems"].map(
+    objId: json["_id"].toString(),
+    orderItems: List<OrderItemInput>.from(
+      json["orderItems"].map(
             (x) => OrderItemInput.fromMap(x),
-          ),
-        ),
-        modeOfPayment: json["modeOfPayment"] ?? "",
-        id: json['id'],
-        party: json["party"] is Map ? Party.fromMap(json["party"]) : null,
-        user: json["user"] is Map ? User.fromMMap(json["user"]) : null,
-        createdAt: json["createdAt"] == null ? DateTime.now() : DateTime.parse(json["createdAt"].toString()),
-        total: json['total'].toString() ?? " ",
-      );
+      ),
+    ),
+    modeOfPayment:  (json["modeOfPayment"] as List?)?.cast<Map<String, dynamic>>() ?? [],
+    id: json['id'],
+    party: json["party"] is Map ? Party.fromMap(json["party"]) : null,
+    user: json["user"] is Map ? User.fromMMap(json["user"]) : null,
+    invoiceNum: json["invoiceNum"],
+    estimateNum: json["estimateNum"].toString(),
+    createdAt: json["createdAt"] == null ? DateTime.now() : DateTime.parse(json["createdAt"].toString()),
+    total: json['total'].toString() ?? " ",
+    businessName: json['businessName'] ?? "",
+    businessAddress: json['businessAddress'] ?? "",
+    reciverName: json['reciverName'] ?? "",
+    gst: json['gst'] ?? "",
+  );
 
   factory Order.fromMapForParty(Map<String, dynamic> json) {
     print("  ${json["_id"]} and ${json["party"]}  ");
 
     return Order(
+      objId: json["objId"].toString(),
       orderItems: List<OrderItemInput>.from(
         json["orderItems"].map(
           (x) => OrderItemInput.fromMap(x),
         ),
       ),
-      modeOfPayment: json["modeOfPayment"] ?? "",
+      modeOfPayment: (json["modeOfPayment"] as List?)?.cast<Map<String, dynamic>>() ?? [],
       id: "1",
       party: Party(id: json['_id']),
       user: json["user"] is Map ? User.fromMMap(json["user"]) : null,
@@ -85,7 +97,7 @@ class OrderItemInput {
   OrderItemInput({this.price = 0, this.quantity = 0, this.product, this.saleSGST, this.saleCGST, this.baseSellingPrice, this.saleIGST, this.discountAmt = "0", this.originalbaseSellingPrice = ""});
 
   double? price;
-  int quantity;
+  double quantity;
   Product? product;
   String? saleSGST;
   String? saleCGST;
@@ -96,7 +108,7 @@ class OrderItemInput {
 
   factory OrderItemInput.fromMap(Map<String, dynamic> json) => OrderItemInput(
       price: double.parse(json['price'].toString()) ?? 0,
-      quantity: json["quantity"],
+      quantity: json['quantity']!= null? json['quantity'].toDouble() : 0.0,
       product: json["product"] is Map ? Product.fromMap(json["product"]) : null,
       saleCGST: json["saleCGST"].toString(),
       saleSGST: json["saleSGST"].toString(),
@@ -108,7 +120,7 @@ class OrderItemInput {
 
   factory OrderItemInput.fromMapForLocalDatabase(Map<String, dynamic> json) => OrderItemInput(
         price: double.parse(json['price'].toString()) ?? 0,
-        quantity: json["quantity"],
+        quantity: json['quantity']!= null? json['quantity'].toDouble() : 0.0,
         product: json["product"],
         saleCGST: json["saleCGST"].toString(),
         saleSGST: json["saleSGST"].toString(),

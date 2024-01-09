@@ -76,7 +76,7 @@ class _CreateSaleState extends State<CreateSale> {
 
   _onSubtotalChange(Product product, String? localSellingPrice) async {
     product.baseSellingPriceGst = localSellingPrice;
-    double newGStRate = (double.parse(product.baseSellingPriceGst!) * double.parse(product.gstRate!) / 100);
+    double newGStRate = (double.parse(product.baseSellingPriceGst!) * double.parse(product.gstRate == 'null' ? '0' : product.gstRate!) / 100);
     product.saleigst = newGStRate.toStringAsFixed(2);
 
     product.salecgst = (newGStRate / 2).toStringAsFixed(2);
@@ -161,7 +161,7 @@ class _CreateSaleState extends State<CreateSale> {
                       itemBuilder: (context, index) {
                         var basesellingprice = 0.0;
                         if (_orderItems[index].product!.baseSellingPriceGst != null && _orderItems[index].product!.baseSellingPriceGst != "null")
-                         basesellingprice = double.parse(_orderItems[index].product!.baseSellingPriceGst ?? "0.0");
+                         basesellingprice = double.parse(_orderItems[index].product!.baseSellingPriceGst!);
                         return GestureDetector(
                           onLongPress: () {
                             showaddDiscountDialouge(basesellingprice, _orderItems, index);
@@ -330,7 +330,7 @@ class _CreateSaleState extends State<CreateSale> {
     final orderItems = temp
         .map((e) => OrderItemInput(
               product: e,
-              quantity: tempMap["${e.id}"],
+              quantity: tempMap["${e.id}"].toDouble(),
               price: 0,
             ))
         .toList();
@@ -388,12 +388,15 @@ class _CreateSaleState extends State<CreateSale> {
                       onChanged: (val) {
                         localSellingPrice = val;
                       },
-                      hintText: 'Enter Taxable Value   (${basesellingprice + discount})',
+                        hintText: 'Enter Taxable Value   (${_orderItem.product!.baseSellingPriceGst !="null" ?
+                        basesellingprice + discount : sellingPriceListForShowinDiscountTextBOX[index]})'
                     ),
+                    _orderItem.product!.baseSellingPriceGst != "null" ?
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text('or'),
-                    ),
+                    ) : SizedBox.shrink(),
+                    _orderItem.product!.baseSellingPriceGst != "null" ?
                     CustomTextField(
                       inputType: TextInputType.number,
                       onChanged: (val) {
@@ -406,7 +409,7 @@ class _CreateSaleState extends State<CreateSale> {
                         }
                         return null;
                       },
-                    ),
+                    ) : SizedBox.shrink(),
                   ],
                 ),
                 actions: [
@@ -417,8 +420,17 @@ class _CreateSaleState extends State<CreateSale> {
                           if (localSellingPrice != null) {
                             print(localSellingPrice);
                             print(discountedPrice);
+                            // print("----line 463---in createsale.dart");
+                            // print(basesellingprice);
+                            // print(_orderItem.product!.baseSellingPriceGst!);
+                            if(_orderItem.product!.baseSellingPriceGst =="null"){
+                              print("---line 467 in createsale.dart");
+                              discount = (_orderItem.product!.sellingPrice!  + double.parse(_orderItem.discountAmt) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
 
-                            discount = (double.parse(_orderItem.product!.baseSellingPriceGst!) + double.parse(_orderItem.discountAmt) - int.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
+                            }else{
+                              print("---line 470 in createsale.dart");
+                              discount = (double.parse(_orderItem.product!.baseSellingPriceGst!) + double.parse(_orderItem.discountAmt) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
+                            }
 
                             _orderItems[index].discountAmt = discount.toStringAsFixed(2);
                             setState(() {});

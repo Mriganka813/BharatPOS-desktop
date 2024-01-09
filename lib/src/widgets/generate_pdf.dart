@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:htmltopdfwidgets/htmltopdfwidgets.dart';
+import 'package:intl/intl.dart';
 import 'package:open_app_file/open_app_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -15,11 +16,13 @@ Future<void> generatePdf({
   required String companyName,
   required Order Order,
   required User user,
+  bool? convertToSale,
   String? totalPrice,
   required String gstType,
   required OrderType orderType,
   String? subtotal,
   String? gstTotal,
+  String? dlNum,
   String? invoiceNum,
 }) async {
   double nettotal = 0;
@@ -28,6 +31,20 @@ Future<void> generatePdf({
   List<String> address = user.address.toString().split(',');
 
   final List<pw.Row> tableRows = [];
+  bool expirydateAvailableFlag = false;
+  bool hsnAvailableFlag = false;
+  Order.orderItems!.forEach((element) {
+    if (element.product!.expiryDate != null &&
+        element.product!.expiryDate != "null" &&
+        element.product!.expiryDate != "") {
+      expirydateAvailableFlag = true;
+    }
+    if (element.product!.hsn != null &&
+        element.product!.hsn != "null" &&
+        element.product!.hsn != "") {
+      hsnAvailableFlag = true;
+    }
+  });
 
   for (var data in Order.orderItems!) {
     double basePrice = 0.0;
@@ -40,7 +57,7 @@ Future<void> generatePdf({
         basePrice = data.product!.purchasePrice.toDouble();
       }
     } else {
-      if (orderType == OrderType.sale) {
+      if (orderType == OrderType.sale || orderType==OrderType.estimate || orderType==OrderType.saleReturn) {
         if (data.product!.gstRate == "null") {
           basePrice = data.product!.sellingPrice!.toDouble();
           gstrate = "NA";
@@ -73,7 +90,7 @@ Future<void> generatePdf({
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
         pw.Container(
-          width: 200,
+          width: 50,
           child: pw.Text(
               (data.product!.name! + "                              ")
                   .substring(0, 30),
@@ -85,6 +102,30 @@ Future<void> generatePdf({
           child: pw.Text(data.quantity.toString(),
               textAlign: TextAlign.center, style: TextStyle(fontSize: 10)),
         ),
+        expirydateAvailableFlag?
+          data.product!.expiryDate != null
+        ? Row(
+          children:[
+            SizedBox(width: 20),
+            Container(
+              width: 55,
+              child: pw.Text('${data.product!.expiryDate!.day}/${data.product!.expiryDate!.month}/${data.product!.expiryDate!.year}',
+                  textAlign: TextAlign.center, style: TextStyle(fontSize: 10)),
+            )
+          ]
+        )
+        : SizedBox(width: 75):SizedBox.shrink(),
+        hsnAvailableFlag? data.product!.hsn != null
+        ? Row(
+            children:[
+              SizedBox(width: 20),
+              Container(
+                width: 50,
+                child: pw.Text('${data.product!.hsn}',
+                    textAlign: TextAlign.center, style: TextStyle(fontSize: 10)),
+              )
+            ]
+        ): SizedBox(width: 70):SizedBox.shrink(),
         SizedBox(width: 30),
         Container(
             width: 70,
@@ -99,7 +140,7 @@ Future<void> generatePdf({
                     child: pw.Text(data.product!.saleigst!,
                         style: TextStyle(fontSize: 10)))),
         SizedBox(width: 20),
-        orderType == OrderType.sale
+        orderType == OrderType.sale || orderType == OrderType.estimate || orderType == OrderType.saleReturn
             ? Container(
                 width: 50,
                 child: pw.Text(
@@ -126,12 +167,29 @@ Future<void> generatePdf({
   final ttf = await Font.ttf(font);
   PdfColor pdfColor = PdfColor.fromInt(1);
   PdfColor pdfColor2 = PdfColor.fromInt(0xFF808080);
+  print("line 130 in generate pdf");
+  print(date);
+  String dateFormat(){
+    if(date != "null" && date!= ""){
+      date = date.substring(0, 10);
+      DateTime dateTime = DateTime.parse(date);
+      String formattedDate = DateFormat('dd/MM/yyyy').format(dateTime);
+      if(convertToSale==true){
+        DateTime dateTime = DateTime.now();
+        return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+      }
+      return formattedDate;
+    }else{
+      DateTime dateTime = DateTime.now();
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    }
+  }
   pdf.addPage(
     pw.Page(build: (pw.Context context) {
       return pw.Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-          pw.Text('Invoice : $invoiceNum', style: TextStyle(font: ttf)),
-          pw.Text('Date: ${date.substring(0, 10)}',
+          pw.Text('$invoiceNum', style: TextStyle(font: ttf)),
+          pw.Text('Date: ${dateFormat()}',
               style: TextStyle(font: ttf)),
         ]),
         pw.Divider(
@@ -170,7 +228,7 @@ Future<void> generatePdf({
                         Order.businessName != null) ||
                     (Order.businessAddress != "" &&
                         Order.businessAddress != null) ||
-                    Order.gst != "" && Order.gst != null)
+                    Order.gst != "" && Order.gst != null || dlNum != null && dlNum != "")
                   pw.Text('Billed to:                        ',
                       style: TextStyle(
                         font: ttf,
@@ -178,21 +236,57 @@ Future<void> generatePdf({
                 pw.SizedBox(height: 10),
                 if (Order.reciverName != "" &&
                     Order.reciverName != null)
-                  pw.Text(Order.reciverName.toString(),
-                      style:
-                          TextStyle(font: ttf, fontWeight: pw.FontWeight.bold)),
+                  pw.RichText(
+                    text: pw.TextSpan(
+                      style: pw.TextStyle(font: ttf),
+                      children: [
+                        pw.TextSpan(text: 'Name: ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                        pw.TextSpan(text: Order.reciverName.toString()),
+                      ],
+                    ),
+                  ),
                 if (Order.businessName != "" &&
                     Order.businessName != null)
-                  pw.Text(Order.businessName.toString(),
-                      style:
-                          TextStyle(font: ttf, fontWeight: pw.FontWeight.bold)),
+                  pw.RichText(
+                    text: pw.TextSpan(
+                      style: pw.TextStyle(font: ttf),
+                      children: [
+                        pw.TextSpan(text: 'Business Name: ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                        pw.TextSpan(text: Order.businessName.toString()),
+                      ],
+                    ),
+                  ),
                 if (Order.businessAddress != "" &&
                     Order.businessAddress != null)
-                  pw.Text(Order.businessAddress.toString(),
-                      style: TextStyle(font: ttf)),
+                  pw.RichText(
+                    text: pw.TextSpan(
+                      style: pw.TextStyle(font: ttf),
+                      children: [
+                        pw.TextSpan(text: 'Business Add.: ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                        pw.TextSpan(text: Order.businessAddress.toString()),
+                      ],
+                    ),
+                  ),
                 if (Order.gst != "" && Order.gst != null)
-                  pw.Text(Order.gst.toString(),
-                      style: TextStyle(font: ttf)),
+                  pw.RichText(
+                    text: pw.TextSpan(
+                      style: pw.TextStyle(font: ttf),
+                      children: [
+                        pw.TextSpan(text: 'GSTIN: ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold,fontSize: 10)),
+                        pw.TextSpan(text: Order.gst.toString()),
+                      ],
+                    ),
+                  ),
+                if (dlNum != "" && dlNum != null)
+                  pw.RichText(
+                    text: pw.TextSpan(
+                      style: pw.TextStyle(font: ttf),
+                      children: [
+                        pw.TextSpan(text: 'DL Number: ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                        pw.TextSpan(text: dlNum.toString()),
+                      ],
+                    ),
+                  ),
               ])
             ]),
 
@@ -200,7 +294,7 @@ Future<void> generatePdf({
         pw.Divider(thickness: 1, color: pdfColor2),
         pw.Row(mainAxisAlignment: MainAxisAlignment.start, children: [
           pw.Container(
-            width: 200,
+            width: 50,
             child: pw.Text('Name'),
           ),
           SizedBox(width: 20),
@@ -208,6 +302,20 @@ Future<void> generatePdf({
             width: 30,
             child: pw.Text('Qty'),
           ),
+          if(expirydateAvailableFlag)
+          SizedBox(width: 20),
+          if(expirydateAvailableFlag)
+          pw.Container(
+            width: 55,
+            child: pw.Text('Expiry'),
+          ),
+          if(hsnAvailableFlag)
+            SizedBox(width: 20),
+          if(hsnAvailableFlag)
+            pw.Container(
+              width: 50,
+              child: pw.Text('HSN'),
+            ),
           SizedBox(width: 20),
           pw.Container(
             width: 70,

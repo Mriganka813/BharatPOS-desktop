@@ -637,6 +637,16 @@ class _CreateProductState extends State<CreateProduct> {
                     ),
                     const Divider(color: Colors.transparent),
                     CustomTextField(
+                      label: "MRP",
+                      value: _formInput.mrp == "null" ? " " : _formInput.mrp,
+                      inputType: TextInputType.numberWithOptions(signed: false, decimal: true),
+                      onChanged: (e) {
+                        _formInput.mrp = e;
+                      },
+                      validator: (e) => null,
+                    ),
+                    const Divider(color: Colors.transparent),
+                    CustomTextField(
                       label: "Quantity",
                       value: _formInput.quantity != null
                           ? _formInput.quantity
@@ -646,10 +656,10 @@ class _CreateProductState extends State<CreateProduct> {
                         _formInput.quantity = e;
                       },
                       validator: (e) {
-                        if (e!.contains(".") || e.contains(",")) {
-                          return '(. ,) characters are not allowed';
+                        if (e!.contains(",")) {
+                          return '(,) characters are not allowed';
                         }
-                        if (e.isNotEmpty) if (int.parse(e) > 99999) {
+                        if (e.isNotEmpty) if (double.parse(e) > 99999) {
                           return 'Maximum value is 99999';
                         }
                         return null;

@@ -25,19 +25,20 @@ class Product {
     this.sellerName,
     this.batchNumber,
     this.expiryDate,
-    
+    this.mrp
   });
 
   String? name;
   double? sellingPrice;
   String? barCode;
-  int? quantity=0;
+  double? quantity=0;
   String? user;
   String? image;
   String? id;
   DateTime? createdAt;
   int? v;
   String? hsn;
+  String? mrp;
   double purchasePrice;
   String? gstRate;
   String? salesgst;
@@ -58,26 +59,26 @@ class Product {
 
     if(json['quantity'] is int)
     {
-      print("${json["name"]} have int quantity");
+      // print("${json["name"]} have int quantity");
     }
     else
     {
-      print("${json["name"]} have double quantity(${json['quantity']})");
+      // print("${json["name"]} have double quantity(${json['quantity']})");
     }
-    print('hsn =${json['hsn']}');
+    // print('hsn =${json['hsn']}');
     
     
     return Product(
       name: json["name"],
       sellingPrice:json["sellingPrice"]==null?0.0: double.parse(json["sellingPrice"].toString()) ,
       barCode: json["barCode"],
-      quantity:  json['quantity']??0,
+        quantity:  json['quantity']!= null? json['quantity'].toDouble() : 0.0,
       purchasePrice:json['purchasePrice']==null?0.0: double.parse(json['purchasePrice'].toString()),
       user: json["user"],
       image: json['image'],
       id: json["_id"],
       hsn: json["hsn"],
-      
+        mrp: json["mrp"].toString(),
       createdAt: DateTime.parse(json["createdAt"]),
       v: json["__v"],
       gstRate: json['GSTRate'].toString(),
@@ -100,7 +101,7 @@ class Product {
       }
 
   Map<String, dynamic> toMap() { 
-        print('hsn =$hsn');
+        // print('hsn =$hsn');
     return
     {
         
@@ -111,6 +112,7 @@ class Product {
         "quantity": quantity,
         "user": user,
         "hsn":hsn,
+        "mrp":mrp,
         "_id": id,
         'purchasePrice': purchasePrice,
         "createdAt": createdAt?.toIso8601String(),

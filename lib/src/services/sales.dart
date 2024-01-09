@@ -30,7 +30,16 @@ class SalesService {
     print(response.data);
     return response;
   }
-
+  static Future<Map<String, dynamic>> getNumberOfSales() async {
+    final response = await ApiV1Service.getRequest('/salesNum');
+    return response.data;
+  }
+  static Future<Map<String, dynamic>> getSingleSaleOrder(String invoiceNum) async {
+    final response = await ApiV1Service.getRequest('/salesOrder/$invoiceNum');
+    print("line 65 in sales.dart");
+    print(response.data);
+    return response.data;
+  }
   ///
   static Future<Response> getAllSalesOrders() async {
     final response = await ApiV1Service.getRequest('/salesOrders/me');

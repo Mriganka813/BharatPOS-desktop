@@ -35,16 +35,19 @@ import 'package:provider/provider.dart';
 
 import '../models/party.dart';
 
-enum OrderType { purchase, sale,saleReturn  }
+enum OrderType { purchase, sale, saleReturn, estimate, none }
 
 class CheckoutPageArgs {
   final OrderType invoiceType;
   final Order order;
   final String orderId;
+  final bool?
+  canEdit; //used for: checkout from sale report(stopping user to edit sale
   const CheckoutPageArgs({
     required this.invoiceType,
     required this.order,
     required this.orderId,
+    this.canEdit
   });
 }
 
@@ -65,9 +68,27 @@ class _CheckoutPageState extends State<CheckoutPage> {
   late CheckoutCubit _checkoutCubit;
   late final TextEditingController _typeAheadController;
   bool isBillTo = false;
-  String? date;
+  String date = '';
   bool _isLoading = false;
+  bool _isUPI = false;
+  bool _isCash = false;
+  bool _isCredit = false;
+  bool _isBankTransfer = false;
+  bool _singlePayMode = true;
   User userData = User();
+  var salesInvoiceNo;
+  var purchasesInvoiceNo;
+  var estimateNo;
+  bool convertToSale = false;
+  final TextEditingController receiverNameController = TextEditingController();
+  final TextEditingController businessNameController = TextEditingController();
+  final TextEditingController businessAddressController =
+  TextEditingController();
+  final TextEditingController gstController = TextEditingController();
+  final TextEditingController dlNumController = TextEditingController();
+
+  final List<TextEditingController> _amountControllers = [];
+  final List<TextEditingController> _modeOfPayControllers = [];
 
   ///
   @override
@@ -76,6 +97,71 @@ class _CheckoutPageState extends State<CheckoutPage> {
     getUserData();
     _checkoutCubit = CheckoutCubit();
     _typeAheadController = TextEditingController();
+    fetchNTPTime();
+    _amountControllers.add(TextEditingController());
+    _modeOfPayControllers.add(TextEditingController());
+    print("line 130 in checkout");
+    print(widget.args.order.businessName);
+    if (widget.args.order.reciverName != null &&
+        widget.args.order.reciverName != "") {
+      isBillTo = true;
+      receiverNameController.text = widget.args.order.reciverName!;
+      businessNameController.text = widget.args.order.businessName!;
+      businessAddressController.text = widget.args.order.businessAddress!;
+      gstController.text = widget.args.order.gst!;
+    }
+  }
+
+  _addPaymentMethodField() {
+    setState(() {
+      _amountControllers.add(TextEditingController());
+      _modeOfPayControllers.add(TextEditingController());
+      if (_modeOfPayControllers.length > 1) _singlePayMode = false;
+      checkUpi();
+    });
+  }
+
+  void includePayments() {
+    widget.args.order.modeOfPayment = [];
+
+    if (_singlePayMode) {
+      _amountControllers[0].text = totalPrice()!;
+      var defaultPayment = {
+        "mode": _modeOfPayControllers[0].text,
+        "amount": double.parse(_amountControllers[0].text)
+      };
+      widget.args.order.modeOfPayment?.add(defaultPayment);
+    } else {
+      for (int i = 0; i < _modeOfPayControllers.length; i++) {
+        if (_modeOfPayControllers[i].text.isNotEmpty) {
+          var newPayment = {
+            "mode": _modeOfPayControllers[i].text,
+            "amount": 0
+          };
+          if (_amountControllers[i].text.isNotEmpty) {
+            newPayment["amount"] = double.parse(_amountControllers[i].text);
+          } else {
+            newPayment["amount"] = "0";
+          }
+          widget.args.order.modeOfPayment?.add(newPayment);
+        }
+      }
+    }
+  }
+
+  _removePaymentMethodField(i) {
+    setState(() {
+      _amountControllers.removeAt(i);
+      _modeOfPayControllers.removeAt(i);
+      if (_modeOfPayControllers.length == 1) {
+        _singlePayMode = true;
+        _amountControllers[0].text = '';
+      }
+      checkUpi();
+      // if(_modeOfPayControllers.elementAt(i).text=="UPI"){
+      //   _isUPI=false;
+      // }
+    });
   }
 
   getUserData() async {
@@ -176,7 +262,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 // SharedPreferences prefs = await SharedPreferences.getInstance();
                 // String? defaultBill = prefs.getString('defaultBill');
                 // print(defaultBill);
-                _showNewDialog(widget.args.order);
+                if (widget.args.invoiceType != OrderType.estimate) {
+                  _showNewDialog(widget.args.order);
+                } else {
+                  _viewPdfwithoutgst(userData);
+                }
 
                 // if (defaultBill == null) {
                 //   _showNewDialog(widget.args.Order);
@@ -216,10 +306,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   TextEditingController t = TextEditingController();
                   showDialog(
                       context: context,
-                      builder: (_) => AlertDialog(
+                      builder: (_) =>
+                          AlertDialog(
                             shape: RoundedRectangleBorder(
                                 borderRadius:
-                                    BorderRadius.all(Radius.circular(20))),
+                                BorderRadius.all(Radius.circular(20))),
                             backgroundColor: Colors.white,
                             title: Column(children: [
                               Text(
@@ -242,7 +333,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                 ),
                                 onSubmitted: (val) {
                                   if (int.tryParse(val.trim()) != null &&
-                                      val.trim().length == 10)
+                                      val
+                                          .trim()
+                                          .length == 10)
                                     _launchUrl(
                                         val.trim(),
                                         user,
@@ -257,14 +350,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                   onPressed: () {
                                     if (int.tryParse(t.text.trim()) != null &&
                                         t.text.length == 10)
-                                      _launchUrl(
-                                          t.text.trim(),
-                                          user,
-                                          widget.args.order.modeOfPayment,
-                                          totalbasePrice(),
-                                          totalgstPrice(),
-                                          "0.0",
-                                          widget.args.order.orderItems);
+                                      includePayments();
+                                    _launchUrl(
+                                        t.text.trim(),
+                                        user,
+                                        widget.args.order.modeOfPayment,
+                                        totalbasePrice(),
+                                        totalgstPrice(),
+                                        "0.0",
+                                        widget.args.order.orderItems);
                                   },
                                   child: Text("Yes")),
                               TextButton(
@@ -374,18 +468,42 @@ class _CheckoutPageState extends State<CheckoutPage> {
     // Navigator.of(context)
     //     .pushNamed(ShowPdfScreen.routeName, arguments: htmlContent);
     print(totalbasePrice().toString() + "+" + totalgstPrice().toString());
+    salesInvoiceNo = await _checkoutCubit.getSalesNum() as int;
+    purchasesInvoiceNo = await _checkoutCubit.getPurchasesNum() as int;
+    estimateNo = await _checkoutCubit.getEstimateNum() as int;
+    estimateNo++; //for showing in the pdf
+    salesInvoiceNo++;
+    purchasesInvoiceNo++;
     generatePdf(
       fileName: "Invoice",
-      date: DateTime.now().toString(),
-      companyName: user.businessName!,
+      date: widget.args.order.createdAt.toString() ?? "",
+      companyName: user.businessName ?? "",
       Order: widget.args.order,
       user: user,
       totalPrice: totalPrice() ?? '',
       subtotal: totalbasePrice(),
       gstTotal: totalgstPrice(),
       gstType: 'WithGST',
+      dlNum: dlNumController.text,
       orderType: widget.args.invoiceType,
-      invoiceNum: date,
+      convertToSale: convertToSale,
+      invoiceNum: widget.args.invoiceType == OrderType.sale
+          ? "Invoice No: ${widget.args.order.invoiceNum != '' &&
+          widget.args.order.invoiceNum != null &&
+          widget.args.order.invoiceNum != "null"
+          ? widget.args.order.invoiceNum
+          : salesInvoiceNo.toString()}"
+          : widget.args.invoiceType == OrderType.purchase
+          ? "Invoice No: ${purchasesInvoiceNo.toString()}"
+          : widget.args.invoiceType == OrderType.estimate
+          ? widget.args.order.estimateNum == '' ||
+          widget.args.order.estimateNum == "null" ||
+          widget.args.order.estimateNum == null
+          ? "Estimate No: ${estimateNo.toString()}"
+          : convertToSale
+          ? "Invoice No: ${salesInvoiceNo.toString()}"
+          : "Estimate No: ${widget.args.order.estimateNum}"
+          : "",
     );
     // final generatedPdfFile = await FlutterHtmlToPdf.convertFromHtmlContent(
     //   htmlContent,
@@ -430,7 +548,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
         "${DateFormat('dd/MM/yyyy').format(DateTime.now())}"
       ],
       date: DateTime.now(),
-      invoiceNum: date!,
+      invoiceNum: widget.args.invoiceType == OrderType.sale
+          ? widget.args.order.invoiceNum != '' &&
+          widget.args.order.invoiceNum != null &&
+          widget.args.order.invoiceNum != "null"
+          ? widget.args.order.invoiceNum!
+          : salesInvoiceNo.toString()
+          : purchasesInvoiceNo.toString(),
       totalPrice: totalPrice() ?? '',
       subtotal: totalbasePrice() ?? '',
       gstTotal: totalgstPrice() ?? '',
@@ -444,7 +568,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
     // }
   }
 
-  void _view57mmBill(Order Order) {
+  void _view57mmBill(Order Order) async {
+    salesInvoiceNo = await _checkoutCubit.getSalesNum() as int;
+    purchasesInvoiceNo = await _checkoutCubit.getPurchasesNum() as int;
+    salesInvoiceNo++;
+    purchasesInvoiceNo++;
     PdfUI.generate57mmPdf(
       user: userData,
       order: Order,
@@ -453,7 +581,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
         "${DateFormat('dd/MM/yyyy').format(DateTime.now())}"
       ],
       date: DateTime.now(),
-      invoiceNum: date!,
+      invoiceNum: widget.args.invoiceType == OrderType.sale
+          ? widget.args.order.invoiceNum != '' &&
+          widget.args.order.invoiceNum != null &&
+          widget.args.order.invoiceNum != "null"
+          ? widget.args.order.invoiceNum!
+          : salesInvoiceNo.toString()
+          : purchasesInvoiceNo.toString(),
       totalPrice: totalPrice() ?? '',
       subtotal: totalbasePrice() ?? '',
       gstTotal: totalgstPrice() ?? '',
@@ -465,11 +599,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
       return [];
     }
     final type =
-        widget.args.invoiceType == OrderType.sale ? "customer" : "supplier";
+    widget.args.invoiceType == OrderType.purchase ? "supplier" : "customer";
 
     try {
       final response =
-          await const PartyService().getSearch(pattern, type: type);
+      await const PartyService().getSearch(pattern, type: type);
       final data = response.data['allParty'] as List<dynamic>;
       return data.map((e) => Party.fromMap(e));
     } catch (err) {
@@ -482,22 +616,22 @@ class _CheckoutPageState extends State<CheckoutPage> {
   String? totalPrice() {
     return widget.args.order.orderItems?.fold<double>(
       0,
-      (acc, curr) {
+          (acc, curr) {
         if (widget.args.invoiceType == OrderType.purchase) {
           return (curr.quantity * (curr.product?.purchasePrice ?? 1)) + acc;
         }
         return (double.parse(curr.quantity.toString()) *
-                (curr.product?.sellingPrice ?? 1.0)) +
+            (curr.product?.sellingPrice ?? 1.0)) +
             acc;
       },
-    ).toString();
+    ).toStringAsFixed(2);
   }
 
   ///
   String? totalbasePrice() {
     return widget.args.order.orderItems?.fold<double>(
       0,
-      (acc, curr) {
+          (acc, curr) {
         if (widget.args.invoiceType == OrderType.purchase) {
           // return (curr.quantity * (curr.product?.purchasePrice ?? 1)) + acc;
           double sum = 0;
@@ -524,7 +658,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   String? totalgstPrice() {
     return widget.args.order.orderItems?.fold<double>(
       0,
-      (acc, curr) {
+          (acc, curr) {
         if (widget.args.invoiceType == OrderType.purchase) {
           // return (curr.quantity * (curr.product?.purchasePrice ?? 1)) + acc;
           double gstsum = 0;
@@ -549,47 +683,64 @@ class _CheckoutPageState extends State<CheckoutPage> {
     ).toStringAsFixed(2);
   }
 
-  _showNewDialog(
-    Order order,
-  ) async {
+  _showNewDialog(Order order,) async {
     return showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              onTap: () async {
-                // SharedPreferences prefs = await SharedPreferences.getInstance();
-                // await prefs.setString('defaultBill', '57mm');
-                _view57mmBill(order);
-                // _viewPdfwithoutgst(userData);
-                Navigator.of(ctx).pop();
-              },
-              title: Text('58mm'),
+      builder: (ctx) =>
+          AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  onTap: () async {
+                    // SharedPreferences prefs = await SharedPreferences.getInstance();
+                    // await prefs.setString('defaultBill', '57mm');
+                    _view57mmBill(order);
+                    // _viewPdfwithoutgst(userData);
+                    Navigator.of(ctx).pop();
+                  },
+                  title: Text('58mm'),
+                ),
+                ListTile(
+                  onTap: () async {
+                    // SharedPreferences prefs = await SharedPreferences.getInstance();
+                    // await prefs.setString('defaultBill', '80mm');
+                    _view80mmBill(order);
+                    Navigator.of(ctx).pop();
+                  },
+                  title: Text('80mm'),
+                ),
+                ListTile(
+                  onTap: () async {
+                    // SharedPreferences prefs = await SharedPreferences.getInstance();
+                    // await prefs.setString('defaultBill', 'A4');
+                    _viewPdfwithoutgst(userData);
+                    Navigator.of(ctx).pop();
+                  },
+                  title: Text('A4'),
+                )
+              ],
             ),
-            ListTile(
-              onTap: () async {
-                // SharedPreferences prefs = await SharedPreferences.getInstance();
-                // await prefs.setString('defaultBill', '80mm');
-                _view80mmBill(order);
-                Navigator.of(ctx).pop();
-              },
-              title: Text('80mm'),
-            ),
-            ListTile(
-              onTap: () async {
-                // SharedPreferences prefs = await SharedPreferences.getInstance();
-                // await prefs.setString('defaultBill', 'A4');
-                _viewPdfwithoutgst(userData);
-                Navigator.of(ctx).pop();
-              },
-              title: Text('A4'),
-            )
-          ],
-        ),
-      ),
+          ),
     );
+  }
+
+  void checkUpi() {
+    _isUPI = false;
+    for (int i = 0; i < _modeOfPayControllers.length; i++) {
+      if (_modeOfPayControllers[i].text == "UPI") {
+        _isUPI = true;
+      }
+    }
+  }
+
+  void checkCredit() {
+    _isCredit = false;
+    for (int i = 0; i < _modeOfPayControllers.length; i++) {
+      if (_modeOfPayControllers[i].text == "Credit") {
+        _isCredit = true;
+      }
+    }
   }
 
   @override
@@ -599,15 +750,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text(
-          "${widget.args.order.orderItems?.fold<int>(0, (acc, item) => item.quantity + acc)} products",
+          "${widget.args.order.orderItems?.fold<double>(
+              0, (acc, item) => item.quantity + acc)} products",
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 15.0),
+            padding: const EdgeInsets.only(right: 35.0),
             child: Center(
               child: Text(
-                "₹ ${totalPrice()}",
-                style: Theme.of(context).appBarTheme.titleTextStyle,
+                "₹ ${double.parse(totalPrice()!).toStringAsFixed(2)}",
+                style: Theme
+                    .of(context)
+                    .appBarTheme
+                    .titleTextStyle,
               ),
             ),
           ),
@@ -618,10 +773,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
         listener: (context, state) {
           if (state is CheckoutSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
+              SnackBar(
                 backgroundColor: Colors.green,
                 content: Text(
-                  'Order was created successfully',
+                  widget.args.invoiceType == OrderType.estimate
+                      ? widget.args.order.estimateNum != null
+                      ? convertToSale
+                      ? 'Estimate Converted to Sale'
+                      : 'Estimate Updated successfully'
+                      : 'Estimate Created Successfully'
+                      : 'Order was created successfully',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
@@ -663,295 +824,650 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         //height: media.size.height * 0.9,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Card(
-                              elevation: 0,
-                              color: Theme.of(context).scaffoldBackgroundColor,
-                              child: Column(
-                                children: [
-                                  Container(
-                                    width: media.size.width * 0.4,
-                                    child: Column(
-                                      children: [
-                                        const SizedBox(height: 10),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text('Sub Total'),
-                                            Text('₹ ${totalbasePrice()}'),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 5),
-                                        const SizedBox(height: 5),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text('Tax GST'),
-                                            Text('₹ ${totalgstPrice()}'),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 5),
-                                        const SizedBox(height: 5),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text('Discount'),
-                                            Text('₹ 0'),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 5),
-                                        Divider(color: Colors.black54),
-                                        const SizedBox(height: 5),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text('Grand Total'),
-                                            Text(
-                                              '₹ ${totalPrice()}',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 5),
-                                      ],
-                                    ),
-                                    // Divider(color: Colors.black54),
-                                    // Text(
-                                    //   "INVOICE",
-                                    //   style: TextStyle(
-                                    //       fontSize: 30, fontWeight: FontWeight.w500),
-                                    // ),
-                                    // Divider(color: Colors.black54),
+                            Column(
+                              children: [
+                                Card(
+                                  elevation: 0,
+                                  color: Theme
+                                      .of(context)
+                                      .scaffoldBackgroundColor,
+                                  child: Column(
+                                    children: [
+                                      SingleChildScrollView(
+                                        child: Container(
+                                          width: media.size.width * 0.4,
+                                          child: Column(
+                                            children: [
+                                              const SizedBox(height: 10),
+                                              Row(
+                                                mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Text('Sub Total'),
+                                                  Text('₹ ${totalbasePrice()}'),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 5),
+                                              const SizedBox(height: 5),
+                                              Row(
+                                                mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Text('Tax GST'),
+                                                  Text('₹ ${totalgstPrice()}'),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 5),
+                                              const SizedBox(height: 5),
+                                              Row(
+                                                mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Text('Discount'),
+                                                  Text('₹ 0'),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 5),
+                                              Divider(color: Colors.black54),
+                                              const SizedBox(height: 5),
+                                              Row(
+                                                mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Text('Grand Total'),
+                                                  Text(
+                                                    '₹ ${totalPrice()}',
+                                                    style: TextStyle(
+                                                        fontWeight: FontWeight
+                                                            .bold),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 5),
+                                            ],
+                                          ),
+                                          // Divider(color: Colors.black54),
+                                          // Text(
+                                          //   "INVOICE",
+                                          //   style: TextStyle(
+                                          //       fontSize: 30, fontWeight: FontWeight.w500),
+                                          // ),
+                                          // Divider(color: Colors.black54),
 
-                                    // Divider(color: Colors.black54),
-                                    // const Divider(color: Colors.transparent),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            //const Divider(color: Colors.transparent),
-                            Container(
-                              
-                              width: media.size.width * 0.4,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  SizedBox(
-                                    width: 400,
-                                    child: TypeAheadFormField<Party>(
-                                      validator: (value) {
-                                        final isEmpty =
-                                            (value == null || value.isEmpty);
-                                        final isCredit = widget.args.order
-                                                .modeOfPayment ==
-                                            "Credit";
-                                        if (isEmpty && isCredit) {
-                                          return "Please select a party for credit order";
-                                        }
-                                        return null;
-                                      },
-                                      debounceDuration:
-                                          const Duration(milliseconds: 500),
-                                      textFieldConfiguration:
-                                          TextFieldConfiguration(
-                                        controller: _typeAheadController,
-                                        autofocus: true,
-                                        decoration: InputDecoration(
-                                          hintText: "Party",
-                                          suffixIcon: GestureDetector(
-                                            onTap: () {
-                                              Navigator.pushNamed(context,
-                                                  CreatePartyPage.routeName,
-                                                  arguments:
-                                                      CreatePartyArguments(
-                                                    "",
-                                                    "",
-                                                    "",
-                                                    "",
-                                                    widget.args.invoiceType ==
-                                                            OrderType.purchase
-                                                        ? 'supplier'
-                                                        : 'customer',
-                                                  ));
-                                            },
-                                            child: const Icon(Icons
-                                                .add_circle_outline_rounded),
-                                          ),
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                            vertical: 2,
-                                            horizontal: 10,
-                                          ),
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                          ),
+                                          // Divider(color: Colors.black54),
+                                          // const Divider(color: Colors.transparent),
                                         ),
                                       ),
-                                      suggestionsCallback: (String pattern) {
-                                        if (int.tryParse(pattern.trim()) !=
-                                            null) {
-                                          return Future.value([]);
-                                        }
-                                        return _searchParties(pattern);
-                                      },
-                                      itemBuilder: (context, party) {
-                                        return ListTile(
-                                          leading: const Icon(Icons.person),
-                                          title: Text(party.name ?? ""),
-                                        );
-                                      },
-                                      onSuggestionSelected: (Party party) {
-                                        setState(() {
-                                          widget.args.order.party = party;
-                                        });
-                                        _typeAheadController.text =
-                                            party.name ?? "";
-                                      },
-                                    ),
-                                  ),
-                                  const Divider(
-                                      color: Colors.transparent, height: 5),
-                                  const Divider(
-                                      color: Colors.transparent, height: 20),
-                                  CustomDropDownField(
-                                    items: const <String>[
-                                      "Cash",
-                                      "Credit",
-                                      "Bank Transfer",
-                                      "UPI",
                                     ],
-                                    onSelected: (e) {
-                                      setState(() {
-                                        widget.args.order.modeOfPayment =
-                                            e;
-                                      });
-                                    },
-                                    validator: (e) {
-                                      if ((e ?? "").isEmpty) {
-                                        return 'Please select a mode of payment';
-                                      }
-                                      return null;
-                                    },
-                                    hintText: "Mode of payment",
                                   ),
-
-                                  const Divider(
-                                      color: Colors.transparent, height: 50),
-
-                                  CustomButton(
-                                    title: "Share",
-                                    onTap: () async {
-                                      try {
-                                        final res = await UserService.me();
-                                        if ((res.statusCode ?? 400) < 300) {
-                                          final user =
-                                              User.fromMap(res.data['user']);
-
-                                          openShareModal(context, user);
-                                        }
-                                      } catch (_) {}
-                                    },
-                                    type: ButtonType.outlined,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 30,
-                                      vertical: 10,
+                                ),
+                                if (widget.args.invoiceType ==
+                                    OrderType.estimate &&
+                                    widget.args.order.estimateNum != null)
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: media.size.width * 0.4,
+                                        child: SwitchListTile(
+                                            title: Text('Convert to Sale: '),
+                                            value: convertToSale,
+                                            onChanged: (val) {
+                                              convertToSale = val;
+                                              setState(() {});
+                                            }),
+                                      ),
+                                      const Divider(color: Colors.transparent),
+                                    ],
+                                  ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: media.size.width * 0.4,
+                                      child: SwitchListTile(
+                                          title: Text('Bill to: '),
+                                          value: isBillTo,
+                                          onChanged: (val) {
+                                            isBillTo = val;
+                                            setState(() {});
+                                          }),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: 5,
+                                ),
+                                Container(
+                                  width: media.size.width * 0.3,
+                                  child: Visibility(
+                                    visible: isBillTo,
+                                    child: Column(
+                                      children: [
+                                        TextFormField(
+                                          controller: receiverNameController,
+                                          decoration: InputDecoration(
+                                              label: Text("Receiver name"),
+                                              border: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(10))),
+                                          onChanged: (val) {
+                                            widget.args.order.reciverName = val;
+                                            setState(() {});
+                                          },
+                                        ),
+                                        SizedBox(
+                                          height: 15,
+                                        ),
+                                        TextFormField(
+                                          controller: businessNameController,
+                                          decoration: InputDecoration(
+                                              label: Text("Business Name"),
+                                              border: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(10))),
+                                          onChanged: (val) {
+                                            widget.args.order.businessName =
+                                                val;
+                                            setState(() {});
+                                          },
+                                        ),
+                                        SizedBox(
+                                          height: 15,
+                                        ),
+                                        TextFormField(
+                                          controller: businessAddressController,
+                                          decoration: InputDecoration(
+                                              label: Text("Business Address"),
+                                              border: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(10))),
+                                          onChanged: (val) {
+                                            widget.args.order.businessAddress =
+                                                val;
+                                            setState(() {});
+                                          },
+                                        ),
+                                        SizedBox(
+                                          height: 15,
+                                        ),
+                                        TextFormField(
+                                          controller: gstController,
+                                          decoration: InputDecoration(
+                                              label: Text("GSTIN"),
+                                              border: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(10))),
+                                          onChanged: (val) {
+                                            widget.args.order.gst = val;
+                                            setState(() {});
+                                          },
+                                        ),
+                                        SizedBox(
+                                          height: 15,
+                                        ),
+                                        TextFormField(
+                                          controller: dlNumController,
+                                          decoration: InputDecoration(
+                                              label: Text("DL Number"),
+                                              border: OutlineInputBorder(
+                                                  borderRadius:
+                                                  BorderRadius.circular(10))),
+                                          onChanged: (val) {
+                                            // widget.args.order.dlNum = val;
+                                            setState(() {});
+                                          },
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  const Divider(
-                                      color: Colors.transparent, height: 30),
+                                ),
+                              ],
+                            ),
 
-                                  CustomButton(
-                                    title: "Save",
-                                    onTap: () {
-                                      _onTapSubmit();
-                                    },
-                                  ),
-                                  SizedBox(height: 100,),
+                            //const Divider(color: Colors.transparent),
+                            SingleChildScrollView(
+                              child: Container(
+                                width: media.size.width * 0.4,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    if (widget.args.invoiceType !=
+                                        OrderType.estimate &&
+                                        widget.args.canEdit != false ||
+                                        convertToSale != false)
+                                      Column(
+                                        children: [
+                                          SizedBox(
+                                            width: 400,
+                                            child: TypeAheadFormField<Party>(
+                                              validator: (value) {
+                                                final isEmpty =
+                                                (value == null ||
+                                                    value.isEmpty);
+                                                if (isEmpty && _isCredit) {
+                                                  return "Please select a party for credit order";
+                                                }
+                                                return null;
+                                              },
+                                              debounceDuration:
+                                              const Duration(milliseconds: 500),
+                                              textFieldConfiguration:
+                                              TextFieldConfiguration(
+                                                controller: _typeAheadController,
+                                                autofocus: true,
+                                                decoration: InputDecoration(
+                                                  hintText: "Party",
+                                                  suffixIcon: GestureDetector(
+                                                    onTap: () {
+                                                      Navigator.pushNamed(
+                                                          context,
+                                                          CreatePartyPage
+                                                              .routeName,
+                                                          arguments:
+                                                          CreatePartyArguments(
+                                                            "",
+                                                            "",
+                                                            "",
+                                                            "",
+                                                            widget.args
+                                                                .invoiceType ==
+                                                                OrderType
+                                                                    .purchase
+                                                                ? 'supplier'
+                                                                : 'customer',
+                                                          ));
+                                                    },
+                                                    child: const Icon(Icons
+                                                        .add_circle_outline_rounded),
+                                                  ),
+                                                  contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 2,
+                                                    horizontal: 10,
+                                                  ),
+                                                  border: OutlineInputBorder(
+                                                    borderRadius:
+                                                    BorderRadius.circular(10),
+                                                  ),
+                                                ),
+                                              ),
+                                              suggestionsCallback: (
+                                                  String pattern) {
+                                                if (int.tryParse(
+                                                    pattern.trim()) !=
+                                                    null) {
+                                                  return Future.value([]);
+                                                }
+                                                return _searchParties(pattern);
+                                              },
+                                              itemBuilder: (context, party) {
+                                                return ListTile(
+                                                  leading: const Icon(
+                                                      Icons.person),
+                                                  title: Text(party.name ?? ""),
+                                                );
+                                              },
+                                              onSuggestionSelected: (
+                                                  Party party) {
+                                                setState(() {
+                                                  widget.args.order.party =
+                                                      party;
+                                                });
+                                                _typeAheadController.text =
+                                                    party.name ?? "";
+                                              },
+                                            ),
+                                          ),
+                                          const Divider(
+                                              color: Colors.transparent,
+                                              height: 30),
+                                          if (widget.args.invoiceType !=
+                                              OrderType.saleReturn)
+                                            Column(
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: CustomDropDownField(
+                                                        items: const <String>[
+                                                          "Cash",
+                                                          "Credit",
+                                                          "Bank Transfer",
+                                                          "UPI"
+                                                        ],
+                                                        onSelected: (e) {
+                                                          // widget.args.order.modeOfPayment = e;
+                                                          _modeOfPayControllers[0]
+                                                              .text = e;
+                                                          checkUpi();
+                                                          checkCredit();
+                                                          // if (widget.args.order.modeOfPayment ==
+                                                          //     'UPI') {
+                                                          //   _isUPI = true;
+                                                          //   getUPIDetails();
+                                                          // } else {
+                                                          //   _isUPI = false;
+                                                          // }
 
-                                  CustomButton(title: "Checkout", onTap: (){_onTapSubmit();})
+                                                          setState(() {});
+                                                        },
+                                                        validator: (e) {
+                                                          if ((e ?? "")
+                                                              .isEmpty) {
+                                                            return 'Please select a mode of payment';
+                                                          }
+                                                          return null;
+                                                        },
+                                                        hintText: "Payment Mode",
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 5,
+                                                    ),
+                                                    Expanded(
+                                                        child: TextFormField(
+                                                          enabled: !_singlePayMode,
+                                                          controller: _amountControllers[0],
+                                                          keyboardType: TextInputType
+                                                              .numberWithOptions(
+                                                              signed: false,
+                                                              decimal: true),
+                                                          decoration: InputDecoration(
+                                                              contentPadding:
+                                                              EdgeInsets
+                                                                  .symmetric(
+                                                                  vertical: 5,
+                                                                  horizontal: 7),
+                                                              label: Text(
+                                                                  "Amount"),
+                                                              border: OutlineInputBorder(
+                                                                  borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                      10))),
+                                                          validator: (e) {
+                                                            if (e!.contains(
+                                                                ",")) {
+                                                              return '(,) character are not allowed';
+                                                            }
+                                                            if (e.isNotEmpty)
+                                                              if (double
+                                                                  .parse(e) >
+                                                                  99999.0) {
+                                                                return 'Maximum value is 99999';
+                                                              }
+                                                            return null;
+                                                          },
+                                                        )),
+                                                    SizedBox(
+                                                      width: 30,
+                                                    ),
+                                                  ],
+                                                ),
 
-                               
-                                ],
+                                                SizedBox(
+                                                  height: 10,
+                                                ),
+                                                // qr code image
+                                                Column(
+                                                  children: [
+                                                    for (int i = 1;
+                                                    i < _amountControllers
+                                                        .length;
+                                                    i++)
+                                                      Column(
+                                                        children: [
+                                                          Row(
+                                                            children: [
+                                                              Expanded(
+                                                                child:
+                                                                CustomDropDownField(
+                                                                  items: const <
+                                                                      String>[
+                                                                    "Cash",
+                                                                    "Credit",
+                                                                    "Bank Transfer",
+                                                                    "UPI"
+                                                                  ],
+                                                                  onSelected: (
+                                                                      e) {
+                                                                    _modeOfPayControllers[i]
+                                                                        .text =
+                                                                        e;
+                                                                    checkUpi();
+                                                                    checkCredit();
+                                                                    setState(() {});
+                                                                  },
+                                                                  validator: (
+                                                                      e) {
+                                                                    if ((e ??
+                                                                        "")
+                                                                        .isEmpty) {
+                                                                      return 'Please select a mode of payment';
+                                                                    }
+                                                                    return null;
+                                                                  },
+                                                                  hintText:
+                                                                  "Payment Mode",
+                                                                ),
+                                                              ),
+                                                              SizedBox(
+                                                                width: 5,
+                                                              ),
+                                                              Expanded(
+                                                                  child: TextFormField(
+                                                                    controller:
+                                                                    _amountControllers[
+                                                                    i],
+                                                                    keyboardType: TextInputType
+                                                                        .numberWithOptions(
+                                                                        signed: false,
+                                                                        decimal: true),
+                                                                    decoration: InputDecoration(
+                                                                        contentPadding:
+                                                                        EdgeInsets
+                                                                            .symmetric(
+                                                                            vertical:
+                                                                            5,
+                                                                            horizontal:
+                                                                            7),
+                                                                        label:
+                                                                        Text(
+                                                                            "Amount"),
+                                                                        border: OutlineInputBorder(
+                                                                            borderRadius:
+                                                                            BorderRadius
+                                                                                .circular(
+                                                                                10))),
+                                                                    validator: (
+                                                                        e) {
+                                                                      if (e!
+                                                                          .contains(
+                                                                          ",")) {
+                                                                        return '(,) character are not allowed';
+                                                                      }
+                                                                      if (e
+                                                                          .isNotEmpty)
+                                                                        if (double
+                                                                            .parse(
+                                                                            e) >
+                                                                            99999.0) {
+                                                                          return 'Amount not correct';
+                                                                        }
+                                                                      return null;
+                                                                    },
+                                                                  )),
+                                                              SizedBox(
+                                                                width: 5,
+                                                              ),
+                                                              i ==
+                                                                  _modeOfPayControllers
+                                                                      .length -
+                                                                      1
+                                                                  ? InkWell(
+                                                                onTap: () =>
+                                                                    _removePaymentMethodField(
+                                                                        i),
+                                                                child: Container(
+                                                                  width:
+                                                                  25,
+                                                                  // Adjust the width as needed
+                                                                  child: Icon(
+                                                                    Icons
+                                                                        .remove_circle,
+                                                                    color: Colors
+                                                                        .red,
+                                                                  ),
+                                                                ),
+                                                              )
+                                                                  : SizedBox(
+                                                                width: 25,
+                                                              )
+                                                            ],
+                                                          ),
+                                                          SizedBox(
+                                                            height: 10,
+                                                          )
+                                                        ],
+                                                      )
+                                                  ],
+                                                ),
+                                                Row(
+                                                  //add payment mode button
+                                                    mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                    children: [
+                                                      InkWell(
+                                                        onTap: () {
+                                                          if (_modeOfPayControllers
+                                                              .length <
+                                                              4) {
+                                                            _addPaymentMethodField();
+                                                          }
+                                                        },
+                                                        child: Container(
+                                                          padding:
+                                                          const EdgeInsets.only(
+                                                              left: 18,
+                                                              right: 20,
+                                                              top: 8,
+                                                              bottom: 8),
+                                                          decoration: ShapeDecoration(
+                                                            // color: const Color(0xFF1E232C),
+                                                            color: Colors
+                                                                .grey[100],
+                                                            shape: RoundedRectangleBorder(
+                                                                side: const BorderSide(
+                                                                    color:
+                                                                    Colors
+                                                                        .black),
+                                                                borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                    18)),
+                                                          ),
+                                                          child: Row(
+                                                            mainAxisSize:
+                                                            MainAxisSize.min,
+                                                            mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
+                                                            crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .center,
+                                                            children: [
+                                                              Icon(
+                                                                Icons
+                                                                    .add_circle,
+                                                                color:
+                                                                _modeOfPayControllers
+                                                                    .length >=
+                                                                    4
+                                                                    ? Colors
+                                                                    .grey
+                                                                    : Colors
+                                                                    .green,
+                                                              ),
+                                                              SizedBox(
+                                                                width: 5,
+                                                              ),
+                                                              Text(
+                                                                'Payment Mode',
+                                                                style: TextStyle(
+                                                                  color: _modeOfPayControllers
+                                                                      .length >=
+                                                                      4
+                                                                      ? Colors
+                                                                      .grey
+                                                                      : Colors
+                                                                      .black,
+                                                                  fontSize: 14,
+                                                                  fontFamily:
+                                                                  'Urbanist',
+                                                                  fontWeight:
+                                                                  FontWeight
+                                                                      .w500,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(
+                                                        width: 10,
+                                                      ),
+                                                    ]),
+                                                SizedBox(
+                                                  height: 10,
+                                                ),
+                                                // if (_isUPI)
+                                                //   Center(
+                                                //     child: UPIPaymentQRCode(
+                                                //       upiDetails: _myUpiId!,
+                                                //       size: 200,
+                                                //       embeddedImagePath:
+                                                //       'assets/icon/BharatPos.png',
+                                                //       embeddedImageSize:
+                                                //       const Size(40, 40),
+                                                //       upiQRErrorCorrectLevel:
+                                                //       UPIQRErrorCorrectLevel.high,
+                                                //       qrCodeLoader: Center(
+                                                //           child:
+                                                //           CircularProgressIndicator()),
+                                                //     ),
+                                                //   ),
+                                                // if (_isUPI)
+                                                //   SizedBox(
+                                                //     height: 20,
+                                                //   ),
+                                                // if (_isUPI)
+                                                //   Row(
+                                                //     mainAxisAlignment:
+                                                //     MainAxisAlignment.center,
+                                                //     children: [
+                                                //       Text(
+                                                //         'Upi id: ',
+                                                //       ),
+                                                //       // to copy upi id
+                                                //       SelectableText(
+                                                //         _myUpiId!.upiID,
+                                                //       )
+                                                //     ],
+                                                //   ),
+                                              ],
+                                            ),
+                                        ],
+                                      ),
+
+                                    const Divider(
+                                        color: Colors.transparent, height: 50),
+
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: media.size.width / 2,
-                            child: SwitchListTile(
-                                title: Text('Bill to: '),
-                                value: isBillTo,
-                                onChanged: (val) {
-                                  isBillTo = val;
-                                  setState(() {});
-                                }),
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      Visibility(
-                        visible: isBillTo,
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                CustomTextField(
-                                  hintText: 'Receiver name',
-                                  onChanged: (val) {
-                                    widget.args.order.reciverName = val;
-
-                                    setState(() {});
-                                  },
-                                ),
-                                SizedBox(
-                                  width: 20,
-                                ),
-                                CustomTextField(
-                                  hintText: 'Business name',
-                                  onChanged: (val) {
-                                    widget.args.order.businessName = val;
-                                    setState(() {});
-                                  },
-                                ),
-                              ],
-                            ),
-                            SizedBox(
-                              height: 20,
-                            ),
-                            Row(
-                              children: [
-                                CustomTextField(
-                                  hintText: 'Business address',
-                                  onChanged: (val) {
-                                    widget.args.order.businessAddress =
-                                        val;
-                                    setState(() {});
-                                  },
-                                ),
-                                SizedBox(
-                                  width: 20,
-                                ),
-                                CustomTextField(
-                                  hintText: 'GSTIN',
-                                  onChanged: (val) {
-                                    widget.args.order.gst = val;
-                                    setState(() {});
-                                  },
-                                ),
-                              ],
                             ),
                           ],
                         ),
@@ -964,6 +1480,69 @@ class _CheckoutPageState extends State<CheckoutPage> {
           },
         ),
       ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+        child: Container(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if(convertToSale)
+                  CustomButton(
+                    title: "Submit",
+                    onTap: () {
+                      _onTapSubmit();
+                    },
+                  ),
+                if(!convertToSale)
+                CustomButton(
+                  title: "Share",
+                  onTap: () async {
+                    try {
+                      final res = await UserService.me();
+                      if ((res.statusCode ?? 400) < 300) {
+                        final user =
+                        User.fromMap(res.data['user']);
+
+                        openShareModal(context, user);
+                      }
+                    } catch (_) {}
+                  },
+                  type: ButtonType.outlined,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: 10,
+                  ),
+                ),
+                if(!convertToSale)
+                SizedBox(width: 20,),
+
+                if (widget.args.canEdit != false)
+                  if(!convertToSale)
+                  CustomButton(
+                    title: "Save",
+                    onTap: () {
+                      _onTapSubmit();
+                    },
+                  ),
+                // TextButton(
+                //   onPressed: () {
+                //     _onTapSubmit();
+                //   },
+                //   style: TextButton.styleFrom(
+                //     backgroundColor: ColorsConst.primaryColor,
+                //     shape: const CircleBorder(),
+                //   ),
+                //   child: const Icon(
+                //     Icons.arrow_forward_rounded,
+                //     size: 40,
+                //     color: Colors.white,
+                //   ),
+                // )
+              ],
+            )
+        ),
+      ),
+
     );
   }
 
@@ -981,73 +1560,187 @@ class _CheckoutPageState extends State<CheckoutPage> {
     Navigator.pop(context);
   }
 
+  bool checkAmounts() {
+    if (!_singlePayMode) {
+      var inputAmount = 0.0;
+      for (int i = 0; i < _amountControllers.length; i++) {
+        inputAmount += double.parse(_amountControllers[i].text);
+      }
+      print("checking amount");
+      print(inputAmount);
+      var total = double.parse(totalPrice()!);
+      print(total);
+      double tolerance = 0.99;
+
+      if ((inputAmount - total).abs() > tolerance) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            'Payment amount mismatch. Check grand total.',
+            style: TextStyle(color: Colors.white),
+          ),
+        ));
+        return false;
+      } else {
+        return true;
+      }
+    }
+    return true;
+  }
+
   void _onTapSubmit() async {
     print(date);
     _formKey.currentState?.save();
     if (_formKey.currentState?.validate() ?? false) {
-      widget.args.invoiceType == OrderType.purchase
-          ? _checkoutCubit.createPurchaseOrder(widget.args.order, date!): widget.args.invoiceType == OrderType.saleReturn?_checkoutCubit.createSalesReturn(widget.args.order, date!,totalPrice()!)
-          : _checkoutCubit.createSalesOrder(widget.args.order, date!);
+      widget.args.order.modeOfPayment = [];
 
-      final provider = Provider.of<Billing>(context, listen: false);
-      widget.args.invoiceType == OrderType.purchase
-          ? provider.removePurchaseBillItems(widget.args.orderId)
-          : provider.removeSalesBillItems(widget.args.orderId);
+      if (_singlePayMode) {
+        print("line 1276 in checkout.dart");
+        _amountControllers[0].text = totalPrice()!;
+        print(_amountControllers[0].text);
+        var defaultPayment = {
+          "mode": _modeOfPayControllers[0].text,
+          "amount": double.parse(_amountControllers[0].text)
+        };
+        widget.args.order.modeOfPayment?.add(defaultPayment);
+        print(widget.args.order.modeOfPayment.toString());
+      } else {
+        print("line 1284 in checkout.dart");
+        for (int i = 0; i < _modeOfPayControllers.length; i++) {
+          if (_modeOfPayControllers[i].text.isNotEmpty) {
+            var newPayment = {
+              "mode": _modeOfPayControllers[i].text,
+              "amount": 0
+            };
+            // widget.args.order.modeOfPayment?[i]["mode"] = _modeOfPayControllers[i].text;
+            if (_amountControllers[i].text.isNotEmpty) {
+              // widget.args.order.modeOfPayment?[i]["amount"] = _amountControllers[i].text;
+              newPayment["amount"] = double.parse(_amountControllers[i].text);
+            } else {
+              newPayment["amount"] = "0";
+              // widget.args.order.modeOfPayment?[i]["amount"] = "0";
+            }
+            widget.args.order.modeOfPayment?.add(newPayment);
+          }
+        }
+      }
+
+      salesInvoiceNo = await _checkoutCubit.getSalesNum() as int;
+      purchasesInvoiceNo = await _checkoutCubit.getPurchasesNum() as int;
+      estimateNo = await _checkoutCubit.getEstimateNum() as int;
+      // print("lilne 1310 in checkout.dart");
+      // print("sales invoice no is: $salesInvoiceNo");
+
+      if (widget.args.invoiceType == OrderType.purchase) {
+        if (checkAmounts()) {
+          _checkoutCubit.createPurchaseOrder(
+              widget.args.order, (purchasesInvoiceNo + 1).toString());
+        }
+      } else if (widget.args.invoiceType == OrderType.saleReturn) {
+        _checkoutCubit.createSalesReturn(
+            widget.args.order, date, totalPrice()!);
+      } else if (widget.args.invoiceType == OrderType.estimate) {
+        if (widget.args.order.estimateNum != null) {
+          //update estimate
+          print("line 1422 in checkout.dart");
+          print(widget.args.order.estimateNum.runtimeType);
+          if (convertToSale) {
+            print("line 1500 in checkout");
+            if (checkAmounts()) {
+              _checkoutCubit.convertEstimateToSales(
+                  widget.args.order, (salesInvoiceNo + 1).toString());
+            }
+          } else {
+            _checkoutCubit.updateEstimateOrder(widget.args.order);
+          }
+        } else {
+          print("line 1424 in checkout.dart");
+          print(widget.args.order.estimateNum.runtimeType);
+          _checkoutCubit.createEstimateOrder(
+              widget.args.order, (estimateNo + 1).toString());
+        }
+      } else if (widget.args.invoiceType == OrderType.sale) {
+        if (checkAmounts()) {
+          _checkoutCubit.createSalesOrder(
+              widget.args.order, (salesInvoiceNo + 1).toString());
+        }
+        final provider = Provider.of<Billing>(context, listen: false);
+        widget.args.invoiceType == OrderType.purchase
+            ? provider.removePurchaseBillItems(widget.args.orderId)
+            : provider.removeSalesBillItems(widget.args.orderId);
+      }
     }
   }
-}
 
-Future<void> _launchUrl(mobNum, user, paymethod, sub, tax, dis, items) async {
-  //916000637319
-  final String mobile = "91${mobNum}";
-  final String invoiceHeader =
-      "%0A%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%0A";
-  final String invoiceText =
-      "%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20INVOICE";
-  final String email = "%0AEmail%3A%20${user.email}";
-  final String cusName = "%0ACustomer%20Name%3A%20${user.businessName}";
-  // final String Date = "%0ADate%3A%20%5BDate%5D";
-  final String Date =
-      "Date%3A%20${DateFormat('dd LLLL yyyy').format(DateTime.now())}";
-  final String invoiceNumber = "%0AMobile%20Number%3A%20${user.phoneNumber}";
-  final String dash1 = "%0A------------------------------------";
-  final String tableHead =
-      "%0A%20%20%20%20%20ITEM%20%20%20%20%20QTY%20%20%20%20%20PRICE%20%20%20%20%20TOTAL";
-  String x = "";
-  for (int i = 0; i < items.length; i++) {
-    if (items[i].product.name.length <= 4) {
-      x = x +
-          "%0A%09%09%09${items[i].product.name}%09%09%20%09%09%09${items[i].quantity}%09%09%09%09%09%09${items[i].product.sellingPrice}%09%09%09%09%09%09%09${items[i].product.sellingPrice * items[i].quantity}";
-    } else {
-      x = x +
-          "%0A%09%09%09${items[i].product.name.substring(0, 4)}%09%09%20%09%09%09${items[i].quantity}%09%09%09%09%09%09${items[i].product.sellingPrice}%09%09%09%09%09%09%09${items[i].product.sellingPrice * items[i].quantity}";
-      x = x + "%0A%09%09%09${items[i].product.name.substring(4)}";
+  Future<void> _launchUrl(mobNum, user, paymethod, sub, tax, dis, items) async {
+    //916000637319
+    final String mobile = "91${mobNum}";
+    final String invoiceHeader =
+        "%0A%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%0A";
+    final String invoiceText =
+        "%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20INVOICE";
+    final String email = "%0AEmail%3A%20${user.email}";
+    final String cusName = "%0ACustomer%20Name%3A%20${user.businessName}";
+    // final String Date = "%0ADate%3A%20%5BDate%5D";
+    final String Date =
+        "Date%3A%20${DateFormat('dd LLLL yyyy').format(DateTime.now())}";
+    final String invoiceNumber = "%0AMobile%20Number%3A%20${user.phoneNumber}";
+    final String dash1 = "%0A------------------------------------";
+    final String tableHead =
+        "%0A%20%20%20%20%20ITEM%20%20%20%20%20QTY%20%20%20%20%20PRICE%20%20%20%20%20TOTAL";
+    String x = "";
+    for (int i = 0; i < items.length; i++) {
+      if (items[i].product.name.length <= 4) {
+        x = x +
+            "%0A%09%09%09${items[i].product.name}%09%09%20%09%09%09${items[i]
+                .quantity}%09%09%09%09%09%09${items[i].product
+                .sellingPrice}%09%09%09%09%09%09%09${items[i].product
+                .sellingPrice * items[i].quantity}";
+      } else {
+        x = x +
+            "%0A%09%09%09${items[i].product.name.substring(
+                0, 4)}%09%09%20%09%09%09${items[i]
+                .quantity}%09%09%09%09%09%09${items[i].product
+                .sellingPrice}%09%09%09%09%09%09%09${items[i].product
+                .sellingPrice * items[i].quantity}";
+        x = x + "%0A%09%09%09${items[i].product.name.substring(4)}";
+      }
     }
-  }
-  /* final String tableData1 =
+    /* final String tableData1 =
         "%0A%5BItem%201%5D%20%20%20%20${items[0]["qty"]}%20%20%5BPrice%201%5D%20%20%5BTotal%201%5D";
     final String tableData2 =
         "%0A%5BItem%202%5D%20%20%20%5BQty%202%5D%20%20%5BPrice%202%5D%20%20%5BTotal%202%5D";
     final String tableData3 = "%0A%5BItem%203%5D%20%20%20%5BQty%203%5D%20%20";*/
-  final String subTotal = "%0ASubtotal%3A%20₹%20${sub}";
-  final String delivery = "%0AGST%20Charges%3A%20₹%20${tax}";
-  final String discount = "%0ADiscount%3A%20₹%20${dis}";
-  final String grandTotal =
-      "%0AGrand%20Total%3A%20₹%20${num.parse(sub) + num.parse(tax) - num.parse(dis)}";
-  final String detailsText =
-      "%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20PAYMENT%20DETAILS";
+    final String subTotal = "%0ASubtotal%3A%20₹%20${sub}";
+    final String delivery = "%0AGST%20Charges%3A%20₹%20${tax}";
+    final String discount = "%0ADiscount%3A%20₹%20${dis}";
+    final String grandTotal =
+        "%0AGrand%20Total%3A%20₹%20${num.parse(sub) + num.parse(tax) -
+        num.parse(dis)}";
+    final String detailsText =
+        "%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20PAYMENT%20DETAILS";
 
-  final String method = "%0APayment%20Method%3A%20${paymethod}";
-  final String dueDate =
-      "%0ADue%20Date%3A%20${DateFormat('dd LLLL yyyy').format(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day + 1))}";
-  final String thanks = "%0AThank%20you%20for%20your%20business%21%0A";
+    final String method = "%0APayment%20Method%3A%20${paymethod?.map((
+        map) => "${map['mode'] ?? "N/A"} : ${map['amount'] ?? ""}")
+        .join(', ')}";
+    final String dueDate =
+        "%0ADue%20Date%3A%20${DateFormat('dd LLLL yyyy').format(
+        DateTime(DateTime
+            .now()
+            .year, DateTime
+            .now()
+            .month, DateTime
+            .now()
+            .day + 1))}";
+    final String thanks = "%0AThank%20you%20for%20your%20business%21%0A";
 
-  final Uri _url = Uri.parse(
-      'https://wa.me/${mobile}?text=${invoiceHeader}${invoiceText}${invoiceHeader}${Date}${cusName}${email}${invoiceNumber}${dash1}${tableHead}${dash1}${x}${dash1}${subTotal}${delivery}${discount}${grandTotal}${dash1}${detailsText}${dash1}${method}${dash1}${thanks}');
+    final Uri _url = Uri.parse(
+        'https://wa.me/${mobile}?text=${invoiceHeader}${invoiceText}${invoiceHeader}${Date}${cusName}${email}${invoiceNumber}${dash1}${tableHead}${dash1}${x}${dash1}${subTotal}${delivery}${discount}${grandTotal}${dash1}${detailsText}${dash1}${method}${dash1}${thanks}');
 
-  if (await canLaunchUrl(_url)) {
-    await launchUrl(_url, mode: LaunchMode.externalApplication);
-  } else {
-    throw Exception('Could not launch $_url');
+    if (await canLaunchUrl(_url)) {
+      await launchUrl(_url, mode: LaunchMode.externalApplication);
+    } else {
+      throw Exception('Could not launch $_url');
+    }
   }
 }

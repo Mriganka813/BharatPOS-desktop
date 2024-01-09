@@ -22,6 +22,7 @@ import 'package:shopos/src/services/set_or_change_pin.dart';
 import 'package:shopos/src/widgets/custom_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'create_estimate.dart';
 import 'online_order_list.dart';
 
 class HomePage extends StatefulWidget {
@@ -121,6 +122,22 @@ class _HomePageState extends State<HomePage> {
                           Navigator.pushNamed(
                               context, SwitchAccountPage.rountName); //
                         },
+                      ),
+                      Divider(
+                        color: Colors.transparent,
+                      ),
+                      ListTile(
+                        leading: Image.asset(
+                          "assets/images/calcicon.jpeg",
+                          height: 38,
+                        ),
+                        title: Title(color: Colors.black, child: Text("Estimates")),
+                        onTap: () async {
+                          Navigator.of(context).pushNamed(CreateEstimate.routeName);
+                        },
+                      ),
+                      Divider(
+                        color: Colors.transparent,
                       ),
                       ListTile(
                         leading: Image.asset(
@@ -230,7 +247,7 @@ class _HomePageState extends State<HomePage> {
                               SearchProductListScreen.routeName,
                               arguments: ProductListPageArgs(
                                   isSelecting: false,
-                                  orderType: OrderType.sale,
+                                  orderType: OrderType.none,
                                   productlist: []),
                             );
                           },
@@ -275,6 +292,7 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     const Spacer(),
+
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(

@@ -7,6 +7,7 @@ import 'package:shopos/src/pages/SwitchAccountPage.dart';
 import 'package:shopos/src/pages/billing_list.dart';
 import 'package:shopos/src/pages/change_password.dart';
 import 'package:shopos/src/pages/checkout.dart';
+import 'package:shopos/src/pages/create_estimate.dart';
 import 'package:shopos/src/pages/create_expense.dart';
 import 'package:shopos/src/pages/create_party.dart';
 import 'package:shopos/src/pages/create_product.dart';
@@ -102,6 +103,10 @@ class MyApp extends StatelessWidget {
                 return CreateSale(
                   args: settings.arguments as BillingPageArgs?,
                 );
+              case CreateEstimate.routeName:
+                return CreateEstimate(
+                  args: settings.arguments as EstimateBillingPageArgs?,
+                );
               case CreatePurchase.routeName:
                 return CreatePurchase(
                     args: settings.arguments as BillingPageArgs?);
@@ -110,9 +115,7 @@ class MyApp extends StatelessWidget {
                   args: settings.arguments as CheckoutPageArgs,
                 );
                  case CreateSaleReturn.routeName:
-                return CreateSaleReturn(
-                 
-                );
+                return CreateSaleReturn();
                  case SwitchAccountPage.rountName:
                 return SwitchAccountPage();
               case PartyCreditPage.routeName:

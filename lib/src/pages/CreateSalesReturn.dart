@@ -132,7 +132,7 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
     print(product.salesgst);
   }
 
- 
+
   @override
   Widget build(BuildContext context) {
     final _orderItems = _Order.orderItems ?? [];
@@ -160,22 +160,23 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                             ),
                           )
                         : GridView.builder(
-                      physics: ClampingScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          physics: ClampingScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2, mainAxisExtent: 200),
-                      itemCount: _orderItems.length,
-                      itemBuilder: (context, index) {
-                        final _orderItem = _orderItems[index];
-                        final product = _orderItems[index].product!;
-                        return GestureDetector(
-                          onLongPress: () {
-                            showDialog(
-                                useSafeArea: true,
-                                useRootNavigator: true,
-                                context: context,
-                                builder: (ctx) {
-                                  String? localSellingPrice;
-                                  String? discountedPrice;
+                          itemCount: _orderItems.length,
+                          itemBuilder: (context, index) {
+                            final _orderItem = _orderItems[index];
+                            final product = _orderItems[index].product!;
+                            double discount = double.parse(_orderItem.discountAmt);
+                            return GestureDetector(
+                              onLongPress: () {
+                                showDialog(
+                                    useSafeArea: true,
+                                    useRootNavigator: true,
+                                    context: context,
+                                    builder: (ctx) {
+                                      String? localSellingPrice;
+                                    String? discountedPrice;
 
                                   return Column(
                                     mainAxisSize: MainAxisSize.min,
@@ -218,12 +219,17 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                                             child: CustomButton(
                                                 title: 'Submit',
                                                 onTap: () {
-                                                  print(
-                                                            localSellingPrice);
-                                                        print(discountedPrice);
-
-                                                    
-                                                        setState(() {});
+                                                  if (localSellingPrice != null) {
+                                                    print(localSellingPrice);
+                                                    print(discountedPrice);
+                                                    if(_orderItem.product!.baseSellingPriceGst =="null"){
+                                                      discount = (_orderItem.product!.sellingPrice!  + double.parse(_orderItem.discountAmt) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
+                                                    }else{
+                                                      discount = (double.parse(_orderItem.product!.baseSellingPriceGst!) + double.parse(_orderItem.discountAmt) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
+                                                    }
+                                                    _orderItems[index].discountAmt = discount.toStringAsFixed(2);
+                                                    setState(() {});
+                                                  }
                                                         // if ((localSellingPrice !=
                                                         //             null ||
                                                         //         localSellingPrice!
@@ -276,7 +282,7 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                               setState(() {});
                             },
                             onDelete: () {
-                            
+
 
                               setState(
                                 () {
@@ -336,7 +342,7 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                           final orderItems = temp
                               .map((e) => OrderItemInput(
                                     product: e,
-                                    quantity: tempMap["${e.id}"],
+                                    quantity: tempMap["${e.id}"].toDouble(),
                                     price: 0,
                                   ))
                               .toList();
@@ -367,26 +373,28 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                         },
                       ),
                       CustomButton(title: "Continue", onTap: (){
-                        
+
                         if (_orderItems.isNotEmpty) {
-                       
+
 
                           // insertToDatabase(provider);
-                          provider.addSalesBill(
-                            _Order,
-                            _Order.id.toString(),
+                          // provider.addSalesBill(
+                          //   _Order,
+                          //   _Order.id.toString(),
+                          // );
+                             Navigator.pushNamed(
+                            context,
+                            CheckoutPage.routeName,
+                            arguments: CheckoutPageArgs(
+                              invoiceType: OrderType.saleReturn,
+                              orderId: "0",
+                              order: _Order
+                            ),
                           );
+                        }else{
+                          locator<GlobalServices>().errorSnackBar("No Products added");
                         }
 
-                       Navigator.pushNamed(
-                      context,
-                      CheckoutPage.routeName,
-                      arguments: CheckoutPageArgs(
-                        invoiceType: OrderType.saleReturn,
-                        orderId: "0",
-                        order: _Order
-                      ),
-                    );
 
                       }),
                       // const VerticalDivider(
@@ -403,7 +411,7 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                     ],
                   ),
                   const Divider(color: Color.fromRGBO(0, 0, 0, 0)),
-                
+
                 ],
               ),
             ),

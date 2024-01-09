@@ -415,7 +415,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                 order.tableNo = tableNoController.text;
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 prefs.setString('default', '80mm');
-                _view80mmPdf(list, order.id!);
+                _view80mmPdf(list, order.id as String);
                 Navigator.of(ctx).pop();
               },
               title: Text('80mm'),
