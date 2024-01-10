@@ -385,7 +385,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
       tableNoController.text = order.tableNo;
     }
     List<Map<String, dynamic>> list = await context.read<KotCubit>().getKot();
-    print(list);
+    print("list in 388 billing list ${list.toString()}");
     return showDialog(
       context: context,
       useRootNavigator: true,
@@ -530,6 +530,11 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                         provider.salesBilling.values
                                             .toList()[index],
                                       );
+                                      print("line 533 in billing list ");
+                                      print("index value is $index");
+                                      print( provider.salesBilling.values
+                                          .toList()[index].toMap(OrderType.sale).toString());
+
 
                                       /*SharedPreferences prefs =
                                           await SharedPreferences.getInstance();

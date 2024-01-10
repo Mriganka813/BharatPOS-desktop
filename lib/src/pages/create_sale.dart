@@ -219,11 +219,12 @@ class _CreateSaleState extends State<CreateSale> {
                           Provider.of<Billing>(context, listen: false);
                             print("jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj ${_Order.id}");
                       if (_orderItems.isNotEmpty) {
-                        provider.addSalesBill(
-                            _Order,
-                            widget.args?.orderId == ""
-                                ? DateTime.now().toString()
-                                : widget.args!.orderId!);
+                        // provider.addSalesBill(
+                        //     _Order,
+                        //     widget.args?.orderId == ""
+                        //         ? DateTime.now().toString()
+                        //         : widget.args!.orderId!);
+                        insertToDatabase(provider);
                       }
 
                       Navigator.pushNamed(context, BillingListScreen.routeName,
