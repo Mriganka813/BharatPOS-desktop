@@ -347,7 +347,7 @@ class _HomePageState extends State<HomePage> {
                           onTap: () {
                             Navigator.pushNamed(context, CreateSale.routeName,
                                 arguments: BillingPageArgs(
-                                    id: "-1", orderId: "", editOrders: []));
+                                    id: "", orderId: "", editOrders: []));
                           },
                           onLongPress: () {
                             Navigator.pushNamed(

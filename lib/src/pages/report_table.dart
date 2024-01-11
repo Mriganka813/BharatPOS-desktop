@@ -652,8 +652,8 @@ class _ReportTableState extends State<ReportTable> {
         discountAmt.add("${item.discountAmt == "null" ? "N/A" : item.discountAmt}");
 
         invoiceNum.add("${e.invoiceNum == null ? "N/A" : e.invoiceNum}");
-        print("line 560 in report table.dart");
-        print(e.estimateNum);
+        // print("line 560 in report table.dart");
+        // print(e.estimateNum);
         estimateNum.add("${e.estimateNum == null? "N/A": e.estimateNum}");
         orginalbasePurchasePrice.add("${item.originalbaseSellingPrice}");
         widget.args.type == "ReportType.sale" || widget.args.type == "ReportType.estimate"

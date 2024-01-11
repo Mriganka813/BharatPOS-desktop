@@ -33,6 +33,7 @@ Future<void> generatePdf({
   final List<pw.Row> tableRows = [];
   bool expirydateAvailableFlag = false;
   bool hsnAvailableFlag = false;
+  bool mrpAvailableFlag = false;
   Order.orderItems!.forEach((element) {
     if (element.product!.expiryDate != null &&
         element.product!.expiryDate != "null" &&
@@ -43,6 +44,11 @@ Future<void> generatePdf({
         element.product!.hsn != "null" &&
         element.product!.hsn != "") {
       hsnAvailableFlag = true;
+    }
+    if (element.product!.mrp != null &&
+        element.product!.mrp != "null" &&
+        element.product!.mrp != "") {
+      mrpAvailableFlag = true;
     }
   });
 
@@ -96,7 +102,7 @@ Future<void> generatePdf({
                   .substring(0, 30),
               style: TextStyle(fontSize: 10)),
         ),
-        SizedBox(width: 20),
+        SizedBox(width: 10),
         Container(
           width: 20,
           child: pw.Text(data.quantity.toString(),
@@ -106,7 +112,7 @@ Future<void> generatePdf({
           data.product!.expiryDate != null
         ? Row(
           children:[
-            SizedBox(width: 20),
+            SizedBox(width: 10),
             Container(
               width: 55,
               child: pw.Text('${data.product!.expiryDate!.day}/${data.product!.expiryDate!.month}/${data.product!.expiryDate!.year}',
@@ -114,19 +120,30 @@ Future<void> generatePdf({
             )
           ]
         )
-        : SizedBox(width: 75):SizedBox.shrink(),
+        : SizedBox(width: 65):SizedBox.shrink(),
         hsnAvailableFlag? data.product!.hsn != null
         ? Row(
             children:[
-              SizedBox(width: 20),
+              SizedBox(width: 10),
               Container(
                 width: 50,
                 child: pw.Text('${data.product!.hsn}',
                     textAlign: TextAlign.center, style: TextStyle(fontSize: 10)),
               )
             ]
-        ): SizedBox(width: 70):SizedBox.shrink(),
-        SizedBox(width: 30),
+        ): SizedBox(width: 60):SizedBox.shrink(),
+        mrpAvailableFlag? data.product!.mrp != null && data.product!.mrp!="null"
+            ? Row(
+            children:[
+              SizedBox(width: 10),
+              Container(
+                width: 50,
+                child: pw.Text('${data.product!.mrp}',
+                    textAlign: TextAlign.center, style: TextStyle(fontSize: 10)),
+              )
+            ]
+        ): SizedBox(width: 60):SizedBox.shrink(),
+        SizedBox(width: 20),
         Container(
             width: 70,
             child: pw.Text('$basePrice', style: TextStyle(fontSize: 10))),
@@ -139,7 +156,7 @@ Future<void> generatePdf({
                     width: 50,
                     child: pw.Text(data.product!.saleigst!,
                         style: TextStyle(fontSize: 10)))),
-        SizedBox(width: 20),
+        SizedBox(width: 10),
         orderType == OrderType.sale || orderType == OrderType.estimate || orderType == OrderType.saleReturn
             ? Container(
                 width: 50,
@@ -220,6 +237,8 @@ Future<void> generatePdf({
                 pw.Text('Email: ${user.email}', style: TextStyle(font: ttf)),
                 pw.Text('Phone: ${user.phoneNumber}',
                     style: TextStyle(font: ttf)),
+                pw.Text('DL Number: ${user.dlNum == "null" || user.dlNum==null ? user.dlNum="": user.dlNum}',
+                    style: TextStyle(font: ttf)),
               ]),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 if ((Order.reciverName != "" &&
@@ -297,26 +316,33 @@ Future<void> generatePdf({
             width: 50,
             child: pw.Text('Name'),
           ),
-          SizedBox(width: 20),
+          SizedBox(width: 10),
           pw.Container(
             width: 30,
             child: pw.Text('Qty'),
           ),
           if(expirydateAvailableFlag)
-          SizedBox(width: 20),
+          SizedBox(width: 10),
           if(expirydateAvailableFlag)
           pw.Container(
             width: 55,
             child: pw.Text('Expiry'),
           ),
           if(hsnAvailableFlag)
-            SizedBox(width: 20),
+            SizedBox(width: 10),
           if(hsnAvailableFlag)
             pw.Container(
               width: 50,
               child: pw.Text('HSN'),
             ),
-          SizedBox(width: 20),
+          if(mrpAvailableFlag)
+            SizedBox(width: 10),
+          if(mrpAvailableFlag)
+            pw.Container(
+              width: 50,
+              child: pw.Text('MRP'),
+            ),
+          SizedBox(width: 10),
           pw.Container(
             width: 70,
             child: pw.Text('Rate/Unit'),
@@ -325,7 +351,7 @@ Future<void> generatePdf({
           gstType == 'WithoutGST'
               ? Container()
               : Container(width: 50, child: pw.Text('GST/Unit')),
-          SizedBox(width: 20),
+          SizedBox(width: 10),
           Container(width: 50, child: pw.Text('Amount'))
         ]),
         pw.Divider(thickness: 1, color: pdfColor2),
