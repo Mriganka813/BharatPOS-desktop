@@ -83,7 +83,7 @@ class  ProductFormInput {
         "available": available ?? true,
         if(gst) "GSTincluded":GSTincluded==null?true:GSTincluded, 
         if (batchNumber != null) "batchNumber": batchNumber,
-        "mrp": mrp,
+        "mrp": mrp=="null" || mrp==null? "": mrp,
       };
   }
 

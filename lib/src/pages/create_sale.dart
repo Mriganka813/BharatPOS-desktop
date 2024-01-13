@@ -164,7 +164,7 @@ class _CreateSaleState extends State<CreateSale> {
                          basesellingprice = double.parse(_orderItems[index].product!.baseSellingPriceGst!);
                         return GestureDetector(
                           onLongPress: () {
-                            showaddDiscountDialouge(basesellingprice, _orderItems, index);
+                            showaddDiscountDialouge(_orderItems, index);
                           },
                           child: ProductCardPurchase(
                             type: "sale",
@@ -357,11 +357,15 @@ class _CreateSaleState extends State<CreateSale> {
     });
   }
 
-  void showaddDiscountDialouge(double basesellingprice, List<OrderItemInput> _orderItems, int index) {
+  void showaddDiscountDialouge(List<OrderItemInput> _orderItems, int index) async {
     final _orderItem = _orderItems[index];
 
     double discount = double.parse(_orderItem.discountAmt);
     final product = _orderItems[index].product!;
+    final tappedProduct = await ProductService().getProduct(_orderItems[index].product!.id!);
+    final productJson = Product.fromMap(tappedProduct.data['inventory']);
+    final baseSellingPriceToShow = productJson.baseSellingPriceGst;
+    final sellingPriceToShow = productJson.sellingPrice;
     showDialog(
         useSafeArea: true,
         useRootNavigator: true,
@@ -389,21 +393,21 @@ class _CreateSaleState extends State<CreateSale> {
                       onChanged: (val) {
                         localSellingPrice = val;
                       },
-                        hintText: 'Enter Taxable Value   (${_orderItem.product!.baseSellingPriceGst !="null" ?
-                        basesellingprice + discount : sellingPriceListForShowinDiscountTextBOX[index]})'
+                        hintText: 'Enter Taxable Value   (${_orderItem.product!.gstRate != "null"  && _orderItem.product!.gstRate!="" ?
+                        baseSellingPriceToShow : sellingPriceToShow})'
                     ),
-                    _orderItem.product!.baseSellingPriceGst != "null" ?
+                    _orderItem.product!.gstRate != "null" && _orderItem.product!.gstRate!=""?
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text('or'),
                     ) : SizedBox.shrink(),
-                    _orderItem.product!.baseSellingPriceGst != "null" ?
+                    _orderItem.product!.gstRate != "null"  && _orderItem.product!.gstRate!="" ?
                     CustomTextField(
                       inputType: TextInputType.number,
                       onChanged: (val) {
                         discountedPrice = val;
                       },
-                      hintText: 'Enter total value   (${sellingPriceListForShowinDiscountTextBOX[index]})',
+                      hintText: 'Enter total value   (${sellingPriceToShow})',
                       validator: (val) {
                         if (val!.isNotEmpty && localSellingPrice!.isNotEmpty) {
                           return 'Do not fill both fields';

@@ -165,130 +165,30 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                           crossAxisCount: 2, mainAxisExtent: 200),
                           itemCount: _orderItems.length,
                           itemBuilder: (context, index) {
-                            final _orderItem = _orderItems[index];
-                            final product = _orderItems[index].product!;
-                            double discount = double.parse(_orderItem.discountAmt);
+
                             return GestureDetector(
-                              onLongPress: () {
-                                showDialog(
-                                    useSafeArea: true,
-                                    useRootNavigator: true,
-                                    context: context,
-                                    builder: (ctx) {
-                                      String? localSellingPrice;
-                                    String? discountedPrice;
-
-                                  return Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      AlertDialog(
-                                        content: Column(
-                                          children: [
-                                            CustomTextField(
-                                              inputType: TextInputType.number,
-                                              onChanged: (val) {
-                                                localSellingPrice = val;
-                                              },
-                                              hintText: 'Enter subtotal',
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: Text('or'),
-                                            ),
-                                            CustomTextField(
-                                              inputType: TextInputType.number,
-                                              onChanged: (val) {
-                                                discountedPrice = val;
-                                              },
-                                              hintText: 'Enter total',
-                                              validator: (val) {
-                                                if (val!.isNotEmpty &&
-                                                    localSellingPrice!
-                                                        .isNotEmpty) {
-                                                  return 'Do not fill both fields';
-                                                }
-                                                return null;
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        actions: [
-                                          Center(
-                                            child: CustomButton(
-                                                title: 'Submit',
-                                                onTap: () {
-                                                  if (localSellingPrice != null) {
-                                                    print(localSellingPrice);
-                                                    print(discountedPrice);
-                                                    if(_orderItem.product!.baseSellingPriceGst =="null"){
-                                                      discount = (_orderItem.product!.sellingPrice!  + double.parse(_orderItem.discountAmt) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
-                                                    }else{
-                                                      discount = (double.parse(_orderItem.product!.baseSellingPriceGst!) + double.parse(_orderItem.discountAmt) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
-                                                    }
-                                                    _orderItems[index].discountAmt = discount.toStringAsFixed(2);
-                                                    setState(() {});
-                                                  }
-                                                        // if ((localSellingPrice !=
-                                                        //             null ||
-                                                        //         localSellingPrice!
-                                                        //             .isNotEmpty) &&
-                                                        //     (discountedPrice != null ||
-                                                        //         discountedPrice!
-                                                        //             .isNotEmpty)) {
-                                                        //   return;
-                                                        // }
-
-                                                        if (localSellingPrice !=
-                                                                null &&
-                                                            localSellingPrice!
-                                                                .isNotEmpty) {
-                                                          _onSubtotalChange(
-                                                              product,
-                                                              localSellingPrice);
-                                                          setState(() {});
-                                                        } else if (discountedPrice !=
-                                                            null) {
-                                                          print(
-                                                              's$discountedPrice');
-
-                                                          _onTotalChange(
-                                                              product,
-                                                              discountedPrice);
-
-                                                          setState(() {});
-                                                        }
-
-                                                        Navigator.of(ctx).pop();
-                                                }),
-                                          )
-                                        ],
-                                      ),
-                                    ],
-                                  );
-                                });
-                          },
-                          child: ProductCardPurchase(
-                            type: "sale",
-                            product: product,
-                                discount:    _orderItems[index].
-                                                                discountAmt,
-                            onAdd: () {
-                              print("toched");
-                              Kotlist.add(
-                                  _Order.orderItems![index].product!);
-                              _onAdd(_orderItem);
-                              setState(() {});
-                            },
-                            onDelete: () {
+                              onLongPress: () async {
+                                showAddDiscountDialog(_orderItems, index);
+                              },
+                              child: ProductCardPurchase(
+                                type: "sale",
+                                product: _orderItems[index].product!,
+                                discount: _orderItems[index].discountAmt,
+                                onAdd: () {
+                                  print("toched");
+                                  Kotlist.add(
+                                      _Order.orderItems![index].product!);
+                                  _onAdd(_orderItems[index]);
+                                  setState(() {});
+                              },
+                              onDelete: () {
 
 
                               setState(
                                 () {
-                                  _orderItem.quantity == 1
+                                  _orderItems[index].quantity == 1
                                       ? _Order.orderItems?.removeAt(index)
-                                      : _orderItem.quantity -= 1;
+                                      : _orderItems[index].quantity -= 1;
                                 },
                               );
 
@@ -304,7 +204,7 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
 
                              setState(() {});
                             },
-                            productQuantity: _orderItem.quantity,
+                            productQuantity: _orderItems[index].quantity,
                           ),
                         );
                       },
@@ -418,6 +318,118 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
     );
   }
 
+  showAddDiscountDialog(List<OrderItemInput> _orderItems, int index) async{
+    final _orderItem = _orderItems[index];
+    final product = _orderItems[index].product!;
+    double discount = double.parse(_orderItem.discountAmt);
+    final tappedProduct = await ProductService().getProduct(_orderItems[index].product!.id!);
+    final productJson = Product.fromMap(tappedProduct.data['inventory']);
+    final baseSellingPriceToShow = productJson.baseSellingPriceGst;
+    final sellingPriceToShow = productJson.sellingPrice;
+    showDialog(
+        useSafeArea: true,
+        useRootNavigator: true,
+        context: context,
+        builder: (ctx) {
+          String? localSellingPrice;
+          String? discountedPrice;
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AlertDialog(
+                content: Column(
+                  children: [
+                    CustomTextField(
+                        inputType: TextInputType.number,
+                        onChanged: (val) {
+                          localSellingPrice = val;
+                        },
+                        hintText: 'Enter Taxable Value   (${_orderItem.product!.gstRate != "null"  && _orderItem.product!.gstRate!="" ?
+                        baseSellingPriceToShow : sellingPriceToShow})'
+                    ),
+                    _orderItem.product!.gstRate != "null" && _orderItem.product!.gstRate!=""?
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text('or'),
+                    ) : SizedBox.shrink(),
+                    _orderItem.product!.gstRate != "null"  && _orderItem.product!.gstRate!="" ?
+                    CustomTextField(
+                      inputType: TextInputType.number,
+                      onChanged: (val) {
+                        discountedPrice = val;
+                      },
+                      hintText: 'Enter total (${sellingPriceToShow})',
+                      validator: (val) {
+                        if (val!.isNotEmpty &&
+                            localSellingPrice!
+                                .isNotEmpty) {
+                          return 'Do not fill both fields';
+                        }
+                        return null;
+                      },
+                    ): SizedBox.shrink(),
+                  ],
+                ),
+                actions: [
+                  Center(
+                    child: CustomButton(
+                        title: 'Submit',
+                        onTap: () {
+                          if (localSellingPrice != null) {
+                            print(localSellingPrice);
+                            print(discountedPrice);
+                            if(_orderItem.product!.baseSellingPriceGst =="null"){
+                              discount = (_orderItem.product!.sellingPrice!  + double.parse(_orderItem.discountAmt) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
+                            }else{
+                              discount = (double.parse(_orderItem.product!.baseSellingPriceGst!) + double.parse(_orderItem.discountAmt) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
+                            }
+                            _orderItems[index].discountAmt = discount.toStringAsFixed(2);
+                            setState(() {});
+                          }
+                          // if ((localSellingPrice !=
+                          //             null ||
+                          //         localSellingPrice!
+                          //             .isNotEmpty) &&
+                          //     (discountedPrice != null ||
+                          //         discountedPrice!
+                          //             .isNotEmpty)) {
+                          //   return;
+                          // }
+
+                          if (localSellingPrice !=
+                              null &&
+                              localSellingPrice!
+                                  .isNotEmpty) {
+                            _onSubtotalChange(
+                                product,
+                                localSellingPrice);
+                            setState(() {});
+                          } else if (discountedPrice !=
+                              null) {
+                            print(
+                                's$discountedPrice');
+                            double realBaseSellingPrice = double.parse(_orderItem.product!.baseSellingPriceGst!);
+                            _onTotalChange(
+                                product,
+                                discountedPrice);
+                            // print("realbase selling price=${realBaseSellingPrice}");
+                            // print("discount=${discount}");
+                            discount = (realBaseSellingPrice + discount - double.parse(_orderItem.product!.baseSellingPriceGst!)) * _orderItem.quantity;
+                            _orderItems[index].discountAmt = discount.toStringAsFixed(2);
+                            setState(() {});
+                          }
+
+                          Navigator.of(ctx).pop();
+                        }),
+                  )
+                ],
+              ),
+            ],
+          );
+        });
+  }
   ///
   Future<void> _searchProductByBarcode() async {
     locator<GlobalServices>().showBottomSheetLoader();

@@ -357,7 +357,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                         widget.args.order.modeOfPayment,
                                         totalbasePrice(),
                                         totalgstPrice(),
-                                        "0.0",
+                                        totalDiscount(),
                                         widget.args.order.orderItems);
                                   },
                                   child: Text("Yes")),
@@ -611,7 +611,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
       return [];
     }
   }
-
+  String? totalDiscount(){
+    return widget.args.order.orderItems?.fold<double>(
+        0,
+            (acc, curr){
+          return double.parse(curr.discountAmt)+acc;
+        }
+    ).toStringAsFixed(2);
+  }
   ///
   String? totalPrice() {
     return widget.args.order.orderItems?.fold<double>(
@@ -866,7 +873,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                                 MainAxisAlignment.spaceBetween,
                                                 children: [
                                                   Text('Discount'),
-                                                  Text('₹ 0'),
+                                                  Text('₹ ${totalDiscount()}'),
                                                 ],
                                               ),
                                               const SizedBox(height: 5),

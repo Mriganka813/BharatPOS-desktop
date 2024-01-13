@@ -78,7 +78,17 @@ class _BillingListScreenState extends State<BillingListScreen> {
     super.initState();
     fetchNTPTime();
   }
-
+  String? totalDiscount(int index, Billing provider){
+    // print("in total discount");
+    return provider.salesBilling.values.toList()[index].orderItems?.fold<double>(
+        0,
+            (acc, curr){
+          // print(acc);
+          // print(curr.discountAmt);
+          return double.parse(curr.discountAmt)+acc;
+        }
+    ).toStringAsFixed(2);
+  }
   Future<void> fetchNTPTime() async {
     DateTime currentTime;
 
@@ -681,7 +691,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text('Discount'),
-                                Text('₹ 0'),
+                                Text('₹ ${totalDiscount(index, provider)}'),
                               ],
                             ),
                             const SizedBox(height: 5),

@@ -149,9 +149,12 @@ Future<void> generatePdf({
             child: pw.Text('$basePrice', style: TextStyle(fontSize: 10))),
         SizedBox(width: 10),
         gstType == 'WithoutGST'
-            ? Container()
+            ? SizedBox()
             : (data.product!.gstRate == 'null'
-                ? pw.Text('NA')
+                ? Container(
+            width: 50,
+            child: pw.Text("N/A",
+                style: TextStyle(fontSize: 10)))
                 : Container(
                     width: 50,
                     child: pw.Text(data.product!.saleigst!,
