@@ -334,7 +334,7 @@ class _HomePageState extends State<HomePage> {
                                     )),
                               ),
                               Text(
-                                "Purchasee",
+                                "Purchase",
                                 style: TextStyle(fontSize: 20),
                               )
                             ],
