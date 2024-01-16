@@ -31,7 +31,7 @@ class _CreatePurchaseState extends State<CreatePurchase> {
   void initState() {
     super.initState();
     _Order = Order(
-      orderItems: [],
+      orderItems: widget.args == null ? [] : widget.args!.editOrders,
     );
   }
 
@@ -108,15 +108,33 @@ class _CreatePurchaseState extends State<CreatePurchase> {
                       if (result == null && result is! List<Product>) {
                         return;
                       }
-                      final orderItems = (result as List<Product>)
+                      var temp = result as List<Product>;
+
+                      // Kotlist.addAll(temp);
+
+                      var tempMap = CountNoOfitemIsList(temp);
+                      final orderItems = temp
                           .map((e) => OrderItemInput(
                                 product: e,
-                                quantity: 1,
+                                quantity: tempMap["${e.id}"].toDouble(),
                                 price: 0,
                               ))
                           .toList();
+                      var tempOrderitems = _Order.orderItems;
+
+                      for (int i = 0; i < tempOrderitems!.length; i++) {
+                        for (int j = 0; j < orderItems.length; j++) {
+                          if (tempOrderitems[i].product!.id == orderItems[j].product!.id) {
+                            tempOrderitems[i].product!.quantity = tempOrderitems[i].product!.quantity! + orderItems[j].quantity;
+                            tempOrderitems[i].quantity = tempOrderitems[i].quantity + orderItems[j].quantity;
+                            orderItems.removeAt(j);
+                          }
+                        }
+                      }
+
+                      _Order.orderItems = tempOrderitems;
                       setState(() {
-                        _Order.orderItems = orderItems;
+                        _Order.orderItems?.addAll(orderItems);
                       });
                     },
                   ),
@@ -177,5 +195,32 @@ class _CreatePurchaseState extends State<CreatePurchase> {
         ),
       ),
     );
+  }
+  Map CountNoOfitemIsList(List<Product> temp) {
+    var tempMap = {};
+
+    for (int i = 0; i < temp.length; i++) {
+      int count = 1;
+      if (!tempMap.containsKey("${temp[i].id}")) {
+        for (int j = i + 1; j < temp.length; j++) {
+          if (temp[i].id == temp[j].id) {
+            count++;
+            print("count =$count");
+          }
+        }
+        tempMap["${temp[i].id}"] = count;
+      }
+    }
+
+    for (int i = 0; i < temp.length; i++) {
+      for (int j = i + 1; j < temp.length; j++) {
+        if (temp[i].id == temp[j].id) {
+          temp.removeAt(j);
+          j--;
+        }
+      }
+    }
+
+    return tempMap;
   }
 }

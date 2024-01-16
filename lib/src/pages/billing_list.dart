@@ -482,8 +482,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                 ListTile(
                                   onTap: () {
                                     print("idssss");
-                                    print(provider.salesBilling.values
-                                                    .toList()[index].id);
+                                    // print(provider.purchaseBilling.values
+                                    //                 .toList()[index].id);
                                     widget.orderType == OrderType.sale
                                         ? Navigator.pushNamed(context, CreateSale.routeName,
                                             arguments: BillingPageArgs(
@@ -502,7 +502,12 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                                     .toList()[index],
                                                 editOrders: provider.purchaseBilling.values
                                                     .toList()[index]
-                                                    .orderItems));
+                                                    .orderItems,
+                                                id: provider.purchaseBilling.values
+                                                    .toList()[index]
+                                                    .id)
+
+                                    );
                                   },
                                   title: Text('Edit',
                                       style: TextStyle(
@@ -651,6 +656,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
                             // ),
                             // Divider(color: Colors.black54),
                             const SizedBox(height: 10),
+                            if(provider.salesBilling.values
+                                .toList().isNotEmpty)
                             if (provider.salesBilling.values
                                     .toList()[index]
                                     .tableNo !=
@@ -691,7 +698,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text('Discount'),
-                                Text('₹ ${totalDiscount(index, provider)}'),
+                                widget.orderType!=OrderType.purchase ? Text('₹ ${totalDiscount(index, provider)}'):Text('₹ 0'),
                               ],
                             ),
                             const SizedBox(height: 5),
