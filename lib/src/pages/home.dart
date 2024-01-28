@@ -106,7 +106,7 @@ class _HomePageState extends State<HomePage> {
                       ListTile(
                         leading: Image.asset(
                           "assets/images/shop.png",
-                          height: 30,
+                          height: 32,
                         ),
                         title: Title(
                           color: Colors.black,
@@ -128,7 +128,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       ListTile(
                         leading: Image.asset(
-                          "assets/images/calcicon.jpeg",
+                          "assets/images/calcicon3.jpeg",
                           height: 38,
                         ),
                         title: Title(color: Colors.black, child: Text("Estimates")),
