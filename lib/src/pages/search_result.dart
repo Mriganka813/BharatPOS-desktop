@@ -57,7 +57,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
   late final ReportCubit _reportCubit;
   final TextEditingController pinController = TextEditingController();
 
-   int expiryDaysTOSearch = 7;
+  int expiryDaysTOSearch = 7;
   String searchMode = "normalSearch";
 
   @override
@@ -80,7 +80,6 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
     super.dispose();
   }
 
-  
   Future<void> fetchSearchedProducts() async {
     List newProducts = [];
     if (searchMode == "normalSearch") {
@@ -97,10 +96,12 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
     }
 
     for (var product in newProducts) {
-      bool checkFlag=false;
-      prodList.forEach((element) { if(element.id==product.id){
-          checkFlag=true;
-      }});
+      bool checkFlag = false;
+      prodList.forEach((element) {
+        if (element.id == product.id) {
+          checkFlag = true;
+        }
+      });
       if (!checkFlag) {
         prodList.add(product);
       }
@@ -209,7 +210,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                 fontFamily: 'GilroyBold'),
           ),
           centerTitle: true,
-            actions: [
+          actions: [
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: GestureDetector(
@@ -227,32 +228,30 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
             bottom: 20,
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (widget.args!.isSelecting)
-                Expanded(
-                  child: CustomButton(
-                      title: "Continue",
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      onTap: () {
-                        if (_products.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              backgroundColor: Colors.red,
-                              content: Text(
-                                "Please select products before continuing",
-                                style: TextStyle(color: Colors.white),
-                              ),
+                CustomButton(
+                    title: "Continue",
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    onTap: () {
+                      if (_products.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            backgroundColor: Colors.red,
+                            content: Text(
+                              "Please select products before continuing",
+                              style: TextStyle(color: Colors.white),
                             ),
-                          );
-                          return;
-                        }
-                        Navigator.pop(
-                          context,
-                          _products,
+                          ),
                         );
-                      }),
-                ),
+                        return;
+                      }
+                      Navigator.pop(
+                        context,
+                        _products,
+                      );
+                    }),
               if (widget.args?.isSelecting ?? false) const SizedBox(width: 20),
               FloatingActionButton(
                 onPressed: () async {
@@ -272,20 +271,20 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
           ),
         ),
         body: Stack(children: [
-                Column(
-                  children: [
-                    SizedBox(
-                      height: 60,
-                    ),
-                        prodList.length == 0
+          Column(
+            children: [
+              SizedBox(
+                height: 60,
+              ),
+              prodList.length == 0
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 5, vertical: 15),
                         child: Text('No products found!'),
                       ),
-                    ):
-                    Expanded(
+                    )
+                  : Expanded(
                       child: GridView.builder(
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
@@ -431,48 +430,44 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                             }
                           }),
                     ),
-                  ],
-                ),
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
 //               child: CustomTextField(
-                  child: CustomTextField2(
-                    key: widgetKey,
-                    controller: searchController,
+            child: CustomTextField2(
+              key: widgetKey,
+              controller: searchController,
 
-                    prefixIcon: const Icon(Icons.search),
-                    hintText: 'Search',
-                    onChanged: (String e) async {
-                      if (e.isNotEmpty) {
-                       
-                        prodList = await searchProductServices.searchproduct(e);
-                        for (int i = 0;
-                            i < widget.args!.productlist.length;
-                            i++) {
-                          for (int j = 0; j < prodList.length; j++) {
-                            if (widget.args!.productlist[i].product!.id ==
-                                prodList[j].id) {
-                              prodList[j].quantity =
-                                  widget.args!.productlist[i].product!.quantity;
-                            }
-                          }
-                        }
-                        print(_products);
-
-                        print("searchbar running");
-                        setState(() {});
+              prefixIcon: const Icon(Icons.search),
+              hintText: 'Search',
+              onChanged: (String e) async {
+                if (e.isNotEmpty) {
+                  prodList = await searchProductServices.searchproduct(e);
+                  for (int i = 0; i < widget.args!.productlist.length; i++) {
+                    for (int j = 0; j < prodList.length; j++) {
+                      if (widget.args!.productlist[i].product!.id ==
+                          prodList[j].id) {
+                        prodList[j].quantity =
+                            widget.args!.productlist[i].product!.quantity;
                       }
-                    },
-                    // onsubmitted: (value) {
-                    //   Navigator.of(context).push(MaterialPageRoute(
-                    //     builder: (context) =>
-                    //         SearchProductListScreen(title: value!),
-                    //   ));
-                    // },
-                  ),
-                ),
-              ]));
+                    }
+                  }
+                  print(_products);
+
+                  print("searchbar running");
+                  setState(() {});
+                }
+              },
+              // onsubmitted: (value) {
+              //   Navigator.of(context).push(MaterialPageRoute(
+              //     builder: (context) =>
+              //         SearchProductListScreen(title: value!),
+              //   ));
+              // },
+            ),
+          ),
+        ]));
   }
 
   Future<bool?> _showPinDialog() {
@@ -543,7 +538,8 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
               ],
             ));
   }
-   Future<bool?> _showFilterDialog() {
+
+  Future<bool?> _showFilterDialog() {
     return showDialog(
         context: context,
         barrierDismissible: false,
@@ -612,6 +608,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
             ));
   }
 }
+
 class ExpiryFilterContent extends StatefulWidget {
   var ontap;
   ExpiryFilterContent(this.ontap);
@@ -666,7 +663,9 @@ class _RadioButtonGroupState extends State<ExpiryFilterContent> {
               setState(() {});
             },
             child: Text("180")),
-            SizedBox(height: 20,),
+        SizedBox(
+          height: 20,
+        ),
         CustomTextField(
           inputType: TextInputType.number,
           hintText: "Custom Expiry",
@@ -674,7 +673,9 @@ class _RadioButtonGroupState extends State<ExpiryFilterContent> {
             groupedValue = int.parse(e);
           },
         ),
-                   SizedBox(height: 20,),
+        SizedBox(
+          height: 20,
+        ),
         CustomButton(
             title: 'Submit',
             onTap: () async {

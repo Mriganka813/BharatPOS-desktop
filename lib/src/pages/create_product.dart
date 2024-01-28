@@ -575,35 +575,49 @@ class _CreateProductState extends State<CreateProduct> {
                             ],
                           ),
                           // const Divider(color: Colors.transparent),
-                          CustomTextField2(
-                            controller: baseSellingPriceController,
-                            readonly:
-                                includedExcludedRadioButton == 1 ? true : false,
-                            label: "Base Selling Price",
-                            value: _formInput.baseSellingPriceGst == "null"
-                                ? "0"
-                                : _formInput.baseSellingPriceGst,
-                            onChanged: (e) {
-                              if (includedExcludedRadioButton == 2) {
-                                _formInput.baseSellingPriceGst = e;
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                flex: 1,
+                                child: CustomTextField2(
+                                  controller: baseSellingPriceController,
+                                  readonly: includedExcludedRadioButton == 1
+                                      ? true
+                                      : false,
+                                  label: "Base Selling Price",
+                                  value:
+                                      _formInput.baseSellingPriceGst == "null"
+                                          ? "0"
+                                          : _formInput.baseSellingPriceGst,
+                                  onChanged: (e) {
+                                    if (includedExcludedRadioButton == 2) {
+                                      _formInput.baseSellingPriceGst = e;
 
-                                setState(() {});
-                                calculate();
-                              }
-                            },
-                            validator: (e) => null,
-                          ),
-                          const Divider(color: Colors.transparent),
-                          CustomTextField(
-                            readonly: true,
-                            label: "Base Purchase Price",
-                            value: _formInput.basePurchasePriceGst == "null"
-                                ? "0"
-                                : _formInput.basePurchasePriceGst,
-                            onChanged: (e) {
-                              _formInput.basePurchasePriceGst = e;
-                            },
-                            validator: (e) => null,
+                                      setState(() {});
+                                      calculate();
+                                    }
+                                  },
+                                  validator: (e) => null,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 1,
+                                child: CustomTextField(
+                                  readonly: true,
+                                  label: "Base Purchase Price",
+                                  value:
+                                      _formInput.basePurchasePriceGst == "null"
+                                          ? "0"
+                                          : _formInput.basePurchasePriceGst,
+                                  onChanged: (e) {
+                                    _formInput.basePurchasePriceGst = e;
+                                  },
+                                  validator: (e) => null,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

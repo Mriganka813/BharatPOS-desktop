@@ -208,10 +208,10 @@ class _HomePageState extends State<HomePage> {
                         title:
                             Title(color: Colors.black, child: Text("Logout")),
                         onTap: () async {
-                           await const AuthService().signOut();
-                           final provider =
+                          await const AuthService().signOut();
+                          final provider =
                               Provider.of<Billing>(context, listen: false);
-                         provider.removeAll();
+                          provider.removeAll();
                           Navigator.pushNamedAndRemoveUntil(
                             context,
                             SignInPage.routeName,
@@ -291,18 +291,21 @@ class _HomePageState extends State<HomePage> {
                         // ),
                       ],
                     ),
-                    const Spacer(),
-
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Create Invoice",
-                        textAlign: TextAlign.left,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                    ),
+                    //const Spacer(),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                      //mainAxisAlignment: MainAxisAlignment.start,
+                      //crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [],
+                        ),
+                      ],
+                    ),
+                    const Expanded(child: SizedBox()),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      // crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         GestureDetector(
                           onTap: () {
@@ -340,8 +343,10 @@ class _HomePageState extends State<HomePage> {
                             ],
                           ),
                         ),
-                        SizedBox(
-                          width: 50,
+                        Text(
+                          "Create Invoice",
+                          textAlign: TextAlign.left,
+                          style: Theme.of(context).textTheme.titleLarge,
                         ),
                         GestureDetector(
                           onTap: () {
@@ -384,7 +389,16 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                       ],
-                    )
+                    ),
+                    SizedBox(
+                      width: 50,
+                    ),
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.end,
+                    //   crossAxisAlignment: CrossAxisAlignment.end,
+                    //   children: [
+                    //   ],
+                    // ),
                   ],
                 ),
               ),
