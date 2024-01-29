@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "BharatPOS"
-#define MyAppVersion "1.3.7"
+#define MyAppVersion "1.4.1"
 #define MyAppPublisher "Magicstep Solutions Private Limited"
 #define MyAppURL "https://bharatpos.xyz/"
 #define MyAppExeName "magicstep.exe"

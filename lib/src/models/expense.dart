@@ -23,7 +23,7 @@ class Expense {
         description: json["description"],
         modeOfPayment: json["modeOfPayment"],
         id: json["_id"],
-        createdAt: DateTime.parse(json["createdAt"]),
+        createdAt: DateTime.parse(json["date"]==null ? json["createdAt"] : json["date"]),
         v: json["__v"],
       );
 
@@ -33,7 +33,7 @@ class Expense {
         "description": description,
         "modeOfPayment": modeOfPayment,
         "_id": id,
-        "createdAt": createdAt?.toIso8601String(),
+        "date": createdAt?.toIso8601String(),
         "__v": v,
       };
 }

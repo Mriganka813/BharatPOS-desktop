@@ -18,8 +18,18 @@ class ExpenseCardHorizontal extends StatelessWidget {
     DateTime? timestamp = expense.createdAt?.toLocal();
     String date =
         timestamp == null ? '--' : DateFormat('dd-MM-yyyy').format(timestamp);
-    String time =
-        timestamp == null ? '--' : DateFormat('jm').format(timestamp.toUtc());
+    String time;
+    if (timestamp != null) {
+      if (expense.createdAt!.toString().endsWith('Z')) {
+        time = DateFormat('jm').format(timestamp.toUtc());
+      } else {
+        time = DateFormat('jm').format(timestamp.toLocal());
+      }
+    } else {
+      time = '--';
+    }
+
+    print(time);
 
     return Card(
       elevation: 5,

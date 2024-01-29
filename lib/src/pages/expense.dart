@@ -68,6 +68,7 @@ class _ExpensePageState extends State<ExpensePage> {
             bloc: _expenseCubit,
             builder: (context, state) {
               if (state is ExpenseListRender) {
+                state.expense.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
                 return GridView.builder(
                   itemCount: state.expense.length,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
