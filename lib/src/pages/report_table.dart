@@ -54,7 +54,7 @@ class _ReportTableState extends State<ReportTable> {
   List<String> datelist = [];
   List<String> timelist = [];
   List<String> partynamelist = [];
-  List<String> estimateNum =[];
+  List<String> estimateNum = [];
   List<String> productnamelist = [];
   List<String> basesplist = [];
   List<String> gstratelist = [];
@@ -62,7 +62,7 @@ class _ReportTableState extends State<ReportTable> {
   List<String> sgstlist = [];
   List<String> igstlist = [];
   List<String> totalsplist = [];
-  List<List<Map<String,dynamic>>> moplist = [];
+  List<List<Map<String, dynamic>>> moplist = [];
   List<String> totallist = [];
   List<String> mrplist = [];
   List<String> hsn = [];
@@ -459,6 +459,7 @@ class _ReportTableState extends State<ReportTable> {
     print(list[0].toString());
     return list;
   }
+
   showPurchaseRow() {
     var total = 0;
     var basesplitTotal = 0;
@@ -857,7 +858,7 @@ class _ReportTableState extends State<ReportTable> {
   //   );
   // }
 
-  saleReturnExcelReport() async{
+  saleReturnExcelReport() async {
     final headersSaleReturn = [
       'Date',
       'Time',
@@ -899,9 +900,6 @@ class _ReportTableState extends State<ReportTable> {
       sheet.getRangeByIndex(i + 2, 15).setText(totalsplist[i]);
     }
 
-
-
-
     final List<int> bytes = workbook.saveAsStream();
     final directory = await getApplicationDocumentsDirectory();
     File excelFileLocal = File('${directory.path}/SaleReturn.xlsx');
@@ -914,6 +912,7 @@ class _ReportTableState extends State<ReportTable> {
 
     workbook.dispose();
   }
+
   saleExcelReport() async {
     print('line 509 in report_table.dart');
     final headersSP = [
@@ -1214,14 +1213,14 @@ class _ReportTableState extends State<ReportTable> {
         title: widget.args.type == "ReportType.sale"
             ? Text("Sale Report")
             : widget.args.type == "ReportType.purchase"
-            ? Text("Purchase Report")
-            : widget.args.type == "ReportType.expense"
-            ? Text("Expense Report")
-            : widget.args.type == "ReportType.estimate"
-            ? Text("Estimate Report")
-            : widget.args.type == "ReportType.saleReturn"
-            ? Text("Sale Return Report")
-            : Text("Stock Report"),
+                ? Text("Purchase Report")
+                : widget.args.type == "ReportType.expense"
+                    ? Text("Expense Report")
+                    : widget.args.type == "ReportType.estimate"
+                        ? Text("Estimate Report")
+                        : widget.args.type == "ReportType.saleReturn"
+                            ? Text("Sale Return Report")
+                            : Text("Stock Report"),
         actions: [
           if(widget.args.type=="ReportType.estimate" || widget.args.type == "ReportType.sale")
             IconButton(onPressed: (){_goToEstimateDialog();}, icon: Icon(Icons.edit)),
@@ -1237,14 +1236,14 @@ class _ReportTableState extends State<ReportTable> {
               widget.args.type == "ReportType.sale"
                   ? saleExcelReport()
                   : widget.args.type == "ReportType.purchase"
-                  ? PurchaseExcelReport()
-                  : widget.args.type == "ReportType.expense"
-                  ? ExpenseExcelReport()
-                  : widget.args.type == "ReportType.estimate"
-                  ? estimateExcelReport()
-                  : widget.args.type == "ReportType.saleReturn"
-                  ? saleReturnExcelReport()
-                  : STOCKExcelReport();
+                      ? PurchaseExcelReport()
+                      : widget.args.type == "ReportType.expense"
+                          ? ExpenseExcelReport()
+                          : widget.args.type == "ReportType.estimate"
+                              ? estimateExcelReport()
+                              : widget.args.type == "ReportType.saleReturn"
+                                  ? saleReturnExcelReport()
+                                  : STOCKExcelReport();
               // saleExcelReport();
             },
             icon: Icon(Icons.share),
@@ -1269,99 +1268,117 @@ class _ReportTableState extends State<ReportTable> {
                   rows: widget.args.type == "ReportType.sale"
                       ? showSaleRow()
                       : widget.args.type == "ReportType.purchase"
-                      ? showPurchaseRow()
-                      : widget.args.type == "ReportType.expense"
-                      ? showExpenseRow()
-                      : widget.args.type == "ReportType.estimate"
-                      ? showEstimateRow()
-                      : widget.args.type == "ReportType.saleReturn"
-                      ? showSaleReturnReport()
-                      : showStockRow()),
+                          ? showPurchaseRow()
+                          : widget.args.type == "ReportType.expense"
+                              ? showExpenseRow()
+                              : widget.args.type == "ReportType.estimate"
+                                  ? showEstimateRow()
+                                  : widget.args.type == "ReportType.saleReturn"
+                                      ? showSaleReturnReport()
+                                      : showStockRow()),
             ),
           ),
         ),
       ),
     );
   }
-  _goToEstimateDialog(){
-    return showDialog(context: context,barrierDismissible: false, builder: (ctx){
-      return AlertDialog(
-        title: widget.args.type=="ReportType.estimate"
-            ? Text("Go to Estimate") : Text("Go to Sale"),
-        content: Container(
-          height: 150,
-          child: Column(
-            children: [
-              TextFormField(
-                autofocus: true,
-                controller: estimateNumController,
-                maxLines: 1,
-                keyboardType:
-                TextInputType.numberWithOptions(
-                    signed: false, decimal: true),
-                decoration: InputDecoration(
-                    label: widget.args.type=="ReportType.estimate"
-                        ? Text("Enter Estimate no") : Text("Enter Invoice no"),
-                    border: OutlineInputBorder(
-                        borderRadius:
-                        BorderRadius.circular(10))),
-                validator: (e) {
-                  if (e!.contains(",")) {
-                    return '(,) character are not allowed';
-                  }
-                  if (e.isNotEmpty) if (double.parse(e) >
-                      99999.0) {
-                    return 'Maximum value is 99999';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 20,),
-              Row(
+
+  _goToEstimateDialog() {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) {
+          return AlertDialog(
+            title: widget.args.type == "ReportType.estimate"
+                ? Text("Go to Estimate")
+                : Text("Go to Sale"),
+            content: Container(
+              height: 100,
+              child: Column(
                 children: [
-                  CustomButton(title: "Submit", onTap: () async {
-                    goToEstimate();
-                  }),
-                  SizedBox(width: 20,),
-                  CustomButton(
-                      title: "Cancel",
-                      onTap:() =>Navigator.pop(context),
-                    type: ButtonType.outlined,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 30,
-                      vertical: 10,
-                    ),
+                  TextFormField(
+                    autofocus: true,
+                    controller: estimateNumController,
+                    maxLines: 1,
+                    keyboardType: TextInputType.numberWithOptions(
+                        signed: false, decimal: true),
+                    decoration: InputDecoration(
+                        label: widget.args.type == "ReportType.estimate"
+                            ? Text("Enter Estimate no")
+                            : Text("Enter Invoice no"),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10))),
+                    validator: (e) {
+                      if (e!.contains(",")) {
+                        return '(,) character are not allowed';
+                      }
+                      if (e.isNotEmpty) if (double.parse(e) > 99999.0) {
+                        return 'Maximum value is 99999';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          goToEstimate();
+                        },
+                        child: Text(
+                          "Submit",
+                          style: TextStyle(color: Colors.blue),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 150,
+                      ),
+                      GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Text(
+                            "Cancle",
+                            style: TextStyle(color: Colors.blue),
+                          )),
+                    ],
                   )
                 ],
-              )
-            ],
-          ),
-        ),
-      );
-    }) ;
+              ),
+            ),
+          );
+        });
   }
+
   goToEstimate() async {
-    if(widget.args.type == "ReportType.estimate"){
-      Map<String,dynamic> estimateResponse = await EstimateService.getEstimate(estimateNumController.text);
+    if (widget.args.type == "ReportType.estimate") {
+      Map<String, dynamic> estimateResponse =
+          await EstimateService.getEstimate(estimateNumController.text);
       print("line 1106 in report table");
       print(estimateResponse['estimate']['_id']);
       Order orders = Order.fromMap(estimateResponse['estimate']);
       print(orders.businessName);
-      Navigator.pushNamed(context, CreateEstimate.routeName,arguments: EstimateBillingPageArgs(order: orders));
-    }else if(widget.args.type == "ReportType.sale"){
-      Map<String, dynamic> salesResponse = await SalesService.getSingleSaleOrder(estimateNumController.text);
+      Navigator.pushNamed(context, CreateEstimate.routeName,
+          arguments: EstimateBillingPageArgs(order: orders));
+    } else if (widget.args.type == "ReportType.sale") {
+      Map<String, dynamic> salesResponse =
+          await SalesService.getSingleSaleOrder(estimateNumController.text);
       Order order = Order.fromMap(salesResponse['salesOrder']);
       print("line 1121 in report table.dart");
 
-      Navigator.pushNamed(context, CheckoutPage.routeName, arguments: CheckoutPageArgs(invoiceType: OrderType.sale, order: order, orderId: "0", canEdit: false));
-
+      Navigator.pushNamed(context, CheckoutPage.routeName,
+          arguments: CheckoutPageArgs(
+              invoiceType: OrderType.sale,
+              order: order,
+              orderId: "0",
+              canEdit: false));
     }
-
   }
-  _showFilterDialog(){
+
+  _showFilterDialog() {
     return showDialog(
       context: context,
-      builder: (context){
+      builder: (context) {
         return AlertDialog(
           title: Text("Select Filter Type: "),
           content: Container(
@@ -1369,7 +1386,7 @@ class _ReportTableState extends State<ReportTable> {
             child: Column(
               children: [
                 InkWell(
-                  onTap: (){
+                  onTap: () {
                     Navigator.pop(context);
                     _showFilterByPartyDialog();
                   },
@@ -1381,9 +1398,9 @@ class _ReportTableState extends State<ReportTable> {
                     ),
                   ),
                 ),
-                if(widget.args.type != "ReportType.saleReturn")
+                if (widget.args.type != "ReportType.saleReturn")
                   InkWell(
-                    onTap: (){
+                    onTap: () {
                       Navigator.pop(context);
                       _showFilterByPaymentModeDialog();
                     },
@@ -1399,13 +1416,12 @@ class _ReportTableState extends State<ReportTable> {
             ),
           ),
           actions: [
-            if(filterPaymentModeSelected!="" || partynametoFilter!="")
+            if (filterPaymentModeSelected != "" || partynametoFilter != "")
               TextButton(
-                  onPressed: (){
-                    filterPaymentModeSelected="";
-                    partynametoFilter="";
-                    setState(() {
-                    });
+                  onPressed: () {
+                    filterPaymentModeSelected = "";
+                    partynametoFilter = "";
+                    setState(() {});
                     Navigator.pop(context);
                   },
                   child: Text('Remove Filter')),
@@ -1433,12 +1449,9 @@ class _ReportTableState extends State<ReportTable> {
               child: CustomDropDownField(
                 items: const ['Cash', 'Bank Transfer','UPI','Credit'],
                 onSelected: (e) {
-                  partynametoFilter="";
-                  filterPaymentModeSelected=e;
-                  setState(() {
-
-
-                  });
+                  partynametoFilter = "";
+                  filterPaymentModeSelected = e;
+                  setState(() {});
                 },
                 hintText: 'Payment Mode',
               ),
@@ -1459,15 +1472,13 @@ class _ReportTableState extends State<ReportTable> {
                     }else{
                       Navigator.pop(context, false);
                     }
-
                   },
                   child: Text(
                     'Submit',
                   )),
             ],
           );
-        }
-    );
+        });
   }
 
   Future<bool?> _showFilterByPartyDialog() {
@@ -1531,7 +1542,7 @@ class _ReportTableState extends State<ReportTable> {
             },
             onSuggestionSelected: (Party party) {
               print("------------line 948 in report_table.dart");
-              filterPaymentModeSelected="";
+              filterPaymentModeSelected = "";
               setState(() {
                 partynametoFilter = party.name ?? "";
                 print(partynametoFilter);
