@@ -442,7 +442,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
       context,
     );
 
-    print(provider.salesBilling);
+    print("provider.salesBilling: ${provider.salesBilling}");
     return WillPopScope(
       onWillPop: () async {
         Navigator.of(context)
@@ -633,6 +633,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
                       return _showDialog();
                     },
                     onDismissed: (direction) async {
+                      print("on dismissed: provider.salesBilling.keys.toList()[index]: ${provider.salesBilling.keys.toList()[index]}");
+                      context.read<KotCubit>().deleteKotWhenDismissed(provider.salesBilling.keys.toList()[index]);
                       widget.orderType == OrderType.sale
                           ? provider.removeSalesBillItems(
                               provider.salesBilling.keys.toList()[index])

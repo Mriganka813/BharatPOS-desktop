@@ -1,9 +1,14 @@
+import 'dart:math';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shopos/src/models/product.dart';
 import 'package:shopos/src/pages/checkout.dart';
 import 'package:shopos/src/services/product_availability_service.dart';
 import 'package:shopos/src/widgets/custom_button.dart';
+
+import '../services/global.dart';
+import '../services/locator.dart';
 
 class ProductCardHorizontal extends StatefulWidget {
   final Product product;
@@ -18,7 +23,9 @@ class ProductCardHorizontal extends StatefulWidget {
   Function onRemove;
   Function onTap;
   bool isAvailable;
-  final int noOfQuatityadded;
+  Function onQuantityFieldChange;
+  double noOfQuatityadded;
+
   ProductCardHorizontal({
     Key? key,
     required this.product,
@@ -34,13 +41,16 @@ class ProductCardHorizontal extends StatefulWidget {
     required this.onAdd,
     required this.onRemove,
     required this.onTap,
+    required this.onQuantityFieldChange
   }) : super(key: key);
   @override
   State<ProductCardHorizontal> createState() => _ProductCardHorizontalState();
 }
 
 class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
-  int itemQuantity = 0;
+  double itemQuantity = 0;
+  TextEditingController _itemQuantityController = TextEditingController();
+  String? errorText;
   ProductAvailabilityService productAvailability = ProductAvailabilityService();
 
   bool tapflag = false;
@@ -49,6 +59,7 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
     // TODO: implement initState
     super.initState();
     itemQuantity = widget.noOfQuatityadded;
+    _itemQuantityController.text = itemQuantity.toString();
     setState(() {});
   }
 
@@ -61,29 +72,54 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        widget.onTap(itemQuantity);
-        if (tapflag) if (itemQuantity == 1) itemQuantity = 0;
+        if(itemQuantity<=1){//on tap function will only work if item quantity less than equal to 1
+          //This entire logi below is written add the functionality of
+          //this logic is done becasue when we press the card only the (+-) button should show and should add item
+          //then when we again press the card the opposite should happen
+          print("itemQuantity on tap= $itemQuantity");
 
-        if (!tapflag) if (itemQuantity == 0) {
-          if (widget.product.quantity! >= 99000&&widget.type==OrderType.purchase) {
-               ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    backgroundColor: Colors.red,
-                                    content: Text(
-                                       "Total quantity can't exceed 99999",
-                                      style: const TextStyle(color: Colors.white),
-                                    ),
-                                  ),);
-            tapflag = !tapflag;
-            itemQuantity = 1;
-            widget.onTap(itemQuantity);
+          print("tap flag is $tapflag");
+          widget.onTap(itemQuantity);
+          if (tapflag) if (itemQuantity <= 1) {
             itemQuantity = 0;
-          } else
-            itemQuantity = 1;
+            _itemQuantityController.text = itemQuantity.toString();
+          }
+
+          if (!tapflag) {
+            if (widget.product.quantity! >= 99000 && widget.type == OrderType.purchase) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  backgroundColor: Colors.red,
+                  content: Text(
+                    "Total quantity can't exceed 99999",
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              );
+              tapflag = !tapflag;
+              itemQuantity = 1;
+              _itemQuantityController.text = itemQuantity.toString();
+              widget.onTap(itemQuantity);
+              itemQuantity = 0;
+              _itemQuantityController.text = itemQuantity.toString();
+            } else{
+              print("in else part 107 line ");
+              if(widget.type == OrderType.sale && widget.product.quantity == 0){
+
+              }else{
+                itemQuantity = 1;
+                _itemQuantityController.text = itemQuantity.toString();
+              }
+
+            }
+          }
+
+          tapflag = !tapflag;
+          setState(() {});
+          print("no of quantity added is ${widget.noOfQuatityadded}");
+          print("item quantity value after set state on tap is $itemQuantity");
         }
 
-        tapflag = !tapflag;
-        setState(() {});
       },
       child: SizedBox(
         height: 250,
@@ -209,36 +245,80 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
                                   flag2 = false;
                                 }
 
-                                if (flag && flag2) {
-                                  setState(() {
-                                    itemQuantity++;
-                                  });
-                                  widget.onAdd();
-                                }
+                               if (flag && flag2) {
+                                 setState(() {
+                                   itemQuantity = itemQuantity + 1;
+                                   itemQuantity = roundToDecimalPlaces(itemQuantity, 4);
+
+                                   _itemQuantityController.text = itemQuantity.toString();
+                                 });
+                                 widget.onAdd(itemQuantity);
+                               }
                               },
                               icon:
                                   const Icon(Icons.add_circle_outline_rounded),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(3.0),
-                              child: Text(
-                                "$itemQuantity",
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                            Container(
+                              width: 80,
+                              child: TextFormField(
+                                controller: _itemQuantityController,
+                                keyboardType: TextInputType.numberWithOptions(signed: false, decimal: true),
+                                decoration: InputDecoration(
+                                  fillColor: Colors.grey[200], // Light grey background color
+                                  filled: true,  // Fill the background
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(15), // Set your desired corner radius
+                                    borderSide: BorderSide.none, // Make the border invisible
+                                  ),
+                                  contentPadding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 7.0),
+                                ),
+                                onTapOutside: (e){
+                                  print("tapped out side");
+                                  print(e);
+                                  if(_itemQuantityController.text.isNotEmpty){
+                                    print("double.parse(controller text) is ${double.parse(_itemQuantityController.text)}");
+                                    itemQuantity = double.parse(_itemQuantityController.text);
+                                    print("item quantity on tap outside is $itemQuantity");
+                                    widget.onQuantityFieldChange(itemQuantity);
+                                  }
+                                },
+                                onFieldSubmitted: (e){
+                                  if(e.isNotEmpty){
+                                    // _itemQuantityController.text = e;
+                                    itemQuantity = double.parse(_itemQuantityController.text);
+                                    widget.onQuantityFieldChange(itemQuantity);
+                                  }
+                                },
+                                onChanged: (e){
+                                  //TODO: implement validation
+                                  if(e.contains('-')){
+                                    print("negative value");
+                                    locator<GlobalServices>().errorSnackBar("Negative quantity not allowed");
+                                    // errorText = "negative value";
+                                  }
+
+                                  return null;
+                                },
                               ),
                             ),
                             IconButton(
                               onPressed: () {
-                                 if (itemQuantity == 1) {
+                                if (itemQuantity <= 1) {
                                   tapflag = !tapflag;
                                 }
 
                                 setState(() {
-                                  itemQuantity--;
+                                  if(itemQuantity <= 1){
+                                    itemQuantity = 0;
+                                  }else{
+                                    itemQuantity = itemQuantity - 1;
+                                    itemQuantity = roundToDecimalPlaces(itemQuantity, 4);
+                                  }
+                                  _itemQuantityController.text = itemQuantity.toString();
+                                  widget.onRemove(itemQuantity);
                                 });
-                                widget.onRemove();
                               },
-                              icon: const Icon(
-                                  Icons.remove_circle_outline_rounded),
+                              icon: const Icon(Icons.remove_circle_outline_rounded),
                             ),
                           ],
                         ),
@@ -298,7 +378,10 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
       ),
     );
   }
-
+  double roundToDecimalPlaces(double value, int decimalPlaces) {
+    final factor = pow(10, decimalPlaces).toDouble();
+    return (value * factor).round() / factor;
+  }
   Future<bool?> _showError(String error) {
     return showDialog(
         context: context,
@@ -332,13 +415,14 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
   }
 }
 
-class ProductCardPurchase extends StatelessWidget {
+class ProductCardPurchase extends StatefulWidget {
   final Product product;
-  final double productQuantity;
+  double productQuantity;
   final VoidCallback onAdd;
   final VoidCallback onDelete;
   final String? type;
   String discount;
+  Function? onQuantityFieldChange;
   ProductCardPurchase(
       {Key? key,
       required this.product,
@@ -346,53 +430,63 @@ class ProductCardPurchase extends StatelessWidget {
       required this.productQuantity,
       required this.onDelete,
       this.discount="",
+        this.onQuantityFieldChange,
       this.type})
       : super(key: key);
 
   @override
+  State<ProductCardPurchase> createState() => _ProductCardPurchaseState();
+}
+
+class _ProductCardPurchaseState extends State<ProductCardPurchase> {
+  double baseSellingPrice = 0;
+  double Sellinggstvalue = 0;
+  double SellingPrice = 0;
+
+  double basePurchasePrice = 0;
+  double Purchasegstvalue = 0;
+  double PurchasePrice = 0;
+  TextEditingController _itemQuantityController = TextEditingController();
+  String? errorText;
+
+
+  @override
+  void initState() {
+    super.initState();
+    print(widget.product.quantityToBeSold);
+    print(widget.productQuantity);
+
+  }
+  double roundToDecimalPlaces(double value, int decimalPlaces) {
+    final factor = pow(10, decimalPlaces).toDouble();
+    return (value * factor).round() / factor;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    double baseSellingPrice = 0;
-    double Sellinggstvalue = 0;
-    double SellingPrice = 0;
+    _itemQuantityController.text = widget.productQuantity.toString();
 
-    double basePurchasePrice = 0;
-    double Purchasegstvalue = 0;
-    double PurchasePrice = 0;
-
-    if (type == "sale" || type == "estimate") {
-      if (product.gstRate != "null") {
-        baseSellingPrice = double.parse(
-            (double.parse(product.baseSellingPriceGst!) * productQuantity)
-                .toStringAsFixed(2));
-        Sellinggstvalue = double.parse(
-            (double.parse(product.saleigst!) * productQuantity)
-                .toStringAsFixed(2));
+    if (widget.type == "sale" || widget.type == "estimate") {
+      if (widget.product.gstRate != "null") {
+        baseSellingPrice = double.parse((double.parse(widget.product.baseSellingPriceGst!) * widget.productQuantity).toStringAsFixed(2));
+        Sellinggstvalue = double.parse((double.parse(widget.product.saleigst!) * widget.productQuantity).toStringAsFixed(2));
       }
-      if (product.gstRate == "null") {
-        baseSellingPrice = double.parse(
-            (product.sellingPrice! * productQuantity)
-                .toDouble()
-                .toStringAsFixed(2));
+      if (widget.product.gstRate == "null") {
+        baseSellingPrice = double.parse((widget.product.sellingPrice! * widget.productQuantity).toDouble().toStringAsFixed(2));
       }
-      SellingPrice = (product.sellingPrice! * productQuantity);
+      SellingPrice = (widget.product.sellingPrice! * widget.productQuantity);
     }
 
-    if (type == "purchase") {
-      if (product.purchasePrice != 0 && product.gstRate != "null") {
-        basePurchasePrice = double.parse(
-            (double.parse(product.basePurchasePriceGst!) * productQuantity)
-                .toStringAsFixed(2));
-        Purchasegstvalue = double.parse(
-            (double.parse(product.purchaseigst!) * productQuantity)
-                .toStringAsFixed(2));
+    if (widget.type == "purchase") {
+      if (widget.product.purchasePrice != 0 && widget.product.gstRate != "null") {
+        basePurchasePrice = double.parse((double.parse(widget.product.basePurchasePriceGst!) * widget.productQuantity).toStringAsFixed(2));
+        Purchasegstvalue = double.parse((double.parse(widget.product.purchaseigst!) * widget.productQuantity).toStringAsFixed(2));
       } else {
-        basePurchasePrice = double.parse(
-            (product.purchasePrice * productQuantity)
-                .toDouble()
-                .toStringAsFixed(2));
+        basePurchasePrice = double.parse((widget.product.purchasePrice * widget.productQuantity).toDouble().toStringAsFixed(2));
       }
-      PurchasePrice = product.purchasePrice * productQuantity;
+      PurchasePrice = widget.product.purchasePrice * widget.productQuantity;
     }
+
     return SizedBox(
       height: 200,
       child: Card(
@@ -409,35 +503,81 @@ class ProductCardPurchase extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(5),
-                    child: product.image != null
+                    child: widget.product.image != null
                         ? Container(
                             height: 120,
                             child: CachedNetworkImage(
-                              imageUrl: product.image!,
+                              imageUrl: widget.product.image!,
                               fit: BoxFit.cover,
                             ),
                           )
                         : Image.asset('assets/images/image_placeholder.png'),
                   ),
+                  SizedBox(height: 10,),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
                         onPressed: () {
-                          onAdd();
+                          widget.onAdd();
+                          _itemQuantityController.text = (double.parse(_itemQuantityController.text)+1).toString();
+                          _itemQuantityController.text = roundToDecimalPlaces(double.parse(_itemQuantityController.text), 4).toString();
+                          setState(() {});
                         },
                         icon: const Icon(Icons.add_circle_outline_rounded),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(3.0),
-                        child: Text(
-                          "$productQuantity",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                      Container(
+                        width: 70,
+                        child: TextFormField(
+                          controller: _itemQuantityController,
+                          keyboardType: TextInputType.numberWithOptions(signed: false, decimal: true),
+                          decoration: InputDecoration(
+                            fillColor: Colors.grey[200], // Light grey background color
+                            filled: true,  // Fill the background
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15), // Set your desired corner radius
+                              borderSide: BorderSide.none, // Make the border invisible
+                            ),
+                            contentPadding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 7.0),
+                          ),
+                          onFieldSubmitted: (e){
+                            if(e.isNotEmpty)
+                              print("double.parse is ${double.parse(_itemQuantityController.text)}");
+                            widget.productQuantity = double.parse(_itemQuantityController.text);
+                            print("item quantity on field submitted is ${widget.productQuantity}");
+                            if(widget.onQuantityFieldChange != null)
+                              widget.onQuantityFieldChange!(widget.productQuantity);
+                          },
+                          onTapOutside: (e){
+                            print("tapped out side");
+                            print(e);
+                            if(_itemQuantityController.text.isNotEmpty){
+                              print("double.parse(controller text) is ${double.parse(_itemQuantityController.text)}");
+                              widget.productQuantity = double.parse(_itemQuantityController.text);
+                              print("item quantity on tap outside is ${widget.productQuantity}");
+                              if(widget.onQuantityFieldChange != null)
+                                widget.onQuantityFieldChange!(widget.productQuantity);
+                            }
+                          },
+                          onChanged: (e){
+                            //TODO: implement validation
+                            if(e.contains('-')){
+                              print("negative value");
+                              locator<GlobalServices>().errorSnackBar("Negative quantity not allowed");
+                              // errorText = "negative value";
+                            }
+
+                            return null;
+                          },
                         ),
                       ),
                       IconButton(
                         onPressed: () {
-                          onDelete();
+                          widget.onDelete();
+                          _itemQuantityController.text = (double.parse(_itemQuantityController.text)-1).toString();
+                          _itemQuantityController.text = roundToDecimalPlaces(double.parse(_itemQuantityController.text), 4).toString();
+                          setState(() {});
+                          setState(() {});
                         },
                         icon: const Icon(Icons.remove_circle_outline_rounded),
                       ),
@@ -464,7 +604,7 @@ class ProductCardPurchase extends StatelessWidget {
                             scrollDirection: Axis.horizontal,
                             physics: BouncingScrollPhysics(),
                             child: Text(
-                              product.name ?? "",
+                              widget.product.name ?? "",
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.headline6,
@@ -480,11 +620,9 @@ class ProductCardPurchase extends StatelessWidget {
                     const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Item Subtotal'),
-                        type == "sale" || type == "estimate"
-                            ? Text('₹ ${baseSellingPrice}')
-                            : Text('₹ ${basePurchasePrice}'),
+                      children:  [
+                        Text('Amount'),
+                        (widget.type == "sale" ||widget.type == "estimate") ? Text('₹ ${(baseSellingPrice + double.parse(widget.discount)).toStringAsFixed(2)}') : Text('₹ ${basePurchasePrice}'),
                       ],
                     ),
                     const SizedBox(height: 5),
@@ -492,8 +630,8 @@ class ProductCardPurchase extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                            'Tax GST @${product.gstRate == "null" ? "0" : product.gstRate}%'),
-                        type == "sale" || type == "estimate"
+                            'Tax GST @${widget.product.gstRate == "null" ? "0" : widget.product.gstRate}%'),
+                        widget.type == "sale" || widget.type == "estimate"
                             ? Text('₹ ${Sellinggstvalue}')
                             : Text('₹ ${Purchasegstvalue}'),
                       ],
@@ -503,7 +641,7 @@ class ProductCardPurchase extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                          Text('Discount @0%'),
-                        Text('₹ ${discount}'),
+                        Text('₹ ${widget.discount}'),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -515,7 +653,7 @@ class ProductCardPurchase extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Item Total'),
-                        type == "sale" || type == "estimate"
+                        widget.type == "sale" || widget.type == "estimate"
                             ? Text(
                                 '₹ ${SellingPrice.toStringAsFixed(2)}',
                                 style: TextStyle(fontWeight: FontWeight.bold),

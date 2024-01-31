@@ -1,5 +1,7 @@
 // import 'package:audioplayers/audioplayers.dart';
 
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
@@ -48,8 +50,7 @@ class _CreateSaleState extends State<CreateSale> {
   List<OrderItemInput>? newAddedItems = [];
   List<Product> Kotlist = [];
   bool isLoading = false;
-  double discount = 0;
-  List<String> sellingPriceListForShowinDiscountTextBOX = [];
+
   @override
   void initState() {
     super.initState();
@@ -64,16 +65,51 @@ class _CreateSaleState extends State<CreateSale> {
 
   void _onAdd(OrderItemInput orderItem) {
     final qty = orderItem.quantity + 1;
+    double discountForOneItem = double.parse(orderItem.discountAmt) / orderItem.quantity;
+    orderItem.discountAmt = (double.parse(orderItem.discountAmt) + discountForOneItem).toStringAsFixed(2);
     final availableQty = orderItem.product?.quantity ?? 0;
     if (qty > availableQty) {
       locator<GlobalServices>().infoSnackBar("Quantity not available");
       return;
     }
     setState(() {
-      orderItem.quantity += 1;
+      orderItem.quantity = orderItem.quantity + 1;
+      orderItem.quantity = roundToDecimalPlaces(orderItem.quantity, 4);
+      orderItem.product?.quantityToBeSold = orderItem.quantity;
     });
   }
+  void setQuantityToBeSold(OrderItemInput orderItem, double value,int index){
+    final availableQty = orderItem.product?.quantity ?? 0;
+    print("setting quantity to be sold: value is $value and available is $availableQty");
+    if (value > availableQty) {
+      locator<GlobalServices>().infoSnackBar("Quantity not available");
+      return;
+    }
 
+    setState(() {
+      if(value <=0 ){
+        orderItem.quantity = 0;
+        _Order.orderItems?[index].product?.quantityToBeSold = 0;
+        _removeOrderItemFromKotList(index);//to remove product from kot list if value set to 0
+        _Order.orderItems?.removeAt(index);
+      }else{
+        orderItem.quantity = value;
+        orderItem.product?.quantityToBeSold = value;
+      }
+    });
+  }
+  void _removeOrderItemFromKotList(int index){
+    for (int i = 0; i < Kotlist.length; i++) {
+      if (Kotlist[i].id == _Order.orderItems![index].product!.id) {
+        print("_Order.orderItems![index].product!.quantityToBeSold : ${_Order.orderItems![index].product!.quantityToBeSold}");
+        if(_Order.orderItems![index].product!.quantityToBeSold! <= 0){
+          print("removing kot from kotlist");
+          Kotlist.removeAt(i);
+        }
+        break;
+      }
+    }
+  }
   _onSubtotalChange(Product product, String? localSellingPrice) async {
     product.baseSellingPriceGst = localSellingPrice;
     double newGStRate = (double.parse(product.baseSellingPriceGst!) * double.parse(product.gstRate == 'null' ? '0' : product.gstRate!) / 100);
@@ -125,8 +161,10 @@ class _CreateSaleState extends State<CreateSale> {
 
     print(Kotlist);
     Kotlist.forEach((element) {
-      var model = KotModel(_Order.id == "" ? date.toString() : _Order.id!, element.name!, tempMap['${element.id}'], "no");
-      kotItemlist.add(model);
+      if(tempMap['${element.id}'] > 0){
+        var model = KotModel(_Order.id == "" ? date.toString() : _Order.id!, element.name!, tempMap['${element.id}'], "no");
+        kotItemlist.add(model);
+      }
     });
 
     context.read<KotCubit>().insertKot(kotItemlist);
@@ -170,6 +208,9 @@ class _CreateSaleState extends State<CreateSale> {
                             type: "sale",
                             product: _orderItems[index].product!,
                             discount: _orderItems[index].discountAmt,
+                            onQuantityFieldChange: (double value){
+                              setQuantityToBeSold(_orderItems[index], value, index);
+                            },
                             onAdd: () {
                               print("toched");
                               Kotlist.add(_Order.orderItems![index].product!);
@@ -179,19 +220,27 @@ class _CreateSaleState extends State<CreateSale> {
                             onDelete: () {
                               context.read<KotCubit>().deleteKot(_Order.id.toString(), _Order.orderItems![index].product!.name!);
 
-                              setState(
-                                () {
-                                  _orderItems[index].quantity == 1 ? _Order.orderItems?.removeAt(index) : _orderItems[index].quantity -= 1;
-                                },
-                              );
+                              setState(() {
+                                if(_orderItems[index].quantity <= 1){
+                                  _orderItems[index].quantity = 0;
+                                  _Order.orderItems?[index].product?.quantityToBeSold = 0;
 
-                              for (int i = 0; i < Kotlist.length; i++) {
-                                if (Kotlist[i].id == _Order.orderItems![index].product!.id) {
-                                  Kotlist.removeAt(i);
+                                  for (int i = 0; i < Kotlist.length; i++) {
+                                    if (Kotlist[i].id == _Order.orderItems![index].product!.id) {
+                                      if((_Order.orderItems![index].product!.quantityToBeSold ?? 0) <= 0){
+                                        Kotlist.removeAt(i);
+                                      }
+                                      break;
+                                    }
+                                  }
 
-                                  break;
+                                  _Order.orderItems?.removeAt(index);
+                                }else{
+                                  _orderItems[index].quantity = _orderItems[index].quantity - 1;
+                                  _orderItems[index].quantity = roundToDecimalPlaces(_orderItems[index].quantity, 4);
+                                  _orderItems[index].product?.quantityToBeSold = _orderItems[index].quantity;
                                 }
-                              }
+                              },);
 
                               if (widget.args!.orderId == null) setState(() {});
                             },
@@ -214,17 +263,18 @@ class _CreateSaleState extends State<CreateSale> {
                   CustomButton(
                   title: "Continue",
                   onTap: () async {
-             
-                      final provider =
-                          Provider.of<Billing>(context, listen: false);
+                      final provider = Provider.of<Billing>(context, listen: false);
                             print("jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj ${_Order.id}");
+                            print(provider.salesBilling);
                       if (_orderItems.isNotEmpty) {
                         // provider.addSalesBill(
                         //     _Order,
                         //     widget.args?.orderId == ""
                         //         ? DateTime.now().toString()
                         //         : widget.args!.orderId!);
-                        insertToDatabase(provider);
+                        Future.delayed(Duration(milliseconds: 500), (){
+                          insertToDatabase(provider);
+                        });
                       }
 
                       Navigator.pushNamed(context, BillingListScreen.routeName,
@@ -285,17 +335,19 @@ class _CreateSaleState extends State<CreateSale> {
     var tempMap = {};
 
     for (int i = 0; i < temp.length; i++) {
-      int count = 1;
+      // int count = 1;
+      print("---countNoofItemisLlist---");
+      print(temp[i].name);
+      print(temp[i].id);
+      print(temp[i].quantityToBeSold);
+      print(temp[i].quantity);
       if (!tempMap.containsKey("${temp[i].id}")) {
-        for (int j = i + 1; j < temp.length; j++) {
-          if (temp[i].id == temp[j].id) {
-            count++;
-            print("count =$count");
-          }
-        }
-        tempMap["${temp[i].id}"] = count;
+        temp[i].quantityToBeSold = roundToDecimalPlaces(temp[i].quantityToBeSold!, 4);
+        if(temp[i].quantityToBeSold != 0)
+          tempMap["${temp[i].id}"] = temp[i].quantityToBeSold;
       }
     }
+    print("temp map is $tempMap");
 
     for (int i = 0; i < temp.length; i++) {
       for (int j = i + 1; j < temp.length; j++) {
@@ -321,10 +373,6 @@ class _CreateSaleState extends State<CreateSale> {
 
     var temp = result as List<Product>;
 
-    temp.forEach((element) {
-     sellingPriceListForShowinDiscountTextBOX.add(element.sellingPrice.toString());
-    });
-
     Kotlist.addAll(temp);
 
     var tempMap = CountNoOfitemIsList(temp);
@@ -336,19 +384,22 @@ class _CreateSaleState extends State<CreateSale> {
             ))
         .toList();
 
-    var tempOrderitems = _Order.orderItems;
+    var tempOrderItems = _Order.orderItems;//tempOrderItems contains the existing add orders in create sale page
 
-    for (int i = 0; i < tempOrderitems!.length; i++) {
+    for (int i = 0; i < tempOrderItems!.length; i++) {
       for (int j = 0; j < orderItems.length; j++) {
-        if (tempOrderitems[i].product!.id == orderItems[j].product!.id) {
-          tempOrderitems[i].product!.quantity = tempOrderitems[i].product!.quantity! - orderItems[j].quantity;
-          tempOrderitems[i].quantity = tempOrderitems[i].quantity + orderItems[j].quantity;
+        if (tempOrderItems[i].product!.id == orderItems[j].product!.id) {
+          // tempOrderItems[i].product!.quantity = tempOrderItems[i].product!.quantity! - orderItems[j].quantity;
+          tempOrderItems[i].quantity = tempOrderItems[i].quantity + orderItems[j].quantity;
+          tempOrderItems[i].quantity = roundToDecimalPlaces(tempOrderItems[i].quantity, 4);
+          tempOrderItems[i].product?.quantityToBeSold = (tempOrderItems[i].product?.quantityToBeSold ?? 0) + (orderItems[j].product?.quantityToBeSold ?? 0);
+          tempOrderItems[i].product?.quantityToBeSold = roundToDecimalPlaces(tempOrderItems[i].product!.quantityToBeSold!, 4);
           orderItems.removeAt(j);
         }
       }
     }
 
-    _Order.orderItems = tempOrderitems;
+    _Order.orderItems = tempOrderItems;
 
     setState(() {
       _Order.orderItems?.addAll(orderItems);
@@ -356,7 +407,10 @@ class _CreateSaleState extends State<CreateSale> {
       newAddedItems!.addAll(orderItems);
     });
   }
-
+  double roundToDecimalPlaces(double value, int decimalPlaces) {
+    final factor = pow(10, decimalPlaces).toDouble();
+    return (value * factor).round() / factor;
+  }
   void showaddDiscountDialouge(List<OrderItemInput> _orderItems, int index) async {
     final _orderItem = _orderItems[index];
 

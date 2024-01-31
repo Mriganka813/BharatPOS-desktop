@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
@@ -45,7 +47,6 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
   late Order _Order;
   late final AudioCache _audioCache;
   List<OrderItemInput>? newAddedItems = [];
-  List<Product> Kotlist = [];
   bool isLoading = false;
 
   @override
@@ -60,32 +61,40 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
       orderItems:  [] ,
     );
 
-    init();
-  }
-
-  List<String> sellingPriceListForShowinDiscountTextBOX = [];
-
-  void init() {
-    _Order.orderItems!.forEach((element) {
-      sellingPriceListForShowinDiscountTextBOX
-          .add(element.product!.baseSellingPriceGst!);
-    });
   }
 
   void _onAdd(OrderItemInput orderItem) {
     final qty = orderItem.quantity + 1;
-    double discountForOneItem =
-        double.parse(orderItem.discountAmt) / orderItem.quantity;
-    orderItem.discountAmt =
-        (double.parse(orderItem.discountAmt) + discountForOneItem)
-            .toStringAsFixed(2);
+    double discountForOneItem = double.parse(orderItem.discountAmt) / orderItem.quantity;
+    orderItem.discountAmt = (double.parse(orderItem.discountAmt) + discountForOneItem).toStringAsFixed(2);
     final availableQty = orderItem.product?.quantity ?? 0;
     if (qty > availableQty) {
       locator<GlobalServices>().infoSnackBar("Quantity not available");
       return;
     }
     setState(() {
-      orderItem.quantity += 1;
+      orderItem.quantity = orderItem.quantity + 1;
+      orderItem.quantity = roundToDecimalPlaces(orderItem.quantity, 4);
+      orderItem.product?.quantityToBeSold = orderItem.quantity;
+    });
+  }
+  void setQuantityToBeSold(OrderItemInput orderItem, double value,int index){
+    final availableQty = orderItem.product?.quantity ?? 0;
+    print("setting quantity to be sold: value is $value and available is $availableQty");
+    if (value > availableQty) {
+      locator<GlobalServices>().infoSnackBar("Quantity not available");
+      return;
+    }
+
+    setState(() {
+      if(value <=0 ){
+        orderItem.quantity = 0;
+        _Order.orderItems?[index].product?.quantityToBeSold = 0;
+        _Order.orderItems?.removeAt(index);
+      }else{
+        orderItem.quantity = value;
+        orderItem.product?.quantityToBeSold = value;
+      }
     });
   }
 
@@ -174,33 +183,29 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                                 type: "sale",
                                 product: _orderItems[index].product!,
                                 discount: _orderItems[index].discountAmt,
+                                onQuantityFieldChange: (double value){
+                                  setQuantityToBeSold(_orderItems[index], value, index);
+                                },
                                 onAdd: () {
                                   print("toched");
-                                  Kotlist.add(
-                                      _Order.orderItems![index].product!);
                                   _onAdd(_orderItems[index]);
                                   setState(() {});
                               },
                               onDelete: () {
 
 
-                              setState(
-                                () {
-                                  _orderItems[index].quantity == 1
-                                      ? _Order.orderItems?.removeAt(index)
-                                      : _orderItems[index].quantity -= 1;
-                                },
-                              );
+                                setState(() {
+                                  if(_orderItems[index].quantity <= 1){
+                                    _orderItems[index].quantity = 0;
+                                    _Order.orderItems?[index].product?.quantityToBeSold = 0;
+                                    _Order.orderItems?.removeAt(index);
+                                  }else{
+                                    _orderItems[index].quantity = _orderItems[index].quantity - 1;
+                                    _orderItems[index].quantity = roundToDecimalPlaces(_orderItems[index].quantity, 4);
+                                    _orderItems[index].product?.quantityToBeSold = _orderItems[index].quantity;
+                                  }
+                                },);
 
-                              for (int i = 0; i < Kotlist.length; i++) {
-                                if (Kotlist[i].id ==
-                                    _Order
-                                        .orderItems![index].product!.id) {
-                                  Kotlist.removeAt(i);
-
-                                  break;
-                                }
-                              }
 
                              setState(() {});
                             },
@@ -231,40 +236,30 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
 
                           var temp = result as List<Product>;
 
-                          temp.forEach((element) {
-                            sellingPriceListForShowinDiscountTextBOX
-                                .add(element.sellingPrice.toString());
-                          });
-
-                          Kotlist.addAll(temp);
-
                           var tempMap = CountNoOfitemIsList(temp);
-                          final orderItems = temp
-                              .map((e) => OrderItemInput(
+                          final orderItems = temp.map((e) => OrderItemInput(
                                     product: e,
                                     quantity: tempMap["${e.id}"].toDouble(),
                                     price: 0,
                                   ))
                               .toList();
 
-                          var tempOrderitems = _Order.orderItems;
+                          var tempOrderItems = _Order.orderItems;
 
-                          for (int i = 0; i < tempOrderitems!.length; i++) {
+                          for (int i = 0; i < tempOrderItems!.length; i++) {
                             for (int j = 0; j < orderItems.length; j++) {
-                              if (tempOrderitems[i].product!.id ==
-                                  orderItems[j].product!.id) {
-                                tempOrderitems[i].product!.quantity =
-                                    tempOrderitems[i].product!.quantity! -
-                                        orderItems[j].quantity;
-                                tempOrderitems[i].quantity =
-                                    tempOrderitems[i].quantity +
-                                        orderItems[j].quantity;
+                              if (tempOrderItems[i].product!.id == orderItems[j].product!.id) {
+                                // tempOrderItems[i].product!.quantity = tempOrderItems[i].product!.quantity! - orderItems[j].quantity;
+                                tempOrderItems[i].quantity = tempOrderItems[i].quantity + orderItems[j].quantity;
+                                tempOrderItems[i].quantity = roundToDecimalPlaces(tempOrderItems[i].quantity, 4);
+                                tempOrderItems[i].product?.quantityToBeSold = (tempOrderItems[i].product?.quantityToBeSold ?? 0) + (orderItems[j].product?.quantityToBeSold ?? 0);
+                                tempOrderItems[i].product?.quantityToBeSold = roundToDecimalPlaces(tempOrderItems[i].product!.quantityToBeSold!, 4);
                                 orderItems.removeAt(j);
                               }
                             }
                           }
 
-                          _Order.orderItems = tempOrderitems;
+                          _Order.orderItems = tempOrderItems;
 
                           setState(() {
                             _Order.orderItems?.addAll(orderItems);
@@ -317,7 +312,10 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
             ),
     );
   }
-
+  double roundToDecimalPlaces(double value, int decimalPlaces) {
+    final factor = pow(10, decimalPlaces).toDouble();
+    return (value * factor).round() / factor;
+  }
   showAddDiscountDialog(List<OrderItemInput> _orderItems, int index) async{
     final _orderItem = _orderItems[index];
     final product = _orderItems[index].product!;

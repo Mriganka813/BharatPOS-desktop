@@ -1,5 +1,29 @@
 import 'package:image_picker/image_picker.dart';
+class SubProduct{
+  SubProduct({
+    this.name,
+    this.quantity,
+    this.inventoryId
+  });
+  String? name;
+  String? inventoryId;
+  double? quantity;
 
+  Map<String, dynamic> toMap(){
+    return {
+      "name": name,
+      "inventoryId": inventoryId,
+      "quantity": quantity
+    };
+  }
+  factory SubProduct.fromMap(map){
+    return SubProduct(
+        name: map['name'],
+        inventoryId: map['inventoryId'],
+        quantity: map['quantity'].toDouble()
+    );
+  }
+}
 class  ProductFormInput {
   ProductFormInput({
     this.name,
@@ -26,7 +50,8 @@ class  ProductFormInput {
     this.batchNumber,
     this.hsn,
     this.mrp,
-    this.GSTincluded=true
+    this.GSTincluded=true,
+    this.subProducts
   });
 
   String? name;
@@ -53,6 +78,7 @@ class  ProductFormInput {
   String? batchNumber;
   bool ?GSTincluded=true;
 
+  List<SubProduct>? subProducts = [];
   bool gst;
   XFile? imageFile;
 
@@ -68,7 +94,7 @@ class  ProductFormInput {
         "quantity": quantity,
         "hsn":hsn,
         "id": id,
-        if (expiryDate != null) 'expiryDate': expiryDate,
+        if (expiryDate != null) 'expiryDate': expiryDate?.toIso8601String(),
         if (gst) "GSTRate": gstRate,
         if (gst) "saleSGST": salesgst,
         if (gst) "saleCGST": salecgst,
@@ -84,6 +110,7 @@ class  ProductFormInput {
         if(gst) "GSTincluded":GSTincluded==null?true:GSTincluded, 
         if (batchNumber != null) "batchNumber": batchNumber,
         "mrp": mrp=="null" || mrp==null? "": mrp,
+      "subProducts": subProducts?.map((e)=> e.toMap()).toList(),
       };
   }
 
@@ -113,7 +140,12 @@ class  ProductFormInput {
           ? DateTime.parse((map['expiryDate']).toString().substring(0, 10))
           : null,
           
-          GSTincluded: map['GSTincluded']
+          GSTincluded: map['GSTincluded'],
+      subProducts: List<SubProduct>.from(
+          map["subProducts"].map(
+                  (e)=> SubProduct.fromMap(e)
+          )
+      )
           );
       
 }

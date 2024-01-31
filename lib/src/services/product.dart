@@ -7,33 +7,45 @@ class ProductService {
   const ProductService();
 
   Future<Response> createProduct(ProductFormInput input) async {
-    final inputMap = FormData.fromMap(input.toMap());
+    // final inputMap = FormData.fromMap(input.toMap()); //commented out because subproducts were not saving in formdata
+    final formData = FormData();
     final filePath = input.imageFile?.path ?? "";
     if (filePath.isNotEmpty) {
       final image = MapEntry("image", await MultipartFile.fromFile(filePath));
-      inputMap.files.add(image);
+      formData.files.add(image);
     }
+    var dataToSend = input.toMap();
     final response =
-        await ApiV1Service.postRequest('/inventory/new', formData: inputMap);
+        await ApiV1Service.postRequest('/inventory/new', data: dataToSend);
     print(response.toString());
+    final imageResp = await uploadImage(formData, response.data["inventory"]["_id"]);//uploaded image for the product
+    print(imageResp.data);
     return response;
   }
-
+  ///for uploading image in a product of _id: id
+  Future<Response> uploadImage(FormData formData, String id) async {
+    formData.fields.add(MapEntry("inventoryId", id));
+    final response = await ApiV1Service.postRequest("/inventory/image", formData: formData);
+    return response;
+  }
   ///
   Future<Response> updateProduct(ProductFormInput input) async {
-    final inputMap = FormData.fromMap(input.toMap());
+    final formData = FormData();
     print("last sec");
     print(input.toMap());
     final filePath = input.imageFile?.path ?? "";
     if (filePath.isNotEmpty) {
       final image = MapEntry("image", await MultipartFile.fromFile(filePath));
-      inputMap.files.add(image);
+      formData.files.add(image);
     }
+    var dataToSend = input.toMap();
     final response = await ApiV1Service.putRequest(
       '/update/inventory/${input.id}',
-      formData: inputMap,
+      data: dataToSend,
     );
     print(response);
+    final imageResp = await uploadImage(formData, response.data["inventory"]["_id"]);//uploaded image for the product
+    print(imageResp.data);
     return response;
   }
 

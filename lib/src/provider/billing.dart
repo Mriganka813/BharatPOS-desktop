@@ -18,7 +18,7 @@ class Billing with ChangeNotifier {
   }
 
   void addSalesBill(Order input, String orderId) {
-
+    print("adding sales bill with order id: $orderId");
      
     if (_salesBilling.containsKey(orderId)) {
       //.... change quantity
@@ -74,7 +74,9 @@ class Billing with ChangeNotifier {
   }
 
   void removeSalesBillItems(String orderId) {
+    print("order id in remove sales bill items: $orderId");
     _salesBilling.remove(orderId);
+    print(_salesBilling.containsKey(orderId));
     notifyListeners();
   }
 

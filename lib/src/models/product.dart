@@ -25,7 +25,8 @@ class Product {
     this.sellerName,
     this.batchNumber,
     this.expiryDate,
-    this.mrp
+    this.mrp,
+    this.quantityToBeSold
   });
 
   String? name;
@@ -52,6 +53,7 @@ class Product {
   String? sellerName;
   String? batchNumber;
   DateTime? expiryDate;
+  double? quantityToBeSold;
   num i=0;
   
   factory Product.fromMap(Map<String, dynamic> json){ 

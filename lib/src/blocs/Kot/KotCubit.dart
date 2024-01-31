@@ -17,27 +17,38 @@ class KotCubit extends Cubit<List<KotModel>> {
     var data = state;
   
     list.forEach((element) {
-
       bool flag=false;
-      for(int i=0;i<data.length;i++)
-      {
-        if(data[i].orderId==element.orderId&&data[i].isPrinted=="no"&&data[i].name==element.name)
-        {
-          if(data[i].qty>0)
-          {
+      for(int i=0;i<data.length;i++){
+        if(data[i].orderId==element.orderId&&data[i].isPrinted=="no"&&data[i].name==element.name){
+          if(data[i].qty>0){
               data[i].qty=element.qty+data[i].qty;
-
           }
           flag=true;
-        
         }
       }
-
-      if(flag==false)
-      {
+      if(flag==false){
         data.add(element);
       }
     });
+    emit(data);
+  }
+
+  void deleteKotWhenDismissed(String orderId){
+    //TODO: i thought that this function will accept order id from billing page and it will remove the KOT
+    var data = state;
+
+    print("data.length is ${data.length}");
+    for (int i = data.length - 1; i >= 0; i--) {
+      print(data[i].orderId);
+      print(data[i].name);
+      // print(data[i+1].name);
+      if (data[i].orderId == orderId) {
+        data.removeAt(i);
+      }
+      print("data.length: ${data.length}");
+    }
+
+
     emit(data);
   }
 
