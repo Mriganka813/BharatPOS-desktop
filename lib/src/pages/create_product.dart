@@ -419,7 +419,8 @@ class _CreateProductState extends State<CreateProduct> {
                     const Divider(color: Colors.transparent),
                     Row(
                       children: [
-                        Expanded(
+                        SizedBox(
+                          width: 400,
                           child: CustomTextField2(
                             readonly:
                                 includedExcludedRadioButton == 2 ? true : false,
@@ -446,7 +447,8 @@ class _CreateProductState extends State<CreateProduct> {
                           ),
                         ),
                         const VerticalDivider(color: Colors.transparent),
-                        Expanded(
+                        SizedBox(
+                          width: 400,
                           child: CustomTextField2(
                             controller: purchasePriceController,
                             label: "Purchase Price",
@@ -508,6 +510,7 @@ class _CreateProductState extends State<CreateProduct> {
                     Visibility(
                       visible: gstSwitch,
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Divider(color: Color.fromRGBO(0, 0, 0, 0)),
                           Row(
@@ -552,22 +555,25 @@ class _CreateProductState extends State<CreateProduct> {
                             height: 50,
                           ),
 
-                          CustomTextField2(
-                            controller: gstratePriceController,
-                            label: "GST Rate (%)",
-                            value: _formInput.gstRate != "null"
-                                ? _formInput.gstRate
-                                : "0",
-                            inputType: TextInputType.number,
-                            onChanged: (e) {
-                              _formInput.gstRate = e;
+                          SizedBox(
+                            width: 400,
+                            child: CustomTextField2(
+                              controller: gstratePriceController,
+                              label: "GST Rate (%)",
+                              value: _formInput.gstRate != "null"
+                                  ? _formInput.gstRate
+                                  : "0",
+                              inputType: TextInputType.number,
+                              onChanged: (e) {
+                                _formInput.gstRate = e;
 
-                              setState(() {});
-                              calculate();
-                            },
-                            validator: (e) {
-                              if (!gstSwitch && e == "") return "Enter Rate";
-                            },
+                                setState(() {});
+                                calculate();
+                              },
+                              validator: (e) {
+                                if (!gstSwitch && e == "") return "Enter Rate";
+                              },
+                            ),
                           ),
                           const Divider(color: Colors.transparent),
                           Row(
@@ -607,14 +613,8 @@ class _CreateProductState extends State<CreateProduct> {
                               //     validator: (e) => null,
                               //   ),
                               // ),
-                            ],
-                          ),
-                          // const Divider(color: Colors.transparent),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                flex: 1,
+                              SizedBox(
+                                width: 400,
                                 child: CustomTextField2(
                                   controller: baseSellingPriceController,
                                   readonly: includedExcludedRadioButton == 1
@@ -622,9 +622,9 @@ class _CreateProductState extends State<CreateProduct> {
                                       : false,
                                   label: "Base Selling Price",
                                   value:
-                                      _formInput.baseSellingPriceGst == "null"
-                                          ? "0"
-                                          : _formInput.baseSellingPriceGst,
+                                  _formInput.baseSellingPriceGst == "null"
+                                      ? "0"
+                                      : _formInput.baseSellingPriceGst,
                                   onChanged: (e) {
                                     if (includedExcludedRadioButton == 2) {
                                       _formInput.baseSellingPriceGst = e;
@@ -637,15 +637,15 @@ class _CreateProductState extends State<CreateProduct> {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              Expanded(
-                                flex: 1,
+                              SizedBox(
+                                width: 400,
                                 child: CustomTextField(
                                   readonly: true,
                                   label: "Base Purchase Price",
                                   value:
-                                      _formInput.basePurchasePriceGst == "null"
-                                          ? "0"
-                                          : _formInput.basePurchasePriceGst,
+                                  _formInput.basePurchasePriceGst == "null"
+                                      ? "0"
+                                      : _formInput.basePurchasePriceGst,
                                   onChanged: (e) {
                                     _formInput.basePurchasePriceGst = e;
                                   },
@@ -654,6 +654,8 @@ class _CreateProductState extends State<CreateProduct> {
                               ),
                             ],
                           ),
+                          // const Divider(color: Colors.transparent),
+
                         ],
                       ),
                     ),
@@ -718,22 +720,20 @@ class _CreateProductState extends State<CreateProduct> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: CustomTextField(
-                            label: "Barcode",
-                            value: _formInput.barCode != "null"
-                                ? _formInput.barCode
-                                : "",
-                            onChanged: (e) {
-                              _formInput.barCode = e;
-                            },
-                            validator: (e) => null,
-                          ),
+                        CustomTextField(
+                          label: "Barcode",
+                          value: _formInput.barCode != "null"
+                              ? _formInput.barCode
+                              : "",
+                          onChanged: (e) {
+                            _formInput.barCode = e;
+                          },
+                          validator: (e) => null,
                         ),
-                        const VerticalDivider(color: Colors.transparent),
+                        // const VerticalDivider(color: Colors.transparent),
                         IconButton(
                           onPressed: () async {
-                            _scanBarode();
+                            _scanBarcode();
                             // Check if the device can vibrate
                           },
                           icon: const Icon(CustomIcons.camera),
@@ -744,90 +744,97 @@ class _CreateProductState extends State<CreateProduct> {
                     Column(
                       children: [
                         for (int i = 0; i < _subProductNames.length; i++)
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 8, right: 8, bottom: 8),
-                              child: Column(
+                          Column(
+                            children: [
+                              Row(
                                 children: [
-                                  Row(
-                                    children: [
-                                      Text("Sub Product ${i + 1}",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleLarge
-                                            ?.copyWith(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.normal),
-                                      ),
-                                      IconButton(
-                                        onPressed: () => _removeSubProductField(i),
-                                        icon: Icon(Icons.delete),
-                                        color: Colors.red,
-                                      ),
-                                    ],
+                                  Text("Sub Product ${i + 1}",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.normal),
                                   ),
-                                  TypeAheadFormField<Product>(
-                                    key: _keys[i],
-                                    textFieldConfiguration: TextFieldConfiguration(
-                                      controller: _subProductNames[i],
+                                  IconButton(
+                                    onPressed: () => _removeSubProductField(i),
+                                    icon: Icon(Icons.delete),
+                                    color: Colors.red,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 2,),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    width: 400,
+                                    child: TypeAheadFormField<Product>(
+                                      key: _keys[i],
+                                      textFieldConfiguration: TextFieldConfiguration(
+                                        controller: _subProductNames[i],
+                                        decoration: InputDecoration(
+                                            label: Text("Name"),
+                                            border: OutlineInputBorder(
+                                                borderRadius:
+                                                BorderRadius.circular(10))),
+                                      ),
+                                      suggestionsCallback: (String pattern) {
+                                        Scrollable.ensureVisible(_keys[i].currentContext!, duration: Duration(microseconds: 500),curve: Curves.easeInOut,);
+                                        if (int.tryParse(pattern.trim()) != null) {
+                                          return Future.value([]);
+                                        }
+                                        return _searchSubProducts(pattern);
+                                      },
+                                      itemBuilder: (context, subProduct) {
+                                        return ListTile(
+                                          leading: const Icon(Icons.shopping_cart),
+                                          title: Text(subProduct.name ?? ""),
+                                          onTap: () {
+                                            _subProductNames[i].text = subProduct.name!;
+                                            FocusScope.of(context).unfocus();
+                                          },
+                                        );
+                                      },
+                                      onSuggestionSelected: (Product subProduct) {
+
+                                        _subProductNames[i].text = subProduct.name!;
+                                        FocusScope.of(context).unfocus();
+                                      },
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  SizedBox(
+                                    width: 400,
+                                    child: TextFormField(
+                                      controller: _subProductQuantities[i],
+                                      keyboardType:
+                                      TextInputType.numberWithOptions(
+                                          signed: false, decimal: true),
                                       decoration: InputDecoration(
-                                          label: Text("Name"),
+                                          label: Text("Quantity"),
                                           border: OutlineInputBorder(
                                               borderRadius:
                                               BorderRadius.circular(10))),
+                                      validator: (e) {
+                                        if (e!.contains(",")) {
+                                          return '(,) character are not allowed';
+                                        }
+                                        if (e.isNotEmpty) if (double.parse(e) >
+                                            99999.0) {
+                                          return 'Maximum value is 99999';
+                                        }
+                                        return null;
+                                      },
                                     ),
-                                    suggestionsCallback: (String pattern) {
-                                      Scrollable.ensureVisible(_keys[i].currentContext!, duration: Duration(microseconds: 500),curve: Curves.easeInOut,);
-                                      if (int.tryParse(pattern.trim()) != null) {
-                                        return Future.value([]);
-                                      }
-                                      return _searchSubProducts(pattern);
-                                    },
-                                    itemBuilder: (context, subProduct) {
-                                      return ListTile(
-                                        leading: const Icon(Icons.shopping_cart),
-                                        title: Text(subProduct.name ?? ""),
-                                        onTap: () {
-                                          _subProductNames[i].text = subProduct.name!;
-                                          FocusScope.of(context).unfocus();
-                                        },
-                                      );
-                                    },
-                                    onSuggestionSelected: (Product subProduct) {
-
-                                      _subProductNames[i].text = subProduct.name!;
-                                      FocusScope.of(context).unfocus();
-                                    },
-                                  ),
-                                  SizedBox(
-                                    height: 10,
-                                  ),
-                                  TextFormField(
-                                    controller: _subProductQuantities[i],
-                                    keyboardType:
-                                    TextInputType.numberWithOptions(
-                                        signed: false, decimal: true),
-                                    decoration: InputDecoration(
-                                        label: Text("Quantity"),
-                                        border: OutlineInputBorder(
-                                            borderRadius:
-                                            BorderRadius.circular(10))),
-                                    validator: (e) {
-                                      if (e!.contains(",")) {
-                                        return '(,) character are not allowed';
-                                      }
-                                      if (e.isNotEmpty) if (double.parse(e) >
-                                          99999.0) {
-                                        return 'Maximum value is 99999';
-                                      }
-                                      return null;
-                                    },
                                   )
                                 ],
                               ),
-                            ),
-                          )
+                              SizedBox(height: 10,)
+                            ],
+                          ),
                       ],
                     ),
                     const Divider(color: Colors.transparent),
@@ -844,7 +851,8 @@ class _CreateProductState extends State<CreateProduct> {
                             );
                           });
                         },
-                        child: Container(
+                        //+SubProduct button layout
+                        child: Container(//+subProduct button
                           padding: const EdgeInsets.only(
                               left: 18, right: 20, top: 8, bottom: 8),
                           decoration: ShapeDecoration(
@@ -947,7 +955,7 @@ class _CreateProductState extends State<CreateProduct> {
     List<Product> prodList = await searchProductServices.searchproduct(pattern);
     return prodList;
   }
-  Future<void> _scanBarode() async {
+  Future<void> _scanBarcode() async {
     final res = await FlutterBarcodeScanner.scanBarcode(
       "#000000",
       "#000000",
