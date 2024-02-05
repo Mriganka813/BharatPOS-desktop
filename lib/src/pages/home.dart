@@ -303,93 +303,100 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     const Expanded(child: SizedBox()),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      // crossAxisAlignment: CrossAxisAlignment.end,
+                    Column(
                       children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(
-                              context,
-                              CreatePurchase.routeName,
-                            );
-                          },
-                          child: Column(
-                            children: [
-                              Card(
-                                color: Color.fromARGB(255, 255, 101, 122)
-                                    .withOpacity(0.5),
-                                elevation: 5,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide(
-                                    color: Color.fromARGB(255, 175, 76,
-                                        76), // Set the border color
-                                    width: 2.0, // Set the border width
-                                  ),
-                                ),
-                                child: Padding(
-                                    padding: const EdgeInsets.all(8),
-                                    child: Image.asset(
-                                      "assets/images/purchase.png",
-                                      height: 100,
-                                      width: 110,
-                                    )),
-                              ),
-                              Text(
-                                "Purchase",
-                                style: TextStyle(fontSize: 20),
-                              )
-                            ],
-                          ),
-                        ),
                         Text(
                           "Create Invoice",
-                          textAlign: TextAlign.left,
+                          textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(context, CreateSale.routeName,
-                                arguments: BillingPageArgs(
-                                    id: "", orderId: "", editOrders: []));
-                          },
-                          onLongPress: () {
-                            Navigator.pushNamed(
-                              context,
-                              CreateSaleReturn.routeName,
-                            );
-                          },
-                          child: Column(
-                            children: [
-                              Card(
-                                color: const Color.fromARGB(255, 101, 255, 106)
-                                    .withOpacity(0.5),
-                                elevation: 5,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide(
-                                    color: Colors.green, // Set the border color
-                                    width: 2.0, // Set the border width
+                        SizedBox(height: 20,),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          // crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  CreatePurchase.routeName,
+                                );
+                              },
+                              child: Column(
+                                children: [
+                                  Card(
+                                    color: Color.fromARGB(255, 255, 101, 122)
+                                        .withOpacity(0.5),
+                                    elevation: 5,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      side: BorderSide(
+                                        color: Color.fromARGB(255, 175, 76,
+                                            76), // Set the border color
+                                        width: 2.0, // Set the border width
+                                      ),
+                                    ),
+                                    child: Padding(
+                                        padding: const EdgeInsets.all(8),
+                                        child: Image.asset(
+                                          "assets/images/purchase.png",
+                                          height: 110,
+                                          width: 210,
+                                        )),
                                   ),
-                                ),
-                                child: Padding(
-                                    padding: const EdgeInsets.all(8),
-                                    child: Image.asset(
-                                      "assets/images/sale.png",
-                                      height: 100,
-                                      width: 110,
-                                    )),
+                                  Text(
+                                    "Purchase",
+                                    style: TextStyle(fontSize: 20),
+                                  )
+                                ],
                               ),
-                              Text(
-                                "Sale",
-                                style: TextStyle(fontSize: 20),
-                              )
-                            ],
-                          ),
+                            ),
+                            SizedBox(width: 120,),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(context, CreateSale.routeName,
+                                    arguments: BillingPageArgs(
+                                        id: "", orderId: "", editOrders: []));
+                              },
+                              onLongPress: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  CreateSaleReturn.routeName,
+                                );
+                              },
+                              child: Column(
+                                children: [
+                                  Card(
+                                    color: const Color.fromARGB(255, 101, 255, 106)
+                                        .withOpacity(0.5),
+                                    elevation: 5,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      side: BorderSide(
+                                        color: Colors.green, // Set the border color
+                                        width: 2.0, // Set the border width
+                                      ),
+                                    ),
+                                    child: Padding(
+                                        padding: const EdgeInsets.all(8),
+                                        child: Image.asset(
+                                          "assets/images/sale.png",
+                                          height: 110,
+                                          width: 210,
+                                        )),
+                                  ),
+                                  Text(
+                                    "Sale",
+                                    style: TextStyle(fontSize: 20),
+                                  )
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
+
                     SizedBox(
                       width: 50,
                     ),

@@ -361,10 +361,15 @@ class _CreateProductState extends State<CreateProduct> {
                             children: [
                               _formInput.image != "null" &&
                                       _formInput.image != null
-                                  ? CachedNetworkImage(
-                                      imageUrl: _formInput.image!,
-                                      fit: BoxFit.fill,
-                                    )
+                                  ? _formInput.imageFile == null
+                                      ? CachedNetworkImage(
+                                        imageUrl: _formInput.image!,
+                                        fit: BoxFit.fill,
+                                      )
+                                          : Image.file(
+                                        File(_formInput.imageFile!.path),
+                                        fit: BoxFit.contain,
+                                      )
                                   : _formInput.imageFile == null
                                       ? Image.asset(
                                           'assets/images/image_placeholder.png',
@@ -717,6 +722,14 @@ class _CreateProductState extends State<CreateProduct> {
                       },
                     ),
                     const Divider(color: Colors.transparent),
+                    CustomTextField(
+                      label: "Unit",
+                      value: _formInput.unit,
+                      onChanged: (e){
+                        _formInput.unit = e;
+                      },
+                    ),
+                    const Divider(color: Colors.transparent),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -925,12 +938,12 @@ class _CreateProductState extends State<CreateProduct> {
                                   //   "quantity": _subProductQuantities[i].text.toString()};
                                   // print(newSubProduct);
                                   subProductList.add(subProduct);
-                                  _formInput.subProducts = (subProductList);
                                 }
                               }
 
                               // _formInput.subProducts?["quantity"] = _subProductQuantities[i];
                             }
+                            _formInput.subProducts = (subProductList);
                             if (_formKey.currentState?.validate() ?? false) {
                               print(_formInput.available);
                               print(_formInput.expiryDate);

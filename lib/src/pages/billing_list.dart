@@ -394,6 +394,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
     } else {
       tableNoController.text = order.tableNo;
     }
+    final provider = Provider.of<Billing>(context,listen: false);
     List<Map<String, dynamic>> list = await context.read<KotCubit>().getKot();
     print("list in 388 billing list ${list.toString()}");
     return showDialog(
@@ -408,6 +409,9 @@ class _BillingListScreenState extends State<BillingListScreen> {
               inputType: TextInputType.number,
               controller: tableNoController,
               value: "",
+              onChanged: (e){
+                provider.updateTableNoInSalesBill(order.id.toString(), tableNoController.text);
+              },
               validator: (e) => null,
             ),
             ListTile(
@@ -416,6 +420,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 prefs.setString('default', '57mm');
                 _view57mmPdf(list, order.id.toString());
+                provider.updateTableNoInSalesBill(order.id.toString(), tableNoController.text);
                 Navigator.of(ctx).pop();
               },
               title: Text('58mm'),
@@ -426,12 +431,14 @@ class _BillingListScreenState extends State<BillingListScreen> {
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 prefs.setString('default', '80mm');
                 _view80mmPdf(list, order.id as String);
+                provider.updateTableNoInSalesBill(order.id.toString(), tableNoController.text);
                 Navigator.of(ctx).pop();
               },
               title: Text('80mm'),
             )
           ],
         ),
+
       ),
     );
   }
@@ -452,7 +459,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Billing orders'),
+          title: Text('Billing Orders'),
           centerTitle: true,
         ),
         body: (widget.orderType == OrderType.sale &&
@@ -660,10 +667,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
                             const SizedBox(height: 10),
                             if(provider.salesBilling.values
                                 .toList().isNotEmpty)
-                            if (provider.salesBilling.values
-                                    .toList()[index]
-                                    .tableNo !=
-                                "-1")
+                            if (provider.salesBilling.values.toList()[index].tableNo !="-1" &&
+                                provider.salesBilling.values.toList()[index].tableNo !="" )
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,

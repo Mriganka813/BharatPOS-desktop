@@ -57,6 +57,7 @@ class Order {
     businessAddress: json['businessAddress'] ?? "",
     reciverName: json['reciverName'] ?? "",
     gst: json['gst'] ?? "",
+      tableNo: json['tableNo'] ?? ""
   );
 
   factory Order.fromMapForParty(Map<String, dynamic> json) {

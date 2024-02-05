@@ -198,7 +198,7 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Net Sell Price'),
+                          Text('Net Price'),
                           Text('₹ ${widget.product.sellingPrice}'),
                         ],
                       ),
