@@ -11,6 +11,7 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shopos/src/models/input/product_input.dart';
+import 'package:shopos/src/pages/Image_Cropper.dart';
 import 'package:shopos/src/services/global.dart';
 import 'package:shopos/src/services/locator.dart';
 import 'package:shopos/src/services/product.dart';
@@ -26,11 +27,15 @@ import 'package:shopos/src/widgets/custom_date_picker.dart';
 import '../blocs/product/product_cubit.dart';
 import '../models/product.dart';
 import '../services/search_service.dart';
-
+class CreateProductArgs{
+  final String? id;
+  final bool? isCopy;
+  CreateProductArgs({this.id, this.isCopy});
+}
 class CreateProduct extends StatefulWidget {
   static const String routeName = '/create-product';
-  final String? id;
-  const CreateProduct({Key? key, this.id}) : super(key: key);
+  CreateProductArgs? args;
+  CreateProduct({Key? key, this.args}) : super(key: key);
 
   @override
   State<CreateProduct> createState() => _CreateProductState();
@@ -90,11 +95,11 @@ class _CreateProductState extends State<CreateProduct> {
   }
   void _fetchProductData() async {
     ProductFormInput? productInput;
-    if (widget.id == null) {
+    if (widget.args?.id == null) {
       return;
     }
     try {
-      final response = await const ProductService().getProduct(widget.id!);
+      final response = await const ProductService().getProduct(widget.args!.id!);
       print(response.toString());
       productInput = ProductFormInput.fromMap(response.data['inventory']);
     } on DioError catch (err) {
@@ -105,14 +110,22 @@ class _CreateProductState extends State<CreateProduct> {
     }
     setState(() {
       _formInput = productInput!;
+      if(widget.args?.isCopy != null && widget.args?.isCopy == true) {
+        //if user wants to copy the product
+        _formInput.id = null;
+        _formInput.name = "${_formInput.name} (copy)";
+        _formInput.barCode = null;
+        _formInput.image = null;
+      }
+    });
+    setState(() {
+      _formInput = productInput!;
     });
 
     if (_formInput.GSTincluded != null) if (_formInput.GSTincluded!) {
       includedExcludedRadioButton = 1;
-      print("it is 1");
     } else {
       includedExcludedRadioButton = 2;
-      print("it is 2");
     }
 
     print("gstttt");
@@ -245,6 +258,9 @@ class _CreateProductState extends State<CreateProduct> {
     if (image == null) {
       return;
     }
+    Image img = Image.file(File(image!.path));
+    Image croppedImage = await Navigator.push(context,
+        MaterialPageRoute(builder: (context) => CustomImageCropper(image: img,)));
     setState(() {
       _formInput.imageFile = image;
     });
@@ -351,7 +367,8 @@ class _CreateProductState extends State<CreateProduct> {
                     const Divider(color: Colors.transparent),
                     GestureDetector(
                       onTap: () {
-                        _showImagePickerOptions();
+                        locator<GlobalServices>().infoSnackBar("Please use mobile version to add image");
+                        // _showImagePickerOptions();
                       },
                       child: SizedBox(
                         height: 160,

@@ -56,14 +56,8 @@ class KotCubit extends Cubit<List<KotModel>> {
     var data = state;
 
     for (int i = 0; i < data.length; i++) {
-      if (data[i].orderId == OrderId &&
-          data[i].isPrinted == "no" &&
-          data[i].name == itemName) {
-        if (data[i].qty > 1) {
-          data[i].qty = data[i].qty - 1;
-        } else {
-          data.removeAt(i);
-        }
+      if (data[i].orderId == OrderId && data[i].isPrinted == "no" && data[i].name == itemName) {
+        data.removeAt(i);
         break;
       }
     }
@@ -71,6 +65,17 @@ class KotCubit extends Cubit<List<KotModel>> {
     emit(data);
   }
 
+  void updateKotQuantity(String orderId, String itemName, double itemQuantity){
+    var data = state;
+    for (int i = 0; i < data.length; i++) {
+      if(data[i].orderId == orderId && data[i].isPrinted == "no" && data[i].name == itemName){
+        data[i].qty = itemQuantity;
+        break;
+      }
+    }
+
+    emit(data);
+  }
   void updateKot(String orderId) {
     var data = state;
     for (int i = 0; i < data.length; i++) {

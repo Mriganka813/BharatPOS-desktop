@@ -73,7 +73,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
   void sort(List<Order> o) {
     for (int i = 0; i < o.length; i++) {
       for (int j = i + 1; j < o.length; j++) {
-        print(o[i].createdAt.toString());
+        // print(o[i].createdAt.toString());
         String dateString = o[i].createdAt != "" && o[i].createdAt != "null" && o[i].createdAt != " " ? o[i].createdAt.toString() : DateTime.now().toString();
 
         DateTime dateTimei = DateTime.parse(dateString);
@@ -173,7 +173,11 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                           child: GestureDetector(
                             onLongPress: () async {
                               HapticFeedback.vibrate();
-                              await openEditModal(order.party!.id!, int.parse(order.total!), order.createdAt.toString(), order.modeOfPayment!, context);
+                              if(order.orderItems!.isEmpty){
+                                await openEditModal(order.objId!, order.total!, order.createdAt.toString(), order.modeOfPayment!, context);
+                              }else{
+                                locator<GlobalServices>().infoSnackBar("You cannot edit sale order");
+                              }
                             },
                             child: Card(
                               clipBehavior: Clip.hardEdge,
@@ -434,7 +438,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
   }
 
 // update settle and credit model
-  modelOpenUpdate(context, String id, int amount, List<Map<String,dynamic>> type) {
+  modelOpenUpdate(context, String id, String amount, List<Map<String,dynamic>> type) {
     String newtotal = amount.toString();
     return showModalBottomSheet(
         barrierColor: Colors.transparent,
@@ -476,8 +480,8 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                       onTap: () {
                         double amountnew = double.parse(newtotal);
                         widget.args.tabbarNo == 0
-                            ? _specificpartyCubit.updateAmountCustomer(Party(id: id, total: amountnew), widget.args.partyId)
-                            : _specificpartyCubit.updateAmountSupplier(Party(id: id, total: amountnew), widget.args.partyId);
+                            ? _specificpartyCubit.updateAmountCustomer(id, amountnew, widget.args.partyId)
+                            : _specificpartyCubit.updateAmountSupplier(id, amountnew, widget.args.partyId);
 
                         Navigator.pop(context);
                       },
@@ -492,7 +496,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
   }
 
 // edit credit or settle
-  openEditModal(String id, int total, String createdAt, List<Map<String,dynamic>> type, context) {
+  openEditModal(String id, String total, String createdAt, List<Map<String,dynamic>> type, context) {
     Alert(
         style: const AlertStyle(
           animationType: AnimationType.grow,
@@ -528,8 +532,8 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
                 }
                 if (result!) {
                   widget.args.tabbarNo == 0
-                      ? _specificpartyCubit.deleteCustomerExpense(Party(id: id), widget.args.partyId)
-                      : _specificpartyCubit.deleteSupplierExpense(Party(id: id), widget.args.partyId);
+                      ? _specificpartyCubit.deleteCustomerExpense(id, widget.args.partyId)
+                      : _specificpartyCubit.deleteSupplierExpense(id, widget.args.partyId);
                   Navigator.pop(context);
                 } else {
                   Navigator.pop(context);
@@ -543,7 +547,7 @@ class _PartyCreditPageState extends State<PartyCreditPage> {
 
   Future<void> _launchUrl(String name, String mobile) async {
     String Message =
-        "Dear customer, your credit balance with ${name} is rupees $balanceToShareOnWhatsapp. Please pay the amount as soon as possible. Thank you for your business.%0A%0A*Powered by BharatPOS*";
+        "Dear customer, your credit balance with ${name} is rupees ${double.parse(balanceToShareOnWhatsapp).abs().toStringAsFixed(2)}. Please pay the amount as soon as possible. Thank you for your business.%0A%0A*Powered by BharatPOS*";
 
     final Uri _url = Uri.parse('https://wa.me/${mobile}?text=$Message');
 

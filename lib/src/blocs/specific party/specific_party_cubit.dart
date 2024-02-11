@@ -86,8 +86,8 @@ class SpecificPartyCubit extends Cubit<SpecificPartyState> {
   }
 
   ///
-  void updateAmountCustomer(Party p, String partyId) async {
-    final response = await _partyService.updatesaleAmount(p);
+  void updateAmountCustomer(String id, double total, String partyId) async {
+    final response = await _partyService.updateSaleAmount(id, total);
     if ((response.statusCode ?? 400) > 300) {
       emit(SpecificPartyError("Error updating party"));
       return;
@@ -99,8 +99,8 @@ class SpecificPartyCubit extends Cubit<SpecificPartyState> {
   }
 
   ///
-  void updateAmountSupplier(Party p, String partyId) async {
-    final response = await _partyService.updatepurchasedAmount(p);
+  void updateAmountSupplier(String id, double amount, String partyId) async {
+    final response = await _partyService.updatepurchasedAmount(id, amount);
     if ((response.statusCode ?? 400) > 300) {
       emit(SpecificPartyError("Error updating party"));
       return;
@@ -112,9 +112,9 @@ class SpecificPartyCubit extends Cubit<SpecificPartyState> {
   }
 
   ///
-  void deleteCustomerExpense(Party p, String partyId) async {
+  void deleteCustomerExpense(String id, String partyId) async {
     try {
-      final response = await _partyService.deletesaleAmount(p.id.toString());
+      final response = await _partyService.deletesaleAmount(id);
       if ((response.statusCode ?? 400) > 300) {
         emit(SpecificPartyError(response.data['message']));
         return;
@@ -129,10 +129,10 @@ class SpecificPartyCubit extends Cubit<SpecificPartyState> {
   }
 
   ///
-  void deleteSupplierExpense(Party p, String partyId) async {
+  void deleteSupplierExpense(String id, String partyId) async {
     try {
       final response =
-          await _partyService.deletepurchaseAmount(p.id.toString());
+      await _partyService.deletepurchaseAmount(id);
       if ((response.statusCode ?? 400) > 300) {
         emit(SpecificPartyError(response.data['message']));
         return;

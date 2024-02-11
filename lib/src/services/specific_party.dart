@@ -54,19 +54,20 @@ class SpecificPartyService {
   }
 
   ///
-  Future<Response> updatepurchasedAmount(Party party) async {
+  Future<Response> updatepurchasedAmount(String id, double total) async {
     return await ApiV1Service.putRequest(
-      '/upd/purchaseOrder/${party.id}',
-      data: {"total": party.total},
+      '/upd/purchaseOrder/${id}',
+      data: {"total": total},
     );
   }
 
   ///
-  Future<Response> updatesaleAmount(Party party) async {
+  Future<Response> updateSaleAmount(String id, double total) async {
     return await ApiV1Service.putRequest(
-      '/upd/salesOrder/${party.id}',
-      data: {"total": party.total},
+      '/upd/salesOrder/${id}',
+      data: {"total": total},
     );
+
   }
 
   ///

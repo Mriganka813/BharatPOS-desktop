@@ -14,6 +14,7 @@ class ProductCardHorizontal extends StatefulWidget {
   final Product product;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
+  final VoidCallback onCopy;
   final VoidCallback? reduceQuantity;
   final VoidCallback? addQuantity;
   final int selectQuantity;
@@ -31,6 +32,7 @@ class ProductCardHorizontal extends StatefulWidget {
     required this.product,
     required this.onDelete,
     required this.onEdit,
+    required this.onCopy,
     this.isSelecting = false,
     required this.type,
     this.addQuantity,
@@ -52,8 +54,9 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
   TextEditingController _itemQuantityController = TextEditingController();
   String? errorText;
   ProductAvailabilityService productAvailability = ProductAvailabilityService();
-
+  bool onTapOutsideWillWork = false;
   bool tapflag = false;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -273,13 +276,16 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
                                   contentPadding: EdgeInsets.symmetric(vertical: 5.0, horizontal: 7.0),
                                 ),
                                 onTapOutside: (e){
-                                  print("tapped out side");
-                                  print(e);
-                                  if(_itemQuantityController.text.isNotEmpty){
-                                    print("double.parse(controller text) is ${double.parse(_itemQuantityController.text)}");
-                                    itemQuantity = double.parse(_itemQuantityController.text);
-                                    print("item quantity on tap outside is $itemQuantity");
-                                    widget.onQuantityFieldChange(itemQuantity);
+                                  if(onTapOutsideWillWork){
+                                    print("tapped out side");
+                                    print(e);
+                                    if(_itemQuantityController.text.isNotEmpty){
+                                      print("double.parse(controller text) is ${double.parse(_itemQuantityController.text)}");
+                                      itemQuantity = double.parse(_itemQuantityController.text);
+                                      print("item quantity on tap outside is $itemQuantity");
+                                      widget.onQuantityFieldChange(itemQuantity);
+                                    }
+                                    onTapOutsideWillWork = false;
                                   }
                                 },
                                 onFieldSubmitted: (e){
@@ -291,6 +297,7 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
                                 },
                                 onChanged: (e){
                                   //TODO: implement validation
+                                  onTapOutsideWillWork = true;
                                   if(e.contains('-')){
                                     print("negative value");
                                     locator<GlobalServices>().errorSnackBar("Negative quantity not allowed");
@@ -351,6 +358,8 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
                           widget.onEdit();
                         } else if (e == 1) {
                           widget.onDelete();
+                        } else if(e == 2) {
+                          widget.onCopy();
                         }
                       },
                       itemBuilder: (BuildContext context) {
@@ -358,6 +367,10 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
                           const PopupMenuItem<int>(
                             value: 0,
                             child: Text('Edit'),
+                          ),
+                          const PopupMenuItem<int>(
+                            value: 2,
+                            child: Text('Copy'),
                           ),
                           const PopupMenuItem<int>(
                             value: 1,
@@ -442,7 +455,7 @@ class _ProductCardPurchaseState extends State<ProductCardPurchase> {
   double baseSellingPrice = 0;
   double Sellinggstvalue = 0;
   double SellingPrice = 0;
-
+  bool onTapOutSideWillWork=false;
   double basePurchasePrice = 0;
   double Purchasegstvalue = 0;
   double PurchasePrice = 0;
@@ -549,18 +562,21 @@ class _ProductCardPurchaseState extends State<ProductCardPurchase> {
                               widget.onQuantityFieldChange!(widget.productQuantity);
                           },
                           onTapOutside: (e){
-                            print("tapped out side");
-                            print(e);
-                            if(_itemQuantityController.text.isNotEmpty){
-                              print("double.parse(controller text) is ${double.parse(_itemQuantityController.text)}");
-                              widget.productQuantity = double.parse(_itemQuantityController.text);
-                              print("item quantity on tap outside is ${widget.productQuantity}");
-                              if(widget.onQuantityFieldChange != null)
-                                widget.onQuantityFieldChange!(widget.productQuantity);
+                            if(onTapOutSideWillWork){
+                              print("tapped out side");
+                              print(e);
+                              if(_itemQuantityController.text.isNotEmpty){
+                                print("double.parse(controller text) is ${double.parse(_itemQuantityController.text)}");
+                                widget.productQuantity = double.parse(_itemQuantityController.text);
+                                print("item quantity on tap outside is ${widget.productQuantity}");
+                                if(widget.onQuantityFieldChange != null)
+                                  widget.onQuantityFieldChange!(widget.productQuantity);
+                              }
+                              onTapOutSideWillWork=false;
                             }
                           },
                           onChanged: (e){
-                            //TODO: implement validation
+                            onTapOutSideWillWork=true;
                             if(e.contains('-')){
                               print("negative value");
                               locator<GlobalServices>().errorSnackBar("Negative quantity not allowed");
@@ -576,7 +592,6 @@ class _ProductCardPurchaseState extends State<ProductCardPurchase> {
                           widget.onDelete();
                           _itemQuantityController.text = (double.parse(_itemQuantityController.text)-1).toString();
                           _itemQuantityController.text = roundToDecimalPlaces(double.parse(_itemQuantityController.text), 4).toString();
-                          setState(() {});
                           setState(() {});
                         },
                         icon: const Icon(Icons.remove_circle_outline_rounded),

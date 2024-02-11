@@ -92,7 +92,7 @@ class Product {
       purchaseigst: json['purchaseIGST'].toString(),
       purchasesgst: json['purchaseSGST'].toString(),
       basePurchasePriceGst: json['basePurchasePrice'].toString(),
-     
+        quantityToBeSold: json['quantityToBeSold'],
       sellerName: json['sellerName'].toString(),
       batchNumber: json['batchNumber'] ?? null,
       expiryDate: json['expiryDate'] != null
@@ -131,8 +131,8 @@ class Product {
         "sellerName": sellerName,
         "batchNumber": batchNumber,
         "expiryDate": expiryDate,
-        
-      };
+      "quantityToBeSold": quantityToBeSold
+    };
 
   }
 }

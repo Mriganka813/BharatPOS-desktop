@@ -152,7 +152,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                       (curr.product?.sellingPrice ?? 1.0)) +
                   acc;
             },
-          ).toString()
+          ).toStringAsFixed(2)
         : provider.purchaseBilling.values
             .toList()[index]
             .orderItems
@@ -512,9 +512,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                                     .orderItems,
                                                 id: provider.purchaseBilling.values
                                                     .toList()[index]
-                                                    .id)
+                                                    .id));
 
-                                    );
                                   },
                                   title: Text('Edit',
                                       style: TextStyle(
@@ -555,7 +554,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                       print("line 533 in billing list ");
                                       print("index value is $index");
                                       print( provider.salesBilling.values
-                                          .toList()[index].toMap(OrderType.sale).toString());
+                                          .toList()[index].orderItems);
 
 
                                       /*SharedPreferences prefs =
@@ -669,13 +668,12 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                 .toList().isNotEmpty)
                             if (provider.salesBilling.values.toList()[index].tableNo !="-1" &&
                                 provider.salesBilling.values.toList()[index].tableNo !="" )
-                              Row(
+                              if(widget.orderType == OrderType.sale)
+                                Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Table No',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
+                                  Text('Table No', style: TextStyle(fontWeight: FontWeight.bold)),
                                   Text(
                                       '${provider.salesBilling.values.toList()[index].tableNo}',
                                       style: TextStyle(
