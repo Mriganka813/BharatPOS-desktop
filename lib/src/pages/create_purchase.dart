@@ -181,45 +181,24 @@ class _CreatePurchaseState extends State<CreatePurchase> {
                   CustomContinueButton(
                     title: "Continue",
                     onTap: () {
-                      // if (_orderItems.isEmpty) {
-                      //   ScaffoldMessenger.of(context).showSnackBar(
-                      //     const SnackBar(
-                      //       backgroundColor: Colors.red,
-                      //       content: Text(
-                      //         "Please select products before continuing",
-                      //         style: TextStyle(color: Colors.white),
-                      //       ),
-                      //     ),
-                      //   );
-                      // } else {
-                      //   Navigator.pushNamed(
-                      //     context,
-                      //     CheckoutPage.routeName,
-                      //     arguments: CheckoutPageArgs(
-                      //       invoiceType: OrderType.purchase,
-                      //       Order: _Order,
-                      //     ),
-                      //   );
-                      // }
 
-                      final provider =
-                          Provider.of<Billing>(context, listen: false);
-                      if (_orderItems.isNotEmpty) {
-                        provider.addPurchaseBill(
-                            _Order,
-                            widget.args?.orderId == null
-                                ? DateTime.now().toString()
-                                : widget.args!.orderId!);
+                      if(_orderItems.isNotEmpty){
+                        Navigator.pushNamed(
+                            context, CheckoutPage.routeName,
+                            arguments: CheckoutPageArgs(
+                              invoiceType: OrderType.purchase,
+                              order: _Order,
+                            )
+                        );
+                      }else{
+                        locator<GlobalServices>().errorSnackBar("No Products added");
                       }
-
-                      Navigator.pushNamed(context, BillingListScreen.routeName,
-                          arguments: OrderType.purchase);
                     },
                   ),
                   CustomButton(
                     title: "Create Product",
                     onTap: () {
-                      Navigator.pushNamed(context, CreateProduct.routeName);
+                      Navigator.pushNamed(context, CreateProduct.routeName, arguments: CreateProductArgs());
                     },
                     type: ButtonType.outlined,
                   )

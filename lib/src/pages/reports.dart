@@ -12,6 +12,9 @@ import 'package:shopos/src/services/set_or_change_pin.dart';
 import 'package:shopos/src/widgets/custom_button.dart';
 import 'package:shopos/src/widgets/custom_date_picker.dart';
 
+import '../services/report.dart';
+import '../widgets/pin_validation.dart';
+
 enum ReportType { sale, purchase, expense, stock,estimate, saleReturn }
 
 class ReportsPage extends StatefulWidget {
@@ -272,93 +275,27 @@ class _ReportsPageState extends State<ReportsPage> {
         locator<GlobalServices>().errorSnackBar("Please select a report type");
         return;
       }
-      // setState(() {
-      //   _showLoader = true;
-      // });
-      // locator<GlobalServices>().showBottomSheetLoader();
-      bool status = await _pinService.pinStatus();
 
-      if (!status) {
+      bool status = await _pinService.pinStatus();
+      bool todayFlag = false;
+      String current_date = await ReportService().getCurrentDate();
+      //if input date is today's date
+      if(current_date.substring(0,10) == _reportInput.startDate.toString().substring(0,10) &&
+          current_date.substring(0,10) == _reportInput.endDate.toString().substring(0,10)){
+        todayFlag = true;
+      }
+      if ((!status) || todayFlag) {
         _reportCubit.getReport(_reportInput);
       } else {
-        bool? checkPin = await _showPinDialog();
-        if (checkPin!) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Incorrect pin'),
-            backgroundColor: Colors.red,
-          ));
+        bool checkPin = await PinValidation.showPinDialog(context) as bool;
+        // bool? checkPin = await _showPinDialog();
+        if (checkPin) {
+          _reportCubit.getReport(_reportInput);
+        }else{
           return;
-        } else {}
+        }
       }
     }
   }
 
-  Future<bool?> _showPinDialog() {
-    return showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) => AlertDialog(
-              content: PinCodeTextField(
-                onChanged: (v) {},
-                autoDisposeControllers: false,
-                appContext: context,
-                length: 6,
-                obscureText: true,
-                obscuringCharacter: '*',
-                blinkWhenObscuring: true,
-                animationType: AnimationType.fade,
-                keyboardType: TextInputType.number,
-                pinTheme: PinTheme(
-                  shape: PinCodeFieldShape.underline,
-                  borderRadius: BorderRadius.circular(5),
-                  fieldHeight: 40,
-                  fieldWidth: 30,
-                  inactiveColor: Colors.black45,
-                  inactiveFillColor: Colors.white,
-                  selectedFillColor: Colors.white,
-                  selectedColor: Colors.black45,
-                  disabledColor: Colors.black,
-                  activeFillColor: Colors.white,
-                ),
-                cursorColor: Colors.black,
-                controller: pinController,
-                animationDuration: const Duration(milliseconds: 300),
-                enableActiveFill: true,
-              ),
-              title: Row(
-                children: [
-                  Expanded(child: Text('Enter your pin')),
-                  GestureDetector(
-                      onTap: () {
-                        Navigator.of(ctx).pop();
-                      },
-                      child: Icon(Icons.close))
-                ],
-              ),
-              actions: [
-                Center(
-                    child: Container(
-                  width: 200,
-                  height: 40,
-                  child: CustomButton(
-                      title: 'Verify',
-                      style: TextStyle(fontSize: 20, color: Colors.white),
-                      onTap: () async {
-                        bool status = await _pinService.verifyPin(
-                            int.parse(pinController.text.toString()));
-                        print(status);
-                        if (status) {
-                          pinController.clear();
-                          Navigator.of(ctx).pop(true);
-                        } else {
-                          Navigator.of(ctx).pop(false);
-                          pinController.clear();
-
-                          return;
-                        }
-                      }),
-                ))
-              ],
-            ));
-  }
 }

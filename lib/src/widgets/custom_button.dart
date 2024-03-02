@@ -10,6 +10,7 @@ class CustomButton extends StatelessWidget {
   final bool isDisabled;
   final bool isLoading;
   final TextStyle? style;
+  final double? paddingOutside;
   final ButtonType type;
   const CustomButton({
     Key? key,
@@ -20,46 +21,50 @@ class CustomButton extends StatelessWidget {
     this.style,
     this.padding = const EdgeInsets.all(10),
     this.type = ButtonType.normal,
+    this.paddingOutside = 20.0
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return TextButton(
-      style: type == ButtonType.outlined
-          ? OutlinedButton.styleFrom(
-              minimumSize: Size(300, 60),
-              side: BorderSide(
-                color: isDisabled ? Colors.green : ColorsConst.primaryColor,
-                width: 2,
+    return Padding(
+      padding: EdgeInsets.all(paddingOutside!),
+      child: TextButton(
+        style: type == ButtonType.outlined
+            ? OutlinedButton.styleFrom(
+                minimumSize: Size(300, 60),
+                side: BorderSide(
+                  color: isDisabled ? Colors.green : ColorsConst.primaryColor,
+                  width: 2,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: padding,
+              )
+            : TextButton.styleFrom(
+                minimumSize: Size(300, 60),
+                backgroundColor:
+                    isDisabled ? Colors.green : ColorsConst.primaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: padding,
               ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              padding: padding,
-            )
-          : TextButton.styleFrom(
-              minimumSize: Size(300, 60),
-              backgroundColor:
-                  isDisabled ? Colors.green : ColorsConst.primaryColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              padding: padding,
-            ),
-      onPressed: () {
-        if (isDisabled) return;
-        onTap();
-      },
-      child: isLoading
-          ? const CircularProgressIndicator()
-          : Text(title,
-              style: style ??
-                  Theme.of(context).textTheme.headline6?.copyWith(
-                      color: type == ButtonType.normal
-                          ? Colors.white
-                          : ColorsConst.primaryColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 30)),
+        onPressed: () {
+          if (isDisabled) return;
+          onTap();
+        },
+        child: isLoading
+            ? const CircularProgressIndicator()
+            : Text(title,
+                style: style ??
+                    Theme.of(context).textTheme.headline6?.copyWith(
+                        color: type == ButtonType.normal
+                            ? Colors.white
+                            : ColorsConst.primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 30)),
+      ),
     );
   }
 }

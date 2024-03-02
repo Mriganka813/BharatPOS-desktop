@@ -17,6 +17,7 @@ import 'package:shopos/src/widgets/custom_text_field2.dart';
 import 'package:shopos/src/widgets/product_card_horizontal.dart';
 
 import '../models/product.dart';
+import '../widgets/pin_validation.dart';
 
 class ProductListPageArgs {
   bool isSelecting;
@@ -481,10 +482,8 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                                           onDelete: () async {
                                             var result = true;
 
-                                            if (await _pinService.pinStatus() ==
-                                                true) {
-                                              result = await _showPinDialog()
-                                                  as bool;
+                                            if (await _pinService.pinStatus() == true) {
+                                              result = await PinValidation.showPinDialog(context) as bool;
                                             }
 
                                             if (result) {
@@ -500,10 +499,8 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                                           onEdit: () async {
                                             var result = true;
                                             print("llllllll");
-                                            if (await _pinService.pinStatus() ==
-                                                true) {
-                                              result = await _showPinDialog()
-                                                  as bool;
+                                            if (await _pinService.pinStatus() == true) {
+                                              result = await PinValidation.showPinDialog(context) as bool;
                                             }
                                             if (result) {
                                               await Navigator.pushNamed(
@@ -521,7 +518,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                                             var result = true;
 
                                             if (await _pinService.pinStatus() == true) {
-                                              result = await _showPinDialog() as bool;
+                                              result = await PinValidation.showPinDialog(context) as bool;
                                             }
                                             if (result) {
                                               await Navigator.pushNamed(
@@ -531,7 +528,6 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                                               );
 
                                               // _productCubit.getProducts(_currentPage, _limit);
-                                              pinController.clear();
                                             }
                                           },
                                           onQuantityFieldChange: (double value){
@@ -607,74 +603,6 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
         ]));
   }
 
-  Future<bool?> _showPinDialog() {
-    return showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) => AlertDialog(
-              content: PinCodeTextField(
-                onChanged: (v) {},
-                autoDisposeControllers: false,
-                appContext: context,
-                length: 6,
-                obscureText: true,
-                obscuringCharacter: '*',
-                blinkWhenObscuring: true,
-                animationType: AnimationType.fade,
-                keyboardType: TextInputType.number,
-                pinTheme: PinTheme(
-                  shape: PinCodeFieldShape.underline,
-                  borderRadius: BorderRadius.circular(5),
-                  fieldHeight: 40,
-                  fieldWidth: 30,
-                  inactiveColor: Colors.black45,
-                  inactiveFillColor: Colors.white,
-                  selectedFillColor: Colors.white,
-                  selectedColor: Colors.black45,
-                  disabledColor: Colors.black,
-                  activeFillColor: Colors.white,
-                ),
-                cursorColor: Colors.black,
-                controller: pinController,
-                animationDuration: const Duration(milliseconds: 300),
-                enableActiveFill: true,
-              ),
-              title: Row(
-                children: [
-                  Expanded(child: Text('Enter your pin')),
-                  GestureDetector(
-                      onTap: () {
-                        Navigator.of(ctx).pop();
-                      },
-                      child: Icon(Icons.close))
-                ],
-              ),
-              actions: [
-                Center(
-                    child: Container(
-                  width: 200,
-                  height: 40,
-                  child: CustomButton(
-                      title: 'Verify',
-                      style: TextStyle(fontSize: 20, color: Colors.white),
-                      onTap: () async {
-                        bool status = await _pinService.verifyPin(
-                            int.parse(pinController.text.toString()));
-                        print(status);
-                        if (status) {
-                          pinController.clear();
-                          Navigator.of(ctx).pop(true);
-                        } else {
-                          Navigator.of(ctx).pop(false);
-                          pinController.clear();
-
-                          return;
-                        }
-                      }),
-                ))
-              ],
-            ));
-  }
 
   Future<bool?> _showFilterDialog() {
     return showDialog(

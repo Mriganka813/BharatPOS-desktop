@@ -21,11 +21,14 @@ dependencies:
   date_time_picker: 
   dio: ^5.1.1
   dio_cookie_manager: any
-  htmltopdfwidgets: 
-  
+  htmltopdfwidgets:
+  lottie:
   flutter_barcode_scanner: ^2.0.0
   flutter_bloc: ^8.0.1
+
   flutter_html_to_pdf: ^0.7.0
+  file_picker:
+  file_saver:
   # flutter_localizations:
   # flutter_secure_storage: ^5.0.2
   flutter_typeahead: ^4.3.7
@@ -39,7 +42,7 @@ dependencies:
   pdf: ^3.7.4
   permission_handler: ^10.2.0
   pin_code_fields: ^7.4.0
-  share_plus: ^6.3.1
+  share_plus:
   slidable_button: ^2.0.0+1
   whatsapp_share2: ^2.0.2
   rflutter_alert: ^2.0.4
@@ -89,6 +92,7 @@ flutter:
     - assets/images/
     - assets/audio/
     - assets/icon/
+    - assets/anims/
   fonts:
     - family: CustomIcons
       fonts:

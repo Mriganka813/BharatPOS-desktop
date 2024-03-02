@@ -282,7 +282,6 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                             CheckoutPage.routeName,
                             arguments: CheckoutPageArgs(
                               invoiceType: OrderType.saleReturn,
-                              orderId: "0",
                               order: _Order
                             ),
                           );

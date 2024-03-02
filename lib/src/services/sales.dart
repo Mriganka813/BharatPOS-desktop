@@ -16,6 +16,7 @@ class SalesService {
     final response = await ApiV1Service.postRequest(
       '/salesOrder/new',
       data: {
+        'kotId': orderItemInput.kotId,
         'orderItems':
             orderItemInput.orderItems?.map((e) => e.toSaleMap()).toList(),
         'modeOfPayment': orderItemInput.modeOfPayment,
@@ -27,6 +28,7 @@ class SalesService {
         'gst': orderItemInput.gst,
       },
     );
+    print("printing response of sale");
     print(response.data);
     return response;
   }

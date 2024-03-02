@@ -13,6 +13,8 @@ import 'package:shopos/src/services/party.dart';
 import 'package:shopos/src/services/set_or_change_pin.dart';
 import 'package:shopos/src/widgets/custom_button.dart';
 import 'package:pin_code_fields/pin_code_fields.dart' as pinCode;
+
+import '../widgets/pin_validation.dart';
 class PartyListPage extends StatefulWidget {
   static const routeName = '/party_list';
   const PartyListPage({Key? key}) : super(key: key);
@@ -300,7 +302,7 @@ class _PartiesListViewState extends State<PartiesListView> {
                  var result = true;
 
                 if (await _pinService.pinStatus()==true) {
-                  result = await _showPinDialog() as bool;
+                  result = await PinValidation.showPinDialog(context) as bool;
                 }
                 if (result == true) {
                   await Navigator.pushNamed(context, CreatePartyPage.routeName,
@@ -308,9 +310,6 @@ class _PartiesListViewState extends State<PartiesListView> {
                           _party.phoneNumber!, _party.address!, _partyType));
                   Navigator.pop(context);
                   widget.partyCubit.getInitialCreditParties();
-                } else {
-                  Navigator.pop(context);
-                  locator<GlobalServices>().errorSnackBar("Incorrect pin");
                 }
               },
             ),
@@ -320,14 +319,11 @@ class _PartiesListViewState extends State<PartiesListView> {
               var result = true;
 
                 if (await _pinService.pinStatus()==true) {
-                  result = await _showPinDialog() as bool;
+                  result = await PinValidation.showPinDialog(context) as bool;
                 }
                 if (result == true) {
                   widget.partyCubit.deleteParty(_party);
                   Navigator.pop(context);
-                } else {
-                  Navigator.pop(context);
-                  locator<GlobalServices>().errorSnackBar("Incorrect pin");
                 }
               },
             ),
@@ -335,76 +331,6 @@ class _PartiesListViewState extends State<PartiesListView> {
         )).show();
   }
 
-  Future<bool?> _showPinDialog() {
-    return showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) => AlertDialog(
-              content: pinCode.PinCodeTextField(
-                onChanged: (v){},
-                autoDisposeControllers: false,
-                appContext: context,
-                length: 6,
-                obscureText: true,
-                obscuringCharacter: '*',
-                blinkWhenObscuring: true,
-                animationType: pinCode.AnimationType.fade,
-                keyboardType: TextInputType.number,
-                pinTheme: pinCode.PinTheme(
-                  shape: pinCode.PinCodeFieldShape.underline,
-                  borderRadius: BorderRadius.circular(5),
-                  fieldHeight: 40,
-                  fieldWidth: 30,
-                  inactiveColor: Colors.black45,
-                  inactiveFillColor: Colors.white,
-                  selectedFillColor: Colors.white,
-                  selectedColor: Colors.black45,
-                  disabledColor: Colors.black,
-                  activeFillColor: Colors.white,
-                ),
-                cursorColor: Colors.black,
-                controller: pinController,
-                animationDuration: const Duration(milliseconds: 300),
-                enableActiveFill: true,
-              ),
-              title: Row(
-                children: [
-                  Expanded(child: Text('Enter your pin')),
-                  GestureDetector(
-                    onTap: (){
-                        Navigator.of(ctx).pop();
-                               Navigator.of(ctx).pop();
-                    },
-                    child: Icon(Icons.close))
-                ],
-              ),
-              actions: [
-                Center(
-                    child: Container(
-                      width: 200,
-                      height: 40,
-                      child: CustomButton(
-                                     
-                          title: 'Verify',
-                          style: TextStyle(fontSize: 20,color: Colors.white),
-                          onTap: () async {
-                            bool status = await _pinService.verifyPin(
-                                int.parse(pinController.text.toString()));
-                            print(status);
-                            if (status) {
-                              pinController.clear();
-                              Navigator.of(ctx).pop(true);
-                            } else {
-                              Navigator.of(ctx).pop(false);
-                              pinController.clear();
-                    
-                              return;
-                            }
-                          }),
-                    ))
-              ],
-            ));
-  }
 }
 
 class MyTabIndicator extends Decoration {

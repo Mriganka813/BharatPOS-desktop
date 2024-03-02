@@ -21,6 +21,7 @@ class Billing with ChangeNotifier {
     if(_salesBilling.containsKey(orderId)){
       _salesBilling.update(orderId, (existingOrder) => Order(
           id: existingOrder.id,
+          kotId: existingOrder.kotId,
           orderItems: existingOrder.orderItems,
           modeOfPayment: existingOrder.modeOfPayment,
           party: existingOrder.party,
@@ -40,6 +41,7 @@ class Billing with ChangeNotifier {
           orderId,
           (existingOrder) => Order(
               id: input.id,
+              kotId: existingOrder.kotId,
               orderItems: existingOrder.orderItems,
               modeOfPayment: existingOrder.modeOfPayment,
               party: existingOrder.party,
@@ -53,6 +55,7 @@ class Billing with ChangeNotifier {
           orderId,
           () => Order(
               id: input.id,
+              kotId: input.kotId,
               orderItems: input.orderItems,
               modeOfPayment: input.modeOfPayment,
               party: input.party,

@@ -19,6 +19,7 @@ import 'package:shopos/src/pages/online_order_list.dart';
 import 'package:shopos/src/pages/party_credit.dart';
 import 'package:shopos/src/pages/party_list.dart';
 import 'package:shopos/src/pages/pdf_preview.dart';
+import 'package:shopos/src/pages/preferences_page.dart';
 import 'package:shopos/src/pages/reports.dart';
 import 'package:shopos/src/pages/report_table.dart';
 import 'package:shopos/src/pages/search_result.dart';
@@ -92,6 +93,8 @@ class MyApp extends StatelessWidget {
                 return const ReportsPage();
               case ExpensePage.routeName:
                 return const ExpensePage();
+              case DefaultPreferences.routeName:
+                return const DefaultPreferences();
               case OnlineOrderList.routeName:
                 return const OnlineOrderList();
               case CreateExpensePage.routeName:

@@ -171,7 +171,9 @@ class _ProductCardHorizontalState extends State<ProductCardHorizontal> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Available'),
-                          Text('${widget.product.quantity}'),
+                          Text(
+                            widget.product.quantity == null || widget.product.quantity! > 9999 ? 'Unlimited' : '${widget.product.quantity?.toStringAsFixed(3)}',
+                          ),
                         ],
                       ),
                       Visibility(

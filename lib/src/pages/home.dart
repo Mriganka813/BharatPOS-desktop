@@ -12,6 +12,7 @@ import 'package:shopos/src/pages/create_purchase.dart';
 import 'package:shopos/src/pages/create_sale.dart';
 import 'package:shopos/src/pages/expense.dart';
 import 'package:shopos/src/pages/party_list.dart';
+import 'package:shopos/src/pages/preferences_page.dart';
 import 'package:shopos/src/pages/reports.dart';
 import 'package:shopos/src/pages/search_result.dart';
 import 'package:shopos/src/pages/set_pin.dart';
@@ -22,6 +23,7 @@ import 'package:shopos/src/services/set_or_change_pin.dart';
 import 'package:shopos/src/widgets/custom_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../widgets/pin_validation.dart';
 import 'create_estimate.dart';
 import 'online_order_list.dart';
 
@@ -134,6 +136,26 @@ class _HomePageState extends State<HomePage> {
                         title: Title(color: Colors.black, child: Text("Estimates")),
                         onTap: () async {
                           Navigator.of(context).pushNamed(CreateEstimate.routeName);
+                        },
+                      ),
+                      Divider(
+                        color: Colors.transparent,
+                      ),
+                      ListTile(
+                        leading: Image.asset(
+                          "assets/icon/preferences_icon.png",
+                          height: 28,
+                        ),
+                        title: Title(color: Colors.black, child: Text("Preferences")),
+                        onTap: () async {
+                          var result = true;
+
+                          if (await _pinService.pinStatus() == true) {
+                            result = await PinValidation.showPinDialog(context) as bool;
+                          }
+                          if(result){
+                            Navigator.of(context).pushNamed(DefaultPreferences.routeName);
+                          }
                         },
                       ),
                       Divider(
@@ -355,8 +377,7 @@ class _HomePageState extends State<HomePage> {
                             GestureDetector(
                               onTap: () {
                                 Navigator.pushNamed(context, CreateSale.routeName,
-                                    arguments: BillingPageArgs(
-                                        id: "", orderId: "", editOrders: []));
+                                    arguments: BillingPageArgs(editOrders: []));
                               },
                               onLongPress: () {
                                 Navigator.pushNamed(

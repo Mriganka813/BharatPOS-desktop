@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:htmltopdfwidgets/htmltopdfwidgets.dart' as htp;
 import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
 import 'package:ntp/ntp.dart';
 import 'package:open_app_file/open_app_file.dart';
 import 'package:path_provider/path_provider.dart';
@@ -33,6 +34,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:shopos/src/provider/billing.dart';
 import 'package:provider/provider.dart';
 
+import '../blocs/billing/billing_cubit.dart';
 import '../models/party.dart';
 
 enum OrderType { purchase, sale, saleReturn, estimate, none }
@@ -40,14 +42,15 @@ enum OrderType { purchase, sale, saleReturn, estimate, none }
 class CheckoutPageArgs {
   final OrderType invoiceType;
   final Order order;
-  final String orderId;
-  final bool?
-  canEdit; //used for: checkout from sale report(stopping user to edit sale
-  const CheckoutPageArgs({
+  // final String orderId;
+  ///canEdit flag is used for: checkout from sale report(stopping user to edit sale
+  ///if canEdit is set to false while go to sale is executed from report page
+  final bool? canEdit;
+  CheckoutPageArgs({
     required this.invoiceType,
     required this.order,
-    required this.orderId,
-    this.canEdit
+    // required this.orderId,
+    this.canEdit,
   });
 }
 
@@ -89,12 +92,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   final List<TextEditingController> _amountControllers = [];
   final List<TextEditingController> _modeOfPayControllers = [];
+  bool shareButtonPref = false;
+  bool _loadingShareButton = false;
+  late SharedPreferences prefs;
+
 
   ///
   @override
   void initState() {
     super.initState();
     getUserData();
+    init();
     _checkoutCubit = CheckoutCubit();
     _typeAheadController = TextEditingController();
     fetchNTPTime();
@@ -111,7 +119,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
       gstController.text = widget.args.order.gst!;
     }
   }
-
+  void init() async {
+    _loadingShareButton = true;
+    prefs = await SharedPreferences.getInstance();
+    shareButtonPref = (await prefs.getBool('share-button-preference'))!;
+    _loadingShareButton = false;
+  }
   _addPaymentMethodField() {
     setState(() {
       _amountControllers.add(TextEditingController());
@@ -242,134 +255,188 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   ///
-  openShareModal(context, user) {
+  openShareModal(context, user, bool popAll) {
+    final String successMsg = widget.args.invoiceType == OrderType.estimate
+        ? widget.args.order.estimateNum != null
+        ? convertToSale
+        ? 'Estimate converted to Sale'
+        : 'Estimate updated successfully'
+        : 'Estimate created successfully'
+        : 'Order created successfully';
     Alert(
+        title: widget.args.canEdit==false || popAll == false ? "Share Invoice" : "",
         style: const AlertStyle(
           animationType: AnimationType.grow,
+          // isCloseButton: false,,
+          isOverlayTapDismiss: false,
           isButtonVisible: false,
         ),
         context: context,
-        title: "Share Invoice",
-        content: Column(
-          children: [
-            SizedBox(
-              height: 10,
-            ),
-            ListTile(
-              title: const Text("Open pdf"),
-              onTap: () async {
-                // _onTapShare(0);
-                // SharedPreferences prefs = await SharedPreferences.getInstance();
-                // String? defaultBill = prefs.getString('defaultBill');
-                // print(defaultBill);
-                if (widget.args.invoiceType != OrderType.estimate) {
-                  _showNewDialog(widget.args.order);
-                } else {
-                  _viewPdfwithoutgst(userData);
-                }
+        closeFunction: (){
+          if(popAll){
+            Future.delayed(const Duration(milliseconds: 50), () {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            });
+          }else{
+            Navigator.pop(context);
+          }
+        },
+        content: WillPopScope(
+          onWillPop: () async {
+            if(popAll){
+              Future.delayed(const Duration(milliseconds: 50), () {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              });
+            }else{
+              Navigator.pop(context);
+            }
+            return true;
+          },
+          child: Column(
+            children: [
+              SizedBox(height: 10,),
+              // if(widget.args.canEdit != false && popAll == true)
+              if(popAll == true)
+                Lottie.asset('assets/anims/check3.json',
+                    width: 150,
+                    height: 150,
+                    repeat: false,
+                    fit: BoxFit.contain),
+              // widget.args.canEdit != false ? SizedBox(height: 20,): SizedBox.shrink(),
+              // widget.args.canEdit != false ? Text("$successMsg",style: TextStyle(fontSize: 14),): SizedBox.shrink(),
+              // widget.args.canEdit != false ? SizedBox(height: 60,): SizedBox(height: 20,),
+              popAll ? SizedBox(height: 20,): SizedBox.shrink(),
+              popAll ? Text("$successMsg",style: TextStyle(fontSize: 20),): SizedBox.shrink(),
+              popAll ? SizedBox(height: 60,): SizedBox(height: 20,),
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomButton(
+                      paddingOutside: 5,
+                      title: "Print",
+                      type: ButtonType.outlined,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 30,
+                        vertical: 10,
+                      ),
+                      onTap: () async {
+                        // _onTapShare(0);
+                        // SharedPreferences prefs = await SharedPreferences.getInstance();
+                        // String? defaultBill = prefs.getString('defaultBill');
+                        // print(defaultBill);
+                        if (widget.args.invoiceType != OrderType.estimate) {
+                          _showNewDialog(widget.args.order, popAll);
+                        } else {
+                          await _viewPdfwithoutgst(userData, popAll);
+                          if(popAll){
+                            Future.delayed(const Duration(milliseconds: 400), () {
+                              Navigator.of(context).popUntil((route) => route.isFirst);
+                            });
+                          }
+                        }
 
-                // if (defaultBill == null) {
-                //   _showNewDialog(widget.args.Order);
-                //   /* _viewPdfwithoutgst(
-                //     userData,
-                //   );*/
-                // } else if (defaultBill == '57mm') {
-                //   _view57mmBill(widget.args.Order);
-                //   // _viewPdfwithoutgst(
-                //   //   userData,
-                //   // );
-                // } else if (defaultBill == '80mm') {
-                //   _view80mmBill(widget.args.Order);
-                //   // _viewPdfwithoutgst(
-                //   //   userData,
-                //   // );
-                // } else if (defaultBill == 'A4') {
-                //   _viewPdfwithoutgst(userData);
-                // }
-              },
-            ),
-            // ListTile(
-            //   title: const Text("With GST"),
-            //   onTap: () {
-            //     _onTapShare(0);
-            //   },
-            // ),
-            // ListTile(
-            //   title: const Text("Without GST"),
-            //   onTap: () {
-            //     _onTapShare(1);
-            //   },
-            // ),
-            ListTile(
-                title: const Text("Whatsapp Message"),
-                onTap: () {
-                  TextEditingController t = TextEditingController();
-                  showDialog(
-                      context: context,
-                      builder: (_) =>
-                          AlertDialog(
-                            shape: RoundedRectangleBorder(
-                                borderRadius:
-                                BorderRadius.all(Radius.circular(20))),
-                            backgroundColor: Colors.white,
-                            title: Column(children: [
-                              Text(
-                                "Enter Whatsapp numer\n(10-digit number only)",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    fontSize: 17.0,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: "Poppins-Regular",
-                                    color: Colors.black),
-                              )
-                            ]),
-                            content: TextField(
-                                autofocus: true,
-                                controller: t,
-                                decoration: InputDecoration(
-                                  hintText: "Enter 10-digit number",
-                                  enabledBorder: OutlineInputBorder(),
-                                  focusedBorder: OutlineInputBorder(),
-                                ),
-                                onSubmitted: (val) {
-                                  if (int.tryParse(val.trim()) != null &&
-                                      val
-                                          .trim()
-                                          .length == 10)
-                                    _launchUrl(
-                                        val.trim(),
-                                        user,
-                                        widget.args.order.modeOfPayment,
-                                        totalbasePrice(),
-                                        totalgstPrice(),
-                                        "0.0",
-                                        widget.args.order.orderItems);
-                                }),
-                            actions: [
-                              TextButton(
-                                  onPressed: () {
-                                    if (int.tryParse(t.text.trim()) != null &&
-                                        t.text.length == 10)
-                                      includePayments();
-                                    _launchUrl(
-                                        t.text.trim(),
-                                        user,
-                                        widget.args.order.modeOfPayment,
-                                        totalbasePrice(),
-                                        totalgstPrice(),
-                                        totalDiscount(),
-                                        widget.args.order.orderItems);
-                                  },
-                                  child: Text("Yes")),
-                              TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: Text("Cancel"))
-                            ],
-                          ));
-                })
-          ],
+                        // if (defaultBill == null) {
+                        //   _showNewDialog(widget.args.Order);
+                        //   /* _viewPdfwithoutgst(
+                        //     userData,
+                        //   );*/
+                        // } else if (defaultBill == '57mm') {
+                        //   _view57mmBill(widget.args.Order);
+                        //   // _viewPdfwithoutgst(
+                        //   //   userData,
+                        //   // );
+                        // } else if (defaultBill == '80mm') {
+                        //   _view80mmBill(widget.args.Order);
+                        //   // _viewPdfwithoutgst(
+                        //   //   userData,
+                        //   // );
+                        // } else if (defaultBill == 'A4') {
+                        //   _viewPdfwithoutgst(userData);
+                        // }
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: CustomButton(
+                        paddingOutside: 5,
+                        type: ButtonType.outlined,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 10,
+                        ),
+                        title: "WhatsApp",
+                        onTap: () {
+                          TextEditingController t = TextEditingController();
+                          showDialog(
+                              context: context,
+                              builder: (_) =>
+                                  AlertDialog(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                        BorderRadius.all(Radius.circular(20))),
+                                    backgroundColor: Colors.white,
+                                    title: Column(children: [
+                                      Text(
+                                        "Enter Whatsapp number\n(10-digit number only)",
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            fontSize: 17.0,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: "Poppins-Regular",
+                                            color: Colors.black),
+                                      )
+                                    ]),
+                                    content: TextField(
+                                        autofocus: true,
+                                        controller: t,
+                                        decoration: InputDecoration(
+                                          hintText: "Enter 10-digit number",
+                                          enabledBorder: OutlineInputBorder(),
+                                          focusedBorder: OutlineInputBorder(),
+                                        ),
+                                        onSubmitted: (val) {
+                                          if (int.tryParse(val.trim()) != null &&
+                                              val
+                                                  .trim()
+                                                  .length == 10)
+                                            _launchUrl(
+                                                val.trim(),
+                                                user,
+                                                widget.args.order.modeOfPayment,
+                                                totalbasePrice(),
+                                                totalgstPrice(),
+                                                totalDiscount(),
+                                                widget.args.order.orderItems);
+                                        }),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () {
+                                            if (int.tryParse(t.text.trim()) != null &&
+                                                t.text.length == 10)
+                                              includePayments();
+                                            _launchUrl(
+                                                t.text.trim(),
+                                                user,
+                                                widget.args.order.modeOfPayment,
+                                                totalbasePrice(),
+                                                totalgstPrice(),
+                                                totalDiscount(),
+                                                widget.args.order.orderItems);
+                                          },
+                                          child: Text("Yes")),
+                                      TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                          child: Text("Cancel"))
+                                    ],
+                                  ));
+                        }),
+                  )
+                ],
+              )
+            ],
+          ),
         )).show();
   }
 
@@ -452,7 +519,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   ///
-  void _viewPdfwithoutgst(User user) async {
+  _viewPdfwithoutgst(User user, bool popAll) async {
     // final targetPath = await getExternalCacheDirectories();
     // const targetFileName = "Invoice";
     // final htmlContent = invoiceTemplatewithouGST(
@@ -471,9 +538,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
     salesInvoiceNo = await _checkoutCubit.getSalesNum() as int;
     purchasesInvoiceNo = await _checkoutCubit.getPurchasesNum() as int;
     estimateNo = await _checkoutCubit.getEstimateNum() as int;
-    estimateNo++; //for showing in the pdf
-    salesInvoiceNo++;
-    purchasesInvoiceNo++;
+    if(!popAll){
+      estimateNo++; //for showing in the pdf
+      salesInvoiceNo++;
+      purchasesInvoiceNo++;
+    }
     generatePdf(
       fileName: "Invoice",
       date: widget.args.order.createdAt.toString() ?? "",
@@ -539,7 +608,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
     // );
   }
 
-  void _view80mmBill(Order Order) {
+  _view80mmBill(Order Order, bool popAll) async {
+    salesInvoiceNo = await _checkoutCubit.getSalesNum() as int;
+    purchasesInvoiceNo = await _checkoutCubit.getPurchasesNum() as int;
+    if(!popAll){
+      salesInvoiceNo++;
+      purchasesInvoiceNo++;
+    }
     PdfUI.generate80mmPdf(
       user: userData,
       order: Order,
@@ -568,11 +643,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
     // }
   }
 
-  void _view57mmBill(Order Order) async {
+  _view57mmBill(Order Order, bool popAll) async {
     salesInvoiceNo = await _checkoutCubit.getSalesNum() as int;
     purchasesInvoiceNo = await _checkoutCubit.getPurchasesNum() as int;
-    salesInvoiceNo++;
-    purchasesInvoiceNo++;
+    if(!popAll){
+      salesInvoiceNo++;
+      purchasesInvoiceNo++;
+    }
     PdfUI.generate57mmPdf(
       user: userData,
       order: Order,
@@ -690,7 +767,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     ).toStringAsFixed(2);
   }
 
-  _showNewDialog(Order order,) async {
+  _showNewDialog(Order order, bool popAll) async {
     return showDialog(
       context: context,
       builder: (ctx) =>
@@ -702,9 +779,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   onTap: () async {
                     // SharedPreferences prefs = await SharedPreferences.getInstance();
                     // await prefs.setString('defaultBill', '57mm');
-                    _view57mmBill(order);
+                    await _view57mmBill(order, popAll);
                     // _viewPdfwithoutgst(userData);
-                    Navigator.of(ctx).pop();
+                    if(popAll){
+                      Navigator.popUntil(context, (route) => route.isFirst);
+                    }else{
+                      Navigator.of(ctx).pop();
+                    }
                   },
                   title: Text('58mm'),
                 ),
@@ -712,8 +793,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   onTap: () async {
                     // SharedPreferences prefs = await SharedPreferences.getInstance();
                     // await prefs.setString('defaultBill', '80mm');
-                    _view80mmBill(order);
-                    Navigator.of(ctx).pop();
+                    await _view80mmBill(order, popAll);
+                    if(popAll){
+                      Navigator.popUntil(context, (route) => route.isFirst);
+                    }else{
+                      Navigator.of(ctx).pop();
+                    }
                   },
                   title: Text('80mm'),
                 ),
@@ -721,8 +806,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   onTap: () async {
                     // SharedPreferences prefs = await SharedPreferences.getInstance();
                     // await prefs.setString('defaultBill', 'A4');
-                    _viewPdfwithoutgst(userData);
-                    Navigator.of(ctx).pop();
+                    _viewPdfwithoutgst(userData, popAll);
+                    if(popAll){
+                      Navigator.popUntil(context, (route) => route.isFirst);
+                    }else{
+                      Navigator.of(ctx).pop();
+                    }
                   },
                   title: Text('A4'),
                 )
@@ -757,27 +846,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text(
-          "${widget.args.order.orderItems?.fold<double>(
-              0, (acc, item) => item.quantity + acc)} products",
+          // "${widget.args.order.orderItems?.fold<double>(0, (acc, item) => item.quantity + acc)} Products",
+          "Checkout",
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 35.0),
-            child: Center(
-              child: Text(
-                "₹ ${double.parse(totalPrice()!).toStringAsFixed(2)}",
-                style: Theme
-                    .of(context)
-                    .appBarTheme
-                    .titleTextStyle,
-              ),
-            ),
-          ),
-        ],
       ),
       body: BlocListener<CheckoutCubit, CheckoutState>(
         bloc: _checkoutCubit,
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is CheckoutSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -794,9 +869,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ),
               ),
             );
-            Future.delayed(const Duration(milliseconds: 400), () {
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            });
+            // Future.delayed(const Duration(milliseconds: 400), () {
+            //   Navigator.of(context).popUntil((route) => route.isFirst);
+            // });
+            try {
+              final res = await UserService.me();
+              if ((res.statusCode ?? 400) < 300) {
+                final user = User.fromMap(res.data['user']);
+                openShareModal(context, user, true);
+              }
+            } catch (_) {}
           }
         },
         child: BlocBuilder<CheckoutCubit, CheckoutState>(
@@ -1222,9 +1304,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                                 Column(
                                                   children: [
                                                     for (int i = 1;
-                                                    i < _amountControllers
-                                                        .length;
-                                                    i++)
+                                                    i < _amountControllers.length;i++)
                                                       Column(
                                                         children: [
                                                           Row(
@@ -1232,27 +1312,20 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                                               Expanded(
                                                                 child:
                                                                 CustomDropDownField(
-                                                                  items: const <
-                                                                      String>[
+                                                                  items: const <String>[
                                                                     "Cash",
                                                                     "Credit",
                                                                     "Bank Transfer",
                                                                     "UPI"
                                                                   ],
-                                                                  onSelected: (
-                                                                      e) {
-                                                                    _modeOfPayControllers[i]
-                                                                        .text =
-                                                                        e;
+                                                                  onSelected: (e) {
+                                                                    _modeOfPayControllers[i].text = e;
                                                                     checkUpi();
                                                                     checkCredit();
                                                                     setState(() {});
                                                                   },
-                                                                  validator: (
-                                                                      e) {
-                                                                    if ((e ??
-                                                                        "")
-                                                                        .isEmpty) {
+                                                                  validator: (e) {
+                                                                    if ((e ?? "").isEmpty) {
                                                                       return 'Please select a mode of payment';
                                                                     }
                                                                     return null;
@@ -1267,19 +1340,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                                               Expanded(
                                                                   child: TextFormField(
                                                                     controller:
-                                                                    _amountControllers[
-                                                                    i],
+                                                                    _amountControllers[i],
                                                                     keyboardType: TextInputType
                                                                         .numberWithOptions(
                                                                         signed: false,
                                                                         decimal: true),
                                                                     decoration: InputDecoration(
                                                                         contentPadding:
-                                                                        EdgeInsets
-                                                                            .symmetric(
-                                                                            vertical:
-                                                                            5,
-                                                                            horizontal:
+                                                                        EdgeInsets.symmetric(vertical: 5, horizontal:
                                                                             7),
                                                                         label:
                                                                         Text(
@@ -1494,43 +1562,62 @@ class _CheckoutPageState extends State<CheckoutPage> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 if(convertToSale)
-                  CustomButton(
-                    title: "Submit",
-                    onTap: () {
-                      _onTapSubmit();
-                    },
+                  Expanded(
+                    child: Container(
+                      width: MediaQuery.of(context).size.width*0.8,
+                      child: CustomButton(
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline6
+                              ?.copyWith(color: Colors.white, fontSize: 18),
+                          title: "Submit",
+                          onTap: (){
+                            _onTapSubmit();
+                          }),
+                    ),
                   ),
-                if(!convertToSale)
-                CustomButton(
-                  title: "Share",
-                  onTap: () async {
-                    try {
-                      final res = await UserService.me();
-                      if ((res.statusCode ?? 400) < 300) {
-                        final user =
-                        User.fromMap(res.data['user']);
+                if((shareButtonPref == true && convertToSale == false) || (shareButtonPref == false && widget.args.canEdit == false))
+                  Visibility(
+                    visible: !_loadingShareButton,
+                    child: Expanded(
+                      child: CustomButton(
+                        title: "Share",
+                        onTap: () async {
+                          try {
+                            final res = await UserService.me();
+                            if ((res.statusCode ?? 400) < 300) {
+                              final user = User.fromMap(res.data['user']);
 
-                        openShareModal(context, user);
-                      }
-                    } catch (_) {}
-                  },
-                  type: ButtonType.outlined,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 30,
-                    vertical: 10,
+                              openShareModal(context, user, false);
+                            }
+                          } catch (_) {}
+                        },
+                        type: ButtonType.outlined,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 30,
+                          vertical: 10,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                if(!convertToSale)
+                if (widget.args.canEdit != false)
+                  if(!convertToSale)
                 SizedBox(width: 20,),
 
                 if (widget.args.canEdit != false)
                   if(!convertToSale)
-                  CustomButton(
-                    title: "Save",
-                    onTap: () {
-                      _onTapSubmit();
-                    },
-                  ),
+                    Expanded(
+                      child: CustomButton(
+                          onTap: () {
+                            _onTapSubmit();
+                          },
+                          title: 'Save',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline6
+                              ?.copyWith(color: Colors.white, fontSize: 16)
+                      ),
+                    )
                 // TextButton(
                 //   onPressed: () {
                 //     _onTapSubmit();
@@ -1553,19 +1640,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  void _onTapShare(int type) async {
-    locator<GlobalServices>().showBottomSheetLoader();
-    try {
-      final res = await UserService.me();
-      if ((res.statusCode ?? 400) < 300) {
-        final user = User.fromMap(res.data['user']);
-        if (type == 0) _viewPdfwithgst(user, widget.args.order);
-        if (type == 1) _viewPdfwithoutgst(user);
-      }
-    } catch (_) {}
-
-    Navigator.pop(context);
-  }
 
   bool checkAmounts() {
     if (!_singlePayMode) {
@@ -1649,10 +1723,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       } else if (widget.args.invoiceType == OrderType.estimate) {
         if (widget.args.order.estimateNum != null) {
           //update estimate
-          print("line 1422 in checkout.dart");
           print(widget.args.order.estimateNum.runtimeType);
           if (convertToSale) {
-            print("line 1500 in checkout");
             if (checkAmounts()) {
               _checkoutCubit.convertEstimateToSales(
                   widget.args.order, (salesInvoiceNo + 1).toString());
@@ -1671,10 +1743,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
           _checkoutCubit.createSalesOrder(
               widget.args.order, (salesInvoiceNo + 1).toString());
         }
-        final provider = Provider.of<Billing>(context, listen: false);
-        widget.args.invoiceType == OrderType.purchase
-            ? provider.removePurchaseBillItems(widget.args.orderId)
-            : provider.removeSalesBillItems(widget.args.orderId);
+
+      }
+      if(widget.args.invoiceType == OrderType.sale){
+        BillingCubit().deleteBillingOrder(widget.args.order.kotId!);
       }
     }
   }

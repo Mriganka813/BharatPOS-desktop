@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "BharatPOS"
-#define MyAppVersion "1.4.1"
+#define MyAppVersion "1.4.9"
 #define MyAppPublisher "Magicstep Solutions Private Limited"
 #define MyAppURL "https://bharatpos.xyz/"
 #define MyAppExeName "magicstep.exe"
@@ -10,7 +10,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{03824C69-3573-4954-9BA3-59D210D9E7FC}
+AppId={{D555D067-899E-48E3-8F5D-7F4D11FAE61C}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -23,7 +23,7 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=D:\Programs\Flutter Projects\CUBE-desktop\installers
-OutputBaseFilename=BharatPosSetup
+OutputBaseFilename=BharatPOSsetup
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -37,6 +37,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "D:\Programs\Flutter Projects\CUBE-desktop\build\windows\runner\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "D:\Programs\Flutter Projects\CUBE-desktop\build\windows\runner\Release\audioplayers_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "D:\Programs\Flutter Projects\CUBE-desktop\build\windows\runner\Release\file_saver_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "D:\Programs\Flutter Projects\CUBE-desktop\build\windows\runner\Release\file_selector_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "D:\Programs\Flutter Projects\CUBE-desktop\build\windows\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "D:\Programs\Flutter Projects\CUBE-desktop\build\windows\runner\Release\permission_handler_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion

@@ -16,6 +16,8 @@ class CustomTextField2 extends StatefulWidget {
   final Widget? suffixIcon;
   final bool obsecureText;
   final bool readonly;
+  final double enabledBorderWidth;
+  final double focusedBorderWidth;
   final bool bypassValidator;
 
   TextEditingController controller;
@@ -37,6 +39,8 @@ class CustomTextField2 extends StatefulWidget {
       this.inputFormatters,
       this.obsecureText = false,
       this.readonly = false,
+        this.enabledBorderWidth=1.5,
+        this.focusedBorderWidth=2,
       this.bypassValidator = false,
       required this.controller,
   
@@ -110,6 +114,14 @@ class _CustomTextFieldState extends State<CustomTextField2> {
             contentPadding: const EdgeInsets.symmetric(
               vertical: 2,
               horizontal: 10,
+            ),
+            enabledBorder: OutlineInputBorder( // Border when enabled
+              borderSide: BorderSide(color: Colors.grey, width: widget.enabledBorderWidth),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            focusedBorder: OutlineInputBorder( // Border when focused
+              borderSide: BorderSide(color: Colors.blue, width: widget.focusedBorderWidth),
+              borderRadius: BorderRadius.circular(10),
             ),
            border:widget.prefixIcon==null? OutlineInputBorder(
             
