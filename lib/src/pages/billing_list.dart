@@ -81,7 +81,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
   //   _Order = provider.getAllOrder();
   //   _orderType = provider.getAllOrderType();
   // }
-  Timer? timer;
+  // Timer? timer;
   String date = '';
   final TextEditingController pinController = TextEditingController();
   PinService _pinService = PinService();
@@ -94,17 +94,17 @@ class _BillingListScreenState extends State<BillingListScreen> {
     super.initState();
     fetchNTPTime();
     _billingCubit = BillingCubit()..getBillingOrders();
-    startTimer();
+    // startTimer();
   }
-  @override
-  void dispose() {
-    super.dispose();
-    timer?.cancel(); // Cancel the timer when the widget is disposed
-  }
+  // @override
+  // void dispose() {
+  //   super.dispose();
+  //   timer?.cancel(); // Cancel the timer when the widget is disposed
+  // }
 
-  void startTimer() {
-    timer = Timer.periodic(Duration(seconds: 10), (_) => refreshPage());
-  }
+  // void startTimer() {
+  //   timer = Timer.periodic(Duration(seconds: 10), (_) => refreshPage());
+  // }
 
   void refreshPage() {
     _billingCubit.getBillingOrders();
@@ -642,7 +642,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                               //     : provider.removePurchaseBillItems(
                               //     provider.purchaseBilling.keys.toList()[index]);
                             }
-                            startTimer();
+                            // startTimer();
                             setState(() {});
                           },
                           child: Card(
@@ -828,7 +828,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
   }
 
   Future<bool?> _showDialog() {
-    timer?.cancel();//pausing timer if this dialog is open
+    // timer?.cancel();//pausing timer if this dialog is open
     return showDialog(
       context: context,
       barrierDismissible: false,
@@ -850,7 +850,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
           actions: [
             TextButton(
                 onPressed: () {
-                  startTimer();
+                  // startTimer();
                   Navigator.pop(ctx, false);
                 },
                 child: Text('No')),

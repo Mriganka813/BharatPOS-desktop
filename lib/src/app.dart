@@ -108,7 +108,7 @@ class MyApp extends StatelessWidget {
                 );
               case CreateEstimate.routeName:
                 return CreateEstimate(
-                  args: settings.arguments as EstimateBillingPageArgs?,
+                  args: settings.arguments as EstimateBillingPageArgs,
                 );
               case CreatePurchase.routeName:
                 return CreatePurchase(

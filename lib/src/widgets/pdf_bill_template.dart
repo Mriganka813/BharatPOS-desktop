@@ -27,6 +27,13 @@ class PdfUI {
     final pdf = pw.Document();
     final roll80 = PdfPageFormat.roll80;
 
+    bool atLeastOneItemHasGst = false;
+    order.orderItems!.forEach((element) {
+      if(element.product?.gstRate != 'null'){
+        atLeastOneItemHasGst = true;
+      }
+    });
+
     final font = await rootBundle.load('assets/OpenSans-Regular.ttf');
     final ttf = await Font.ttf(font);
 
@@ -78,7 +85,7 @@ class PdfUI {
                       font: ttf, fontSize: 16, fontWeight: pw.FontWeight.bold),
                 ),
 
-                if (user.GstIN != null && user.GstIN!.isNotEmpty)
+                if (user.GstIN != null && user.GstIN!.isNotEmpty && atLeastOneItemHasGst)
                   pw.Text(
                     'GSTIN ${user.GstIN}'.toUpperCase(),
                     style: pw.TextStyle(font: ttf, fontSize: 9),
@@ -213,6 +220,7 @@ class PdfUI {
                         style: pw.TextStyle(fontSize: 11, font: ttf)),
                   ],
                 ),
+                if(atLeastOneItemHasGst)
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
@@ -296,6 +304,12 @@ class PdfUI {
     final pdf = pw.Document();
     final roll57 = PdfPageFormat.roll57;
 
+    bool atLeastOneItemHasGst = false;
+    order.orderItems!.forEach((element) {
+      if(element.product?.gstRate != 'null'){
+        atLeastOneItemHasGst = true;
+      }
+    });
     final font = await rootBundle.load('assets/OpenSans-Regular.ttf');
     final ttf = await Font.ttf(font);
 
@@ -354,7 +368,7 @@ class PdfUI {
 
                 if (user.GstIN != null &&
                     user.GstIN!.isNotEmpty &&
-                    user.GstIN != "null")
+                    user.GstIN != "null" && atLeastOneItemHasGst)
                   pw.Text(
                     'GSTIN ${user.GstIN}'.toUpperCase(),
                     style: pw.TextStyle(font: ttf, fontSize: 9),
@@ -486,6 +500,7 @@ class PdfUI {
                         style: pw.TextStyle(fontSize: 9, font: ttf)),
                   ],
                 ),
+                if(atLeastOneItemHasGst)
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [

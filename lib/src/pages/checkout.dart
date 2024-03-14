@@ -36,6 +36,7 @@ import 'package:provider/provider.dart';
 
 import '../blocs/billing/billing_cubit.dart';
 import '../models/party.dart';
+import '../models/product.dart';
 
 enum OrderType { purchase, sale, saleReturn, estimate, none }
 
@@ -108,8 +109,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     fetchNTPTime();
     _amountControllers.add(TextEditingController());
     _modeOfPayControllers.add(TextEditingController());
-    print("line 130 in checkout");
-    print(widget.args.order.businessName);
+
     if (widget.args.order.reciverName != null &&
         widget.args.order.reciverName != "") {
       isBillTo = true;
@@ -118,6 +118,29 @@ class _CheckoutPageState extends State<CheckoutPage> {
       businessAddressController.text = widget.args.order.businessAddress!;
       gstController.text = widget.args.order.gst!;
     }
+
+    if(widget.args.canEdit==false)
+      calculate();
+  }
+
+  ///to show proper data (when coming from reports page)
+  calculate(){
+    for (int i = 0; i < widget.args.order.orderItems!.length; i++) {
+      OrderItemInput orderItem = widget.args.order.orderItems![i];
+      double? totalInputAmount = widget.args.order.modeOfPayment?.fold<double>(0, (acc, curr) {
+        return curr['amount'] + acc;
+      });
+      _onTotalChange(orderItem.product!, orderItem.price?.toStringAsFixed(2));
+    }
+  }
+  _onTotalChange(Product product, String? discountedPrice) {
+    product.sellingPrice = double.parse(discountedPrice!);
+    double newBasePrice = (product.sellingPrice! * 100.0) / (100.0 + double.parse(product.gstRate == 'null' ? '0.0' : product.gstRate!));
+    product.baseSellingPriceGst = newBasePrice.toString();
+    double newGst = product.sellingPrice! - newBasePrice;
+    product.saleigst = newGst.toStringAsFixed(2);
+    product.salecgst = (newGst / 2).toStringAsFixed(2);
+    product.salesgst = (newGst / 2).toStringAsFixed(2);
   }
   void init() async {
     _loadingShareButton = true;
