@@ -18,6 +18,7 @@ import 'package:shopos/src/pages/home.dart';
 import 'package:shopos/src/provider/billing.dart';
 import 'package:shopos/src/services/LocalDatabase.dart';
 import 'package:shopos/src/services/user.dart';
+import 'package:shopos/src/widgets/custom_button.dart';
 import 'package:shopos/src/widgets/custom_text_field2.dart';
 import 'package:shopos/src/widgets/pdf_kot_template.dart';
 
@@ -477,6 +478,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
     } else {
       tableNoController.text = order.tableNo;
     }
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? defaultFormat = prefs.getString('default');
     return showDialog(
       context: context,
       useRootNavigator: true,
@@ -490,8 +493,20 @@ class _BillingListScreenState extends State<BillingListScreen> {
               controller: tableNoController,
               value: "",
               onChanged: (e){},
+              onsubmitted: (e) async {
+                order.tableNo = tableNoController.text;
+                if (defaultFormat == "57mm") {
+                  _view57mmPdf(order.kotId!);
+                } else if (defaultFormat == "80mm") {
+                  _view80mmPdf(order.kotId!);
+                }
+                await BillingService().updateBillingOrder(order);
+                Navigator.of(ctx).pop();
+                refreshPage();
+              },
               validator: (e) => null,
             ),
+            if(defaultFormat==null)
             ListTile(
               onTap: () async {
                 order.tableNo = tableNoController.text;
@@ -501,9 +516,11 @@ class _BillingListScreenState extends State<BillingListScreen> {
                 // provider.updateTableNoInSalesBill(order.id.toString(), tableNoController.text);
                 await BillingService().updateBillingOrder(order);
                 Navigator.of(ctx).pop();
+                refreshPage();
               },
               title: Text('58mm'),
             ),
+            if(defaultFormat==null)
             ListTile(
               onTap: () async {
                 order.tableNo = tableNoController.text;
@@ -512,9 +529,10 @@ class _BillingListScreenState extends State<BillingListScreen> {
                 _view80mmPdf(order.kotId!);
                 await BillingService().updateBillingOrder(order);
                 Navigator.of(ctx).pop();
+                refreshPage();
               },
               title: Text('80mm'),
-            )
+            ),
           ],
         ),
 

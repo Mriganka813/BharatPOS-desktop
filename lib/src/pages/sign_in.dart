@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_version/new_version.dart';
+// import 'package:new_version/new_version.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shopos/src/blocs/auth/auth_cubit.dart';
 import 'package:shopos/src/config/colors.dart';
@@ -29,14 +29,14 @@ class _SignInPageState extends State<SignInPage> {
     _authCubit = AuthCubit();
   }
 
-  Future<void> _checkUpdate() async {
-    final newVersion = NewVersion(androidId: "com.shopos.magicstep");
-    final status = await newVersion.getVersionStatus();
-    if (status!.canUpdate) {
-      newVersion.showUpdateDialog(
-          context: context, versionStatus: status, allowDismissal: false);
-    }
-  }
+  // Future<void> _checkUpdate() async {
+  //   final newVersion = NewVersion(androidId: "com.shopos.magicstep");
+  //   final status = await newVersion.getVersionStatus();
+  //   if (status!.canUpdate) {
+  //     newVersion.showUpdateDialog(
+  //         context: context, versionStatus: status, allowDismissal: false);
+  //   }
+  // }
 
 
 
