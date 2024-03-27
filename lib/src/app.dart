@@ -5,6 +5,7 @@ import 'package:shopos/src/pages/AboutOptionPage.dart';
 import 'package:shopos/src/pages/CreateSalesReturn.dart';
 import 'package:shopos/src/pages/SwitchAccountPage.dart';
 import 'package:shopos/src/pages/billing_list.dart';
+import 'package:shopos/src/pages/bluetooth_printer_list.dart';
 import 'package:shopos/src/pages/change_password.dart';
 import 'package:shopos/src/pages/checkout.dart';
 import 'package:shopos/src/pages/create_estimate.dart';
@@ -152,6 +153,10 @@ class MyApp extends StatelessWidget {
               case ReportTable.routeName:
                 return ReportTable(
                   args: settings.arguments as tableArg,
+                );
+              case BluetoothPrinterList.routeName:
+                return BluetoothPrinterList(
+                  args: settings.arguments as CombineArgs,
                 );
               default:
                 return  SplashScreen(context);

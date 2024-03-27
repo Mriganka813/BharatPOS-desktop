@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_version/new_version.dart';
+// import 'package:new_version/new_version.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shopos/src/blocs/home/home_cubit.dart';
@@ -55,14 +55,14 @@ class _HomePageState extends State<HomePage> {
     super.initState();
   }
 
-  Future<void> _checkUpdate() async {
-    final newVersion = NewVersion(androidId: "com.shopos.magicstep");
-    final status = await newVersion.getVersionStatus();
-    if (status!.canUpdate) {
-      newVersion.showUpdateDialog(
-          context: context, versionStatus: status, allowDismissal: false);
-    }
-  }
+  // Future<void> _checkUpdate() async {
+  //   final newVersion = NewVersion(androidId: "com.shopos.magicstep");
+  //   final status = await newVersion.getVersionStatus();
+  //   if (status!.canUpdate) {
+  //     newVersion.showUpdateDialog(
+  //         context: context, versionStatus: status, allowDismissal: false);
+  //   }
+  // }
 
   void init() async {
     prefs = await SharedPreferences.getInstance();

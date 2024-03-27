@@ -37,9 +37,32 @@ import 'package:provider/provider.dart';
 import '../blocs/billing/billing_cubit.dart';
 import '../models/party.dart';
 import '../models/product.dart';
+import 'billing_list.dart';
 
 enum OrderType { purchase, sale, saleReturn, estimate, none }
+class PrintBillArgs {
+  final billType type;
+  final Order order;
+  final User user;
+  final List<String> headers;
+  final DateTime dateTime;
+  final String invoiceNum;
+  final String totalPrice;
+  final String subtotalPrice;
+  final String gsttotalPrice;
 
+  PrintBillArgs({
+    required this.type,
+    required this.order,
+    required this.user,
+    required this.headers,
+    required this.dateTime,
+    required this.invoiceNum,
+    required this.totalPrice,
+    required this.subtotalPrice,
+    required this.gsttotalPrice,
+  });
+}
 class CheckoutPageArgs {
   final OrderType invoiceType;
   final Order order;
@@ -343,12 +366,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         vertical: 10,
                       ),
                       onTap: () async {
-                        // _onTapShare(0);
-                        // SharedPreferences prefs = await SharedPreferences.getInstance();
-                        // String? defaultBill = prefs.getString('defaultBill');
-                        // print(defaultBill);
                         if (widget.args.invoiceType != OrderType.estimate) {
-                          _showNewDialog(widget.args.order, popAll);
+                          SharedPreferences prefs =
+                          await SharedPreferences.getInstance();
+                          String? defaultBill = prefs.getString('defaultBill');
+                          if (defaultBill == null) {
+                            _showNewDialog(widget.args.order, popAll);
+                          } else if (defaultBill == '57mm') {
+                            await _view57mmBill(widget.args.order, popAll);
+                          } else if (defaultBill == '80mm') {
+                            await _view80mmBill(widget.args.order, popAll);
+                          } else if (defaultBill == 'A4') {
+                            await _viewPdfwithoutgst(userData,popAll);
+                            if(popAll){
+                              Future.delayed(const Duration(milliseconds: 400), () {
+                                Navigator.of(context).popUntil((route) => route.isFirst);
+                              });
+                            }
+                          }
                         } else {
                           await _viewPdfwithoutgst(userData, popAll);
                           if(popAll){

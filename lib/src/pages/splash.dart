@@ -20,46 +20,28 @@ class SplashScreen extends StatefulWidget {
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
-
 class _SplashScreenState extends State<SplashScreen> {
   late String _latestVersion = '';
-  late String _currentVersion = '1.0.1';
-
+  String _currentVersion = '1.0.1';
   ///
   @override
   void initState() {
     super.initState();
-    checkForUpdates();
     // authStatus();
-    //   getDataFromDatabase();
+    checkForUpdates();
+ //   getDataFromDatabase();
   }
-
-  Future<void> _launchURL() async {
-    final Uri _url = Uri.parse('https://bharatpos.xyz');
-
-    if (await canLaunchUrl(_url)) {
-      await launchUrl(_url, mode: LaunchMode.externalApplication);
-    } else {
-      throw Exception('Could not launch $_url');
-    }
-  }
-
-
   Future<void> checkForUpdates() async {
     try {
       final response = await ApiV1Service.getRequest('/version/latest/bharatPos');
 
       if (response.statusCode == 200) {
-        print("response.statuscode = ${response.statusCode}");
-
         _latestVersion = response.data['data']['version'];
         print("latestVersion: = $_latestVersion");
-        if (_currentVersion != _latestVersion) {
-          // downloadUpdate();
-          // _updateAvailable = true;
-          print("download");
+        if(_currentVersion != _latestVersion){
           alertUpdate();
-        } else {
+        }
+        else{
           authStatus();
         }
       } else {
@@ -69,13 +51,13 @@ class _SplashScreenState extends State<SplashScreen> {
       print('Error fetching latest version: $e');
     }
   }
-
   Future<void> alertUpdate() async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
+
           title: const Text('Update Available'),
           content: SingleChildScrollView(
             child: ListBody(
@@ -94,6 +76,7 @@ class _SplashScreenState extends State<SplashScreen> {
               },
             ),
           ],
+
         );
       },
     );
@@ -102,12 +85,22 @@ class _SplashScreenState extends State<SplashScreen> {
   void _startUpdateCheck() {
     // Start a timer to check for updates every 5 seconds
     Timer.periodic(Duration(seconds: 3), (timer) {
-      if (_currentVersion == _latestVersion) {
+      if(_currentVersion == _latestVersion){
         authStatus();
       }
     });
   }
+  Future<void> _launchURL() async {
+    final Uri _url = Uri.parse(
+        'https://bharatpos.xyz');
 
+    if (await canLaunchUrl(_url)) {
+      await launchUrl(_url, mode: LaunchMode.externalApplication);
+    } else {
+      throw Exception('Could not launch $_url');
+    }
+
+  }
   Future<void> authStatus() async {
     final cj = await const ApiV1Service().initCookiesManager();
     final cookies = await cj.loadForRequest(Uri.parse(Const.apiUrl));
@@ -123,8 +116,10 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 
+
   getDataFromDatabase() async {
-    /*// DatabaseHelper().DeleteDatabase();
+
+   /*// DatabaseHelper().DeleteDatabase();
     final provider = Provider.of<Billing>(
       widget.context,
     );
@@ -138,25 +133,23 @@ class _SplashScreenState extends State<SplashScreen> {
     });*/
   }
 
-  @override
+
+   @override
   Widget build(BuildContext context) {
     return Scaffold(
       primary: false,
       appBar: AppBar(
         systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarIconBrightness: Brightness.dark,
-          statusBarColor: /*Color.fromARGB(255, 81, 163, 251)*/ Colors.white,
+          statusBarColor: /*Color.fromARGB(255, 81, 163, 251)*/Colors.white,
         ),
-        backgroundColor: /*Color.fromARGB(255, 81, 163, 251)*/ Colors.white,
+        backgroundColor: /*Color.fromARGB(255, 81, 163, 251)*/Colors.white,
       ),
-      backgroundColor: /*Color.fromARGB(255, 81, 163, 251)*/ Colors.white,
+      backgroundColor: /*Color.fromARGB(255, 81, 163, 251)*/Colors.white,
       body: Center(
         child: Container(
-            width: 700,
-            child: SvgPicture.asset(
-              "assets/icon/BharatPos.svg",
-              fit: BoxFit.cover,
-            )),
+          width: 700,
+          child: SvgPicture.asset("assets/icon/BharatPos.svg",fit: BoxFit.cover,)),
       ),
     );
   }

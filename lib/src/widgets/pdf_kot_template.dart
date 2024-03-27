@@ -26,23 +26,38 @@ class PdfKotUI {
 
     final font = await rootBundle.load('assets/OpenSans-Regular.ttf');
     final ttf = await Font.ttf(font);
+    List<String>? addressRows() => user.address
+        ?.toString()
+        .split(',')
+        .map((e) =>
+    '${e.replaceAll('{', '').replaceAll('}', '').replaceAll('[', '').replaceAll(']', '').replaceAll(',', '').replaceAll('locality:', '').replaceAll('city:', '').replaceAll('state:', '').replaceAll('country:', '')}')
+        .toList();
+    // String dateFormat() => DateFormat('MMM d, y hh:mm:ss a').format(date);
+    String dateFormat() {
+      final dateFormatter = DateFormat('MMM d, y');
+      final timeFormatter = DateFormat('hh:mm:ss a');
 
-    String dateFormat() => DateFormat('MMM d, y hh:mm:ss a').format(date);
+      final formattedDate = dateFormatter.format(date);
+      final formattedTime = timeFormatter.format(date);
 
+      return '$formattedDate\n$formattedTime';
+    }
     List<pw.TableRow> itemRows() => List.generate(
           (order ?? []).length,
           (index) {
             final orderItem = order[index];
 
-            return pw.TableRow(children: [
-              pw.Text(
-                '${orderItem['name']}',
-                style: TextStyle(font: ttf, fontSize: 8),
-              ),
-              pw.SizedBox(width: 30),
-              pw.Text('${orderItem['qty']}',
-                  style: TextStyle(font: ttf, fontSize: 8))
-            ]);
+            return pw.TableRow(
+                children: [
+                  pw.Padding(
+                    padding: EdgeInsets.all(1),
+                    child: pw.Text('${orderItem['name']}',style: TextStyle(font: ttf, fontSize: 8),),
+                  ),
+                  pw.Padding(
+                      padding: EdgeInsets.all(1),
+                      child: pw.Text('${orderItem['qty']}',style: TextStyle(font: ttf, fontSize: 8)))
+
+                ]);
           },
         );
 
@@ -54,24 +69,49 @@ class PdfKotUI {
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
-              pw.Text('KOT', style: pw.TextStyle(fontSize: 11, font: ttf)),
+              pw.Text('KOT', style: pw.TextStyle(fontSize: 15, font: ttf, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 20),
+
+              pw.Text(
+                '${user.businessName}',
+                style: pw.TextStyle(
+                    font: ttf, fontSize: 14, fontWeight: pw.FontWeight.bold),
+              ),
+              for (var i = 0; i < 4; i++)
+                pw.Text(
+                  '${addressRows()!.elementAt(i)}',
+                  style: pw.TextStyle(fontSize: 10, font: ttf),
+                ),
+
+              // Phone number
+              pw.Text(
+                '${user.phoneNumber}',
+                style: pw.TextStyle(fontSize: 10, font: ttf),
+              ),
+              pw.SizedBox(height: 20),
               pw.Text('${dateFormat()}',
-                  style: pw.TextStyle(fontSize: 9, font: ttf)),
+                  style: pw.TextStyle(fontSize: 12, font: ttf, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 20),
+              pw.Text('Table No: $tableNo', style: pw.TextStyle(fontSize: 9, font: ttf)),
+
               pw.SizedBox(height: 10),
-              pw.Text('Table: $tableNo', style: pw.TextStyle(fontSize: 9, font: ttf)),
-              
-              pw.SizedBox(height: 10),
+              pw.Text('Order Summary', style: pw.TextStyle(fontSize: 12, font: ttf)),
+              pw.SizedBox(height: 5),
               pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(headers[0],
-                        style: TextStyle(font: ttf, fontSize: 8)),
+                        style: TextStyle(font: ttf, fontSize: 10)),
                     pw.Text(
                       headers[1],
-                      style: TextStyle(font: ttf, fontSize: 8),
+                      style: TextStyle(font: ttf, fontSize: 10),
                     ),
                   ]),
-              pw.Table(children: itemRows()),
+              pw.Table(
+                  border: TableBorder.symmetric(inside: BorderSide(width: 0.5, style: BorderStyle(paint: true)), outside: BorderSide(width: 0.5,  style: BorderStyle(paint: true))),
+                  children: itemRows()),
+              if(itemRows().length <= 3)
+                pw.SizedBox(height: 30)
             ],
           ),
         );
@@ -120,21 +160,38 @@ class PdfKotUI {
     final font = await rootBundle.load('assets/OpenSans-Regular.ttf');
     final ttf = await Font.ttf(font);
 
-    String dateFormat() => DateFormat('MMM d, y hh:mm:ss a').format(date);
+    List<String>? addressRows() => user.address
+        ?.toString()
+        .split(',')
+        .map((e) =>
+    '${e.replaceAll('{', '').replaceAll('}', '').replaceAll('[', '').replaceAll(']', '').replaceAll(',', '').replaceAll('locality:', '').replaceAll('city:', '').replaceAll('state:', '').replaceAll('country:', '')}')
+        .toList();
+    // String dateFormat() => DateFormat('MMM d, y hh:mm:ss a').format(date);
+    String dateFormat() {
+      final dateFormatter = DateFormat('MMM d, y');
+      final timeFormatter = DateFormat('hh:mm:ss a');
+
+      final formattedDate = dateFormatter.format(date);
+      final formattedTime = timeFormatter.format(date);
+
+      return '$formattedDate\n$formattedTime';
+    }
 
     List<pw.TableRow> itemRows() => List.generate(
           (order ?? []).length,
           (index) {
             final orderItem = order[index];
 
-            return pw.TableRow(children: [
-              pw.Text(
-                '${orderItem['name']}',
-                style: TextStyle(font: ttf, fontSize: 8),
-              ),
-              pw.SizedBox(width: 30),
-              pw.Text('${orderItem['qty']}',
-                  style: TextStyle(font: ttf, fontSize: 8))
+            return pw.TableRow(
+                children: [
+                  pw.Padding(
+                      padding: EdgeInsets.all(1),
+                      child: pw.Text('${orderItem['name']}',style: TextStyle(font: ttf, fontSize: 8),),
+                  ),
+                  pw.Padding(
+                      padding: EdgeInsets.all(1),
+                      child: pw.Text('${orderItem['qty']}',style: TextStyle(font: ttf, fontSize: 8)))
+
             ]);
           },
         );
@@ -147,23 +204,49 @@ class PdfKotUI {
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
-              pw.Text('KOT', style: pw.TextStyle(fontSize: 11, font: ttf)),
+              pw.Text('KOT', style: pw.TextStyle(fontSize: 15, font: ttf, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 20),
+
+              pw.Text(
+                '${user.businessName}',
+                style: pw.TextStyle(
+                    font: ttf, fontSize: 14, fontWeight: pw.FontWeight.bold),
+              ),
+              for (var i = 0; i < 4; i++)
+                pw.Text(
+                  '${addressRows()!.elementAt(i)}',
+                  style: pw.TextStyle(fontSize: 10, font: ttf),
+                ),
+
+              // Phone number
+              pw.Text(
+                '${user.phoneNumber}',
+                style: pw.TextStyle(fontSize: 10, font: ttf),
+              ),
+              pw.SizedBox(height: 20),
               pw.Text('${dateFormat()}',
-                  style: pw.TextStyle(fontSize: 9, font: ttf)),
+                  style: pw.TextStyle(fontSize: 12, font: ttf, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 20),
+              pw.Text('Table No: $tableNo', style: pw.TextStyle(fontSize: 9, font: ttf)),
               pw.SizedBox(height: 10),
-              pw.Text('Table: $tableNo', style: pw.TextStyle(fontSize: 9, font: ttf)),
-              pw.SizedBox(height: 10),
+              pw.Text('Order Summary', style: pw.TextStyle(fontSize: 12, font: ttf)),
+              pw.SizedBox(height: 5),
               pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(headers[0],
-                        style: TextStyle(font: ttf, fontSize: 8)),
+                        style: TextStyle(font: ttf, fontSize: 10)),
                     pw.Text(
                       headers[1],
-                      style: TextStyle(font: ttf, fontSize: 8),
+                      style: TextStyle(font: ttf, fontSize: 10),
                     ),
                   ]),
-              pw.Table(children: itemRows()),
+              pw.SizedBox(height: 10),
+              pw.Table(
+                border: TableBorder.symmetric(inside: BorderSide(width: 0.5, style: BorderStyle(paint: true)), outside: BorderSide(width: 0.5,  style: BorderStyle(paint: true))),
+                  children: itemRows()),
+              if(itemRows().length <= 3)
+              pw.SizedBox(height: 30)
             ],
           ),
         );
