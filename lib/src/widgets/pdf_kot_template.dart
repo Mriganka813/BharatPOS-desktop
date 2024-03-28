@@ -51,11 +51,11 @@ class PdfKotUI {
                 children: [
                   pw.Padding(
                     padding: EdgeInsets.all(1),
-                    child: pw.Text('${orderItem['name']}',style: TextStyle(font: ttf, fontSize: 8),),
+                    child: pw.Text('${orderItem['name']}',style: TextStyle(font: ttf, fontSize: 12),),
                   ),
                   pw.Padding(
                       padding: EdgeInsets.all(1),
-                      child: pw.Text('${orderItem['qty']}',style: TextStyle(font: ttf, fontSize: 8)))
+                      child: pw.Text('${orderItem['qty']}',style: TextStyle(font: ttf, fontSize: 12)))
 
                 ]);
           },
@@ -77,38 +77,32 @@ class PdfKotUI {
                 style: pw.TextStyle(
                     font: ttf, fontSize: 14, fontWeight: pw.FontWeight.bold),
               ),
-              for (var i = 0; i < 4; i++)
-                pw.Text(
-                  '${addressRows()!.elementAt(i)}',
-                  style: pw.TextStyle(fontSize: 10, font: ttf),
-                ),
 
               // Phone number
-              pw.Text(
-                '${user.phoneNumber}',
-                style: pw.TextStyle(fontSize: 10, font: ttf),
-              ),
+              // pw.Text(
+              //   '${user.phoneNumber}',
+              //   style: pw.TextStyle(fontSize: 10, font: ttf),
+              // ),
               pw.SizedBox(height: 20),
               pw.Text('${dateFormat()}',
                   style: pw.TextStyle(fontSize: 12, font: ttf, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 20),
-              pw.Text('Table No: $tableNo', style: pw.TextStyle(fontSize: 9, font: ttf)),
+              pw.Text('Table No: $tableNo', style: pw.TextStyle(fontSize: 12, font: ttf)),
 
               pw.SizedBox(height: 10),
-              pw.Text('Order Summary', style: pw.TextStyle(fontSize: 12, font: ttf)),
+              // pw.Text('Order Summary', style: pw.TextStyle(fontSize: 12, font: ttf)),
               pw.SizedBox(height: 5),
               pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(headers[0],
-                        style: TextStyle(font: ttf, fontSize: 10)),
+                        style: TextStyle(font: ttf, fontSize: 12)),
                     pw.Text(
                       headers[1],
-                      style: TextStyle(font: ttf, fontSize: 10),
+                      style: TextStyle(font: ttf, fontSize: 12),
                     ),
                   ]),
               pw.Table(
-                  border: TableBorder.symmetric(inside: BorderSide(width: 0.5, style: BorderStyle(paint: true)), outside: BorderSide(width: 0.5,  style: BorderStyle(paint: true))),
                   children: itemRows()),
               if(itemRows().length <= 3)
                 pw.SizedBox(height: 30)
@@ -186,11 +180,11 @@ class PdfKotUI {
                 children: [
                   pw.Padding(
                       padding: EdgeInsets.all(1),
-                      child: pw.Text('${orderItem['name']}',style: TextStyle(font: ttf, fontSize: 8),),
+                      child: pw.Text('${orderItem['name']}',style: TextStyle(font: ttf, fontSize: 12),),
                   ),
                   pw.Padding(
                       padding: EdgeInsets.all(1),
-                      child: pw.Text('${orderItem['qty']}',style: TextStyle(font: ttf, fontSize: 8)))
+                      child: pw.Text('${orderItem['qty']}',style: TextStyle(font: ttf, fontSize: 12)))
 
             ]);
           },
@@ -200,7 +194,7 @@ class PdfKotUI {
       pageFormat: roll80,
       build: (context) {
         return pw.Container(
-          margin: pw.EdgeInsets.all(10),
+          margin: pw.EdgeInsets.all(0),
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
@@ -212,39 +206,32 @@ class PdfKotUI {
                 style: pw.TextStyle(
                     font: ttf, fontSize: 14, fontWeight: pw.FontWeight.bold),
               ),
-              for (var i = 0; i < 4; i++)
-                pw.Text(
-                  '${addressRows()!.elementAt(i)}',
-                  style: pw.TextStyle(fontSize: 10, font: ttf),
-                ),
-
-              // Phone number
-              pw.Text(
-                '${user.phoneNumber}',
-                style: pw.TextStyle(fontSize: 10, font: ttf),
-              ),
+              //
+              // // Phone number
+              // pw.Text(
+              //   '${user.phoneNumber}',
+              //   style: pw.TextStyle(fontSize: 10, font: ttf),
+              // ),
               pw.SizedBox(height: 20),
               pw.Text('${dateFormat()}',
                   style: pw.TextStyle(fontSize: 12, font: ttf, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 20),
-              pw.Text('Table No: $tableNo', style: pw.TextStyle(fontSize: 9, font: ttf)),
+              pw.Text('Table No: $tableNo', style: pw.TextStyle(fontSize: 12, font: ttf)),
               pw.SizedBox(height: 10),
-              pw.Text('Order Summary', style: pw.TextStyle(fontSize: 12, font: ttf)),
+              // pw.Text('Order Summary', style: pw.TextStyle(fontSize: 12, font: ttf)),
               pw.SizedBox(height: 5),
               pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(headers[0],
-                        style: TextStyle(font: ttf, fontSize: 10)),
+                        style: TextStyle(font: ttf, fontSize: 12)),
                     pw.Text(
                       headers[1],
-                      style: TextStyle(font: ttf, fontSize: 10),
+                      style: TextStyle(font: ttf, fontSize: 12),
                     ),
                   ]),
               pw.SizedBox(height: 10),
-              pw.Table(
-                border: TableBorder.symmetric(inside: BorderSide(width: 0.5, style: BorderStyle(paint: true)), outside: BorderSide(width: 0.5,  style: BorderStyle(paint: true))),
-                  children: itemRows()),
+              pw.Table(children: itemRows()),
               if(itemRows().length <= 3)
               pw.SizedBox(height: 30)
             ],
