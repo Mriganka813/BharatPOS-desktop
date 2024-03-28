@@ -20,6 +20,7 @@ class CustomInterceptor extends Interceptor {
     // print("errorMEsg = $errorMessage");
     // if(errorMessage == 'Your subscription is not active')
     if(errorMessage!=null)
+      if(errorMessage!='Resource not found. Invalid: _id')
       locator<GlobalServices>().errorSnackBar(errorMessage ?? message);
     return super.onError(err, handler);
   }

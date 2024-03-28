@@ -533,6 +533,27 @@ class _BillingListScreenState extends State<BillingListScreen> {
               },
               title: Text('80mm'),
             ),
+            if(defaultFormat!=null)
+              Padding(
+                padding: const EdgeInsets.only(top: 20),
+                child: InkWell(
+                  onTap: ()async{
+                    order.tableNo = tableNoController.text;
+                    if (defaultFormat == "57mm") {
+                      _view57mmPdf(order.kotId!);
+                    } else if (defaultFormat == "80mm") {
+                      _view80mmPdf(order.kotId!);
+                    }
+                    await BillingService().updateBillingOrder(order);
+                    Navigator.of(ctx).pop();
+                    refreshPage();
+                  },
+                  child: Text(
+                    "Submit",
+                    style: TextStyle(color: Colors.blue),
+                  ),
+                ),
+              )
           ],
         ),
 
