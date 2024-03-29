@@ -25,11 +25,13 @@ import 'package:shopos/src/widgets/pdf_kot_template.dart';
 import '../blocs/billing/billing_cubit.dart';
 import '../config/colors.dart';
 import '../models/input/kot_model.dart';
+import '../services/api_v1.dart';
 import '../services/billing_service.dart';
 import '../services/global.dart';
 import '../services/kot_services.dart';
 import '../services/locator.dart';
 import '../services/set_or_change_pin.dart';
+import '../widgets/custom_text_field.dart';
 import '../widgets/pin_validation.dart';
 
 enum kotType {
@@ -82,8 +84,11 @@ class _BillingListScreenState extends State<BillingListScreen> {
   //   _Order = provider.getAllOrder();
   //   _orderType = provider.getAllOrderType();
   // }
-  // Timer? timer;
+  Timer? timer;
   String date = '';
+  bool autoRefreshPref = false;
+  bool showReadySwitch = false;
+  late SharedPreferences prefs;
   final TextEditingController pinController = TextEditingController();
   PinService _pinService = PinService();
   late final BillingCubit _billingCubit;
@@ -94,8 +99,14 @@ class _BillingListScreenState extends State<BillingListScreen> {
     // getAllOrderList();
     super.initState();
     fetchNTPTime();
+    init();
     _billingCubit = BillingCubit()..getBillingOrders();
     // startTimer();
+  }
+
+  void startTimer() {
+    print("timer started");
+    timer = Timer.periodic(Duration(seconds: 30), (_) => refreshPage());
   }
   // @override
   // void dispose() {
@@ -110,6 +121,13 @@ class _BillingListScreenState extends State<BillingListScreen> {
   void refreshPage() {
     _billingCubit.getBillingOrders();
     // print("Function executed!");
+  }
+  init() async {
+    prefs = await SharedPreferences.getInstance();
+    autoRefreshPref = (await prefs.getBool('refresh-pending-orders-preference'))!;
+    showReadySwitch = (await prefs.getBool('ready-orders-preference'))!;
+    if(autoRefreshPref)
+      startTimer();
   }
   String? totalDiscount(int index, Billing provider, List<Order> _allBills){
     // print("in total discount");
@@ -559,9 +577,12 @@ class _BillingListScreenState extends State<BillingListScreen> {
             actions: [
               IconButton(onPressed: (){
                 _billingCubit.getBillingOrders();
+                timer?.cancel;
+                if(autoRefreshPref) startTimer();
                 locator<GlobalServices>().successSnackBar("Bills Refreshed");
               }, icon: Icon(Icons.refresh))
             ],
+
           ),
           body:BlocListener<BillingCubit, BillingState>(
             bloc: _billingCubit,
@@ -585,250 +606,339 @@ class _BillingListScreenState extends State<BillingListScreen> {
                 }else if(state is BillingListRender){
                   List<Order> _allBills = state.bills;
                   print("_allBills length is ${_allBills.length}");
-                  if(_allBills.length == 0){
-                    return Center(
-                        child: Text(
-                          'No bills are pending',
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-                        ));
-                  } else {
-                    return GridView.builder(
-                      gridDelegate:
-                      SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2, mainAxisExtent: 250),
-                      shrinkWrap: true,
-                      itemCount: widget.orderType == OrderType.sale
-                          ? _allBills.length
-                          : provider.purchaseBilling.length,
-                      itemBuilder: (context, index) => GestureDetector(
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            CheckoutPage.routeName,
-                            arguments: CheckoutPageArgs(
-                              invoiceType: widget.orderType,
-                              // orderId: widget.orderType == OrderType.sale
-                              //     ? provider.salesBilling.keys.toList()[index]
-                              //     : provider.purchaseBilling.keys.toList()[index],
-                              order: widget.orderType == OrderType.sale
-                                  ? _allBills[index]
-                                  : provider.purchaseBilling.values.toList()[index],
-                            ),
-                          );
-                        },
-                        child: Dismissible(
-                          key: ValueKey(DateTime.now()),
-                          background: Container(
-                            color: Theme.of(context).colorScheme.error,
-                            alignment: Alignment.centerLeft,
-                            padding: const EdgeInsets.only(right: 20, left: 20),
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 15, vertical: 4),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Icon(
-                                  Icons.delete,
-                                  size: 40,
-                                  color: Colors.white,
-                                ),
-                                const Icon(
-                                  Icons.delete,
-                                  size: 40,
-                                  color: Colors.white,
-                                ),
-                              ],
-                            ),
-                          ),
-                          confirmDismiss: (direction) {
-                            return _showDialog();
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        child: CustomTextField(
+                          prefixIcon: const Icon(Icons.search),
+                          hintText: 'Search',
+                          onTap: (){
+                            print("timer stopped");
+                            timer?.cancel();
                           },
-                          onDismissed: (direction) async {
-                            var result = true;
-
-                            if (await _pinService.pinStatus() == true) {
-                              result = await PinValidation.showPinDialog(context) as bool;
+                          onChanged: (String e) async {
+                            if (e.isNotEmpty) {
+                              _billingCubit.searchByTableNo(e);
+                              // setState(() {});
+                            }else{
+                              _billingCubit.getBillingOrders();
+                              //user has completed his search now start timer
+                              if(autoRefreshPref) startTimer();
                             }
-                            if(result){
-                              _billingCubit.deleteBillingOrder(_allBills[index].kotId!);
-                              // _billingCubit.getBillingOrders();
-                              // DatabaseHelper().deleteOrderItemInput(
-                              //     provider.salesBilling.values.toList()[index]);
-                              // widget.orderType == OrderType.sale
-                              //     ? provider.removeSalesBillItems(
-                              //     provider.salesBilling.keys.toList()[index])
-                              //     : provider.removePurchaseBillItems(
-                              //     provider.purchaseBilling.keys.toList()[index]);
-                            }
-                            // startTimer();
-                            setState(() {});
                           },
-                          child: Card(
-                            elevation: 2,
-                            // color: Theme.of(context).scaffoldBackgroundColor,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                children: [
-                                  // Divider(color: Colors.black54),
-                                  // Text(
-                                  //   "INVOICE",
-                                  //   style: TextStyle(
-                                  //       fontSize: 30, fontWeight: FontWeight.w500),
-                                  // ),
-                                  // Divider(color: Colors.black54),
-                                  const SizedBox(height: 10),
-                                  if(_allBills.isNotEmpty)
-                                    if (_allBills[index].tableNo !="-1" &&
-                                        _allBills[index].tableNo !="" && _allBills[index].tableNo!='null')
-                                      if(widget.orderType == OrderType.sale)
-                                        Row(
-                                          mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(''
-                                                'Table No',style: TextStyle(fontWeight: FontWeight.bold)),
-                                            Text(
-                                                '${_allBills[index].tableNo}',
-                                                style: TextStyle(fontWeight: FontWeight.bold)),
-                                          ],
-                                        ),
-                                  const SizedBox(height: 20),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text('Sub Total'),
-                                      Text('₹ ${totalbasePrice(index, provider, _allBills)}'),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 5),
-                                  const SizedBox(height: 5),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text('Tax GST'),
-                                      Text('₹ ${totalgstPrice(index, provider, _allBills)}'),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 5),
-                                  const SizedBox(height: 5),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text('Discount'),
-                                      // Text('₹ ${provider.salesBilling.values.toList()[index].orderItems}'),
-                                      widget.orderType!=OrderType.purchase ? Text('₹ ${totalDiscount(index, provider, _allBills)}'):Text('₹ 0'),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 5),
-                                  const SizedBox(height: 5),
+                        ),
+                      ),
+                      Expanded(
+                      child:
+                        (_allBills.length == 0) ?
+                        Center(
+                            child: Text(
+                              'No bills are pending',
+                              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                            )) :
 
-                                  const SizedBox(height: 5),
-                                  Divider(color: Colors.black54),
-                                  const SizedBox(height: 5),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text('Grand Total'),
-                                      Text(
-                                        '₹ ${ double.parse(totalPrice(index, provider, _allBills)!).toStringAsFixed(2)}',
-                                        style: TextStyle(fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
+                        GridView.builder(
+                          gridDelegate:
+                          SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2, mainAxisExtent: 250),
+                          shrinkWrap: true,
+                          itemCount: widget.orderType == OrderType.sale
+                              ? _allBills.length
+                              : provider.purchaseBilling.length,
+                          itemBuilder: (context, index) => GestureDetector(
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                CheckoutPage.routeName,
+                                arguments: CheckoutPageArgs(
+                                  invoiceType: widget.orderType,
+                                  // orderId: widget.orderType == OrderType.sale
+                                  //     ? provider.salesBilling.keys.toList()[index]
+                                  //     : provider.purchaseBilling.keys.toList()[index],
+                                  order: widget.orderType == OrderType.sale
+                                      ? _allBills[index]
+                                      : provider.purchaseBilling.values.toList()[index],
+                                ),
+                              );
+                            },
+                            child: Dismissible(
+                              key: ValueKey(DateTime.now()),
+                              background: Container(
+                                color: Theme.of(context).colorScheme.error,
+                                alignment: Alignment.centerLeft,
+                                padding: const EdgeInsets.only(right: 20, left: 20),
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 4),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Icon(
+                                      Icons.delete,
+                                      size: 40,
+                                      color: Colors.white,
+                                    ),
+                                    const Icon(
+                                      Icons.delete,
+                                      size: 40,
+                                      color: Colors.white,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              confirmDismiss: (direction) {
+                                return _showDialog();
+                              },
+                              onDismissed: (direction) async {
+                                var result = true;
 
-                                  const SizedBox(height: 5),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                if (await _pinService.pinStatus() == true) {
+                                  result = await PinValidation.showPinDialog(context) as bool;
+                                }
+                                if(result){
+                                  _billingCubit.deleteBillingOrder(_allBills[index].kotId!);
+                                  // _billingCubit.getBillingOrders();
+                                  // DatabaseHelper().deleteOrderItemInput(
+                                  //     provider.salesBilling.values.toList()[index]);
+                                  // widget.orderType == OrderType.sale
+                                  //     ? provider.removeSalesBillItems(
+                                  //     provider.salesBilling.keys.toList()[index])
+                                  //     : provider.removePurchaseBillItems(
+                                  //     provider.purchaseBilling.keys.toList()[index]);
+                                }
+                                // startTimer();
+                                if(autoRefreshPref) {
+                                  startTimer();
+                                }
+                                setState(() {});
+                              },
+                              child: Card(
+                                elevation: 2,
+                                // color: Theme.of(context).scaffoldBackgroundColor,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
                                     children: [
+                                      // Divider(color: Colors.black54),
+                                      // Text(
+                                      //   "INVOICE",
+                                      //   style: TextStyle(
+                                      //       fontSize: 30, fontWeight: FontWeight.w500),
+                                      // ),
+                                      // Divider(color: Colors.black54),
+                                      const SizedBox(height: 10),
+                                      if(_allBills.isNotEmpty)
+                                        if (_allBills[index].tableNo !="-1" &&
+                                            _allBills[index].tableNo !="" && _allBills[index].tableNo!='null')
+                                          if(widget.orderType == OrderType.sale)
+                                            Row(
+                                              mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Text(''
+                                                    'Table No',style: TextStyle(fontWeight: FontWeight.bold)),
+                                                Text(
+                                                    '${_allBills[index].tableNo}',
+                                                    style: TextStyle(fontWeight: FontWeight.bold)),
+                                              ],
+                                            ),
+                                      const SizedBox(height: 20),
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          IconButton(onPressed:(){
-                                            String kotId = _allBills[index].kotId!;
-                                            _showKotHistory(kotId);
-                                          }, icon: Icon(Icons.history, color: Colors.blue,)),
-                                          IconButton(onPressed: (){
-                                            // String? defaultFormat =
-                                            // prefs.getString('default');
-                                            //
-                                            // if (defaultFormat == null) {
-                                            //   _showNewDialog(_allBills[index],);
-                                            // } else if (defaultFormat == "57mm") {
-                                            //   _view57mmPdf(_allBills[index],);
-                                            // } else if (defaultFormat == "80mm") {
-                                            //   _view80mmPdf(_allBills[index],);
-                                            // }
-                                            _showNewDialog(_allBills[index]);
-                                          }, icon: Icon(Icons.print, color: Colors.blue[400],)),
+                                          Text('Sub Total'),
+                                          Text('₹ ${totalbasePrice(index, provider, _allBills)}'),
                                         ],
                                       ),
-                                      InkWell(
-                                        onTap: () async {
-                                          // print("on tap edit");
-                                          // print(_allBills[index].orderItems![0].quantity);
-                                          widget.orderType == OrderType.sale
-                                              ? await Navigator.pushNamed(
-                                              context, CreateSale.routeName,
-                                              arguments: BillingPageArgs(
-                                                  editOrders: _allBills[index]
-                                                      .orderItems,
-                                                  kotId: _allBills[index].kotId,
-                                                  tableNo: _allBills[index].tableNo))
-                                              : await Navigator.pushNamed(
-                                              context, CreatePurchase.routeName,
-                                              arguments: BillingPageArgs(
-                                                  editOrders: provider.purchaseBilling.values
-                                                      .toList()[index]
-                                                      .orderItems));
+                                      const SizedBox(height: 5),
+                                      const SizedBox(height: 5),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Tax GST'),
+                                          Text('₹ ${totalgstPrice(index, provider, _allBills)}'),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 5),
+                                      const SizedBox(height: 5),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Discount'),
+                                          // Text('₹ ${provider.salesBilling.values.toList()[index].orderItems}'),
+                                          widget.orderType!=OrderType.purchase ? Text('₹ ${totalDiscount(index, provider, _allBills)}'):Text('₹ 0'),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 5),
+                                      const SizedBox(height: 5),
 
-                                          // var data = await DatabaseHelper().getOrderItems();
-                                          //
-                                          // provider.removeAll();
-                                          //
-                                          // data.forEach((element) {
-                                          //   print("adding sales bill");
-                                          //   provider.addSalesBill(element, element.id.toString());
-                                          // });
-                                        },
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.rectangle,
-                                            borderRadius: BorderRadius.circular(20),
-                                            color: Colors.white, // Adjust color and opacity as needed
-                                            border: Border.all(
-                                              color: Colors.blue, // Border color
-                                              width: 1, // Border width
-                                            ),
+                                      const SizedBox(height: 5),
+                                      Divider(color: Colors.black54),
+                                      const SizedBox(height: 5),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Grand Total'),
+                                          Text(
+                                            '₹ ${ double.parse(totalPrice(index, provider, _allBills)!).toStringAsFixed(2)}',
+                                            style: TextStyle(fontWeight: FontWeight.bold),
                                           ),
-                                          padding: EdgeInsets.only(top: 6, bottom: 6, left: 20, right: 20),
-                                          child: Center(
+                                        ],
+                                      ),
+
+                                      const SizedBox(height: 5),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.start,
+                                            children: [
+                                              IconButton(onPressed:(){
+                                                String kotId = _allBills[index].kotId!;
+                                                _showKotHistory(kotId);
+                                              }, icon: Icon(Icons.history, color: Colors.blue,)),
+                                              IconButton(onPressed: (){
+                                                // String? defaultFormat =
+                                                // prefs.getString('default');
+                                                //
+                                                // if (defaultFormat == null) {
+                                                //   _showNewDialog(_allBills[index],);
+                                                // } else if (defaultFormat == "57mm") {
+                                                //   _view57mmPdf(_allBills[index],);
+                                                // } else if (defaultFormat == "80mm") {
+                                                //   _view80mmPdf(_allBills[index],);
+                                                // }
+                                                _showNewDialog(_allBills[index]);
+                                              }, icon: Icon(Icons.print, color: Colors.blue[400],)),
+                                            ],
+                                          ),
+                                          showReadySwitch ?
+                                          InkWell(
+                                            onTap: () async {
+                                              // Show AlertDialog
+                                              (_allBills[index].orderReady == false) ?
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: Text('Confirmation'),
+                                                  content: Text('Are you sure?'),
+                                                  actions: <Widget>[
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.of(context).pop(); // Close the AlertDialog
+                                                      },
+                                                      child: Text('Cancel'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () async {
+                                                        _allBills[index].orderReady = true;
+                                                        await _billingCubit.updateBillingOrder(_allBills[index]);
+                                                        Navigator.of(context).pop();// Close the AlertDialog
+                                                      },
+                                                      child: Text('OK'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              )
+                                                  : null;
+                                            },
                                             child: Container(
-                                              // padding: EdgeInsets.only(left: 30, right: 10, top: 15, bottom: 15),
-                                              // color: Colors.red,
-                                              child: Row(
-                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                children: [
-                                                  Text('Edit', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),),
-                                                  // SizedBox(width: 10,)
-                                                ],
+                                              decoration:
+
+                                              BoxDecoration(
+                                                shape: BoxShape.rectangle,
+                                                borderRadius: BorderRadius.circular(20),
+                                                color: _allBills[index].orderReady! ? Colors.green : Colors.white, // Adjust color and opacity as needed
+                                                border: Border.all(
+                                                  color: Colors.blue, // Border color
+                                                  width: _allBills[index].orderReady! ? 0 : 1, // Border width
+                                                ),
+                                              ),
+                                              padding: EdgeInsets.only(top: 6, bottom: 6, left: 20, right: 20),
+                                              child: Center(
+                                                child: Container(
+                                                  // padding: EdgeInsets.only(left: 30, right: 10, top: 15, bottom: 15),
+                                                  // color: Colors.red,
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.end,
+                                                    children: [
+                                                      Text('Ready', style: TextStyle(color: _allBills[index].orderReady! ? Colors.white :Colors.blue, fontWeight: FontWeight.bold),),
+                                                      // SizedBox(width: 10,)
+                                                    ],
+                                                  ),
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        ),
+
+                                          ) : SizedBox(),
+                                          InkWell(
+                                            onTap: () async {
+                                              // print("on tap edit");
+                                              // print(_allBills[index].orderItems![0].quantity);
+                                              widget.orderType == OrderType.sale
+                                                  ? await Navigator.pushNamed(
+                                                  context, CreateSale.routeName,
+                                                  arguments: BillingPageArgs(
+                                                      editOrders: _allBills[index]
+                                                          .orderItems,
+                                                      kotId: _allBills[index].kotId,
+                                                      tableNo: _allBills[index].tableNo))
+                                                  : await Navigator.pushNamed(
+                                                  context, CreatePurchase.routeName,
+                                                  arguments: BillingPageArgs(
+                                                      editOrders: provider.purchaseBilling.values
+                                                          .toList()[index]
+                                                          .orderItems));
+
+                                              // var data = await DatabaseHelper().getOrderItems();
+                                              //
+                                              // provider.removeAll();
+                                              //
+                                              // data.forEach((element) {
+                                              //   print("adding sales bill");
+                                              //   provider.addSalesBill(element, element.id.toString());
+                                              // });
+                                            },
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.rectangle,
+                                                borderRadius: BorderRadius.circular(20),
+                                                color: Colors.white, // Adjust color and opacity as needed
+                                                border: Border.all(
+                                                  color: Colors.blue, // Border color
+                                                  width: 1, // Border width
+                                                ),
+                                              ),
+                                              padding: EdgeInsets.only(top: 6, bottom: 6, left: 20, right: 20),
+                                              child: Center(
+                                                child: Container(
+                                                  // padding: EdgeInsets.only(left: 30, right: 10, top: 15, bottom: 15),
+                                                  // color: Colors.red,
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.end,
+                                                    children: [
+                                                      Text('Edit', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),),
+                                                      // SizedBox(width: 10,)
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                        ],
                                       )
+                                      // Divider(color: Colors.black54),
+                                      // const Divider(color: Colors.transparent),
                                     ],
-                                  )
-                                  // Divider(color: Colors.black54),
-                                  // const Divider(color: Colors.transparent),
-                                ],
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    );
-                  }
+                  ]
+                );
                 }
 
                 return const Center(

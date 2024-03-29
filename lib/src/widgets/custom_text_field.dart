@@ -5,6 +5,7 @@ class CustomTextField extends StatefulWidget {
   final Function(String)? onChanged;
   final Function(String?)? onSave;
   final Function(String?)? validator;
+  final Function()? onTap;
   final bool isLoading;
   final String? initialValue;
   final Widget? prefixIcon;
@@ -23,6 +24,7 @@ class CustomTextField extends StatefulWidget {
     this.onChanged,
     this.initialValue,
     this.onSave,
+    this.onTap,
     this.value,
     this.validator,
     this.hintText,
@@ -59,6 +61,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
         TextFormField(
           
           readOnly: widget.readonly,
+          onTap: widget.onTap != null? widget.onTap! : null,
           obscureText: widget.obsecureText,
           inputFormatters: widget.inputFormatters,
           textInputAction: TextInputAction.next,
