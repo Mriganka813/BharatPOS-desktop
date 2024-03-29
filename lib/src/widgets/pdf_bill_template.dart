@@ -74,194 +74,197 @@ class PdfUI {
       pw.Page(
         pageFormat: roll80,
         build: (context) {
-          return pw.Center(
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.center,
-              children: [
-                // Title
-                pw.Text(
-                  '${user.businessName}',
-                  style: pw.TextStyle(
-                      font: ttf, fontSize: 16, fontWeight: pw.FontWeight.bold),
-                ),
-
-                if (user.GstIN != null && user.GstIN!.isNotEmpty && atLeastOneItemHasGst)
+          return pw.Container(
+              margin: pw.EdgeInsets.only(right: 15),
+              child: pw.Center(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  // Title
                   pw.Text(
-                    'GSTIN ${user.GstIN}'.toUpperCase(),
-                    style: pw.TextStyle(font: ttf, fontSize: 9),
+                    '${user.businessName}',
+                    style: pw.TextStyle(
+                        font: ttf, fontSize: 16, fontWeight: pw.FontWeight.bold),
                   ),
 
-                // Address lines
-                for (var i = 0; i < 4; i++)
+                  if (user.GstIN != null && user.GstIN!.isNotEmpty && atLeastOneItemHasGst)
+                    pw.Text(
+                      'GSTIN ${user.GstIN}'.toUpperCase(),
+                      style: pw.TextStyle(font: ttf, fontSize: 9),
+                    ),
+
+                  // Address lines
+                  for (var i = 0; i < 4; i++)
+                    pw.Text(
+                      '${addressRows()!.elementAt(i)}',
+                      style: pw.TextStyle(fontSize: 10, font: ttf),
+                    ),
+
+                  // Phone number
                   pw.Text(
-                    '${addressRows()!.elementAt(i)}',
+                    '${user.phoneNumber}',
                     style: pw.TextStyle(fontSize: 10, font: ttf),
                   ),
 
-                // Phone number
-                pw.Text(
-                  '${user.phoneNumber}',
-                  style: pw.TextStyle(fontSize: 10, font: ttf),
-                ),
+                  pw.SizedBox(height: 10),
 
-                pw.SizedBox(height: 10),
+                  // bill to:
+                  // if ((order.reciverName != null &&
+                  //         order.reciverName!.isNotEmpty) ||
+                  //     (order.businessName != null &&
+                  //         order.businessName!.isNotEmpty) ||
+                  //     (order.businessAddress != null &&
+                  //         order.businessAddress!.isNotEmpty) ||
+                  //     (order.gst != null && order.gst!.isNotEmpty))
+                  //   pw.Row(children: [
+                  //     pw.Text(
+                  //       'Billed to: ',
+                  //       style: pw.TextStyle(
+                  //           fontSize: 9,
+                  //           font: ttf,
+                  //           fontWeight: pw.FontWeight.bold),
+                  //     ),
+                  //     pw.Text(''),
+                  //   ]),
 
-                // bill to:
-                // if ((order.reciverName != null &&
-                //         order.reciverName!.isNotEmpty) ||
-                //     (order.businessName != null &&
-                //         order.businessName!.isNotEmpty) ||
-                //     (order.businessAddress != null &&
-                //         order.businessAddress!.isNotEmpty) ||
-                //     (order.gst != null && order.gst!.isNotEmpty))
-                //   pw.Row(children: [
-                //     pw.Text(
-                //       'Billed to: ',
-                //       style: pw.TextStyle(
-                //           fontSize: 9,
-                //           font: ttf,
-                //           fontWeight: pw.FontWeight.bold),
-                //     ),
-                //     pw.Text(''),
-                //   ]),
+                  // if (order.reciverName != null && order.reciverName!.isNotEmpty)
+                  //   Row(children: [
+                  //     Text(
+                  //       'Receiver name: ',
+                  //       style: pw.TextStyle(fontSize: 9, font: ttf),
+                  //     ),
+                  //     Text(
+                  //       '${order.reciverName}',
+                  //       style: pw.TextStyle(fontSize: 9, font: ttf),
+                  //     )
+                  //   ]),
 
-                // if (order.reciverName != null && order.reciverName!.isNotEmpty)
-                //   Row(children: [
-                //     Text(
-                //       'Receiver name: ',
-                //       style: pw.TextStyle(fontSize: 9, font: ttf),
-                //     ),
-                //     Text(
-                //       '${order.reciverName}',
-                //       style: pw.TextStyle(fontSize: 9, font: ttf),
-                //     )
-                //   ]),
+                  // if (order.businessName != null &&
+                  //     order.businessName!.isNotEmpty)
+                  //   Row(children: [
+                  //     Text(
+                  //       'Business name: ',
+                  //       style: pw.TextStyle(fontSize: 9, font: ttf),
+                  //     ),
+                  //     Text(
+                  //       '${order.businessName}',
+                  //       style: pw.TextStyle(fontSize: 9, font: ttf),
+                  //     )
+                  //   ]),
 
-                // if (order.businessName != null &&
-                //     order.businessName!.isNotEmpty)
-                //   Row(children: [
-                //     Text(
-                //       'Business name: ',
-                //       style: pw.TextStyle(fontSize: 9, font: ttf),
-                //     ),
-                //     Text(
-                //       '${order.businessName}',
-                //       style: pw.TextStyle(fontSize: 9, font: ttf),
-                //     )
-                //   ]),
+                  // if (order.businessAddress != null &&
+                  //     order.businessAddress!.isNotEmpty)
+                  //   Row(children: [
+                  //     Text(
+                  //       'Address: ',
+                  //       style: pw.TextStyle(fontSize: 9, font: ttf),
+                  //     ),
+                  //     Text(
+                  //       '${order.businessAddress}',
+                  //       style: pw.TextStyle(fontSize: 9, font: ttf),
+                  //     )
+                  //   ]),
 
-                // if (order.businessAddress != null &&
-                //     order.businessAddress!.isNotEmpty)
-                //   Row(children: [
-                //     Text(
-                //       'Address: ',
-                //       style: pw.TextStyle(fontSize: 9, font: ttf),
-                //     ),
-                //     Text(
-                //       '${order.businessAddress}',
-                //       style: pw.TextStyle(fontSize: 9, font: ttf),
-                //     )
-                //   ]),
+                  // if (order.gst != null && order.gst!.isNotEmpty)
+                  //   Row(children: [
+                  //     Text(
+                  //       'GSTIN: ',
+                  //       style: pw.TextStyle(fontSize: 9, font: ttf),
+                  //     ),
+                  //     Text(
+                  //       '${order.gst}'.toUpperCase(),
+                  //       style: pw.TextStyle(fontSize: 9, font: ttf),
+                  //     )
+                  //   ]),
 
-                // if (order.gst != null && order.gst!.isNotEmpty)
-                //   Row(children: [
-                //     Text(
-                //       'GSTIN: ',
-                //       style: pw.TextStyle(fontSize: 9, font: ttf),
-                //     ),
-                //     Text(
-                //       '${order.gst}'.toUpperCase(),
-                //       style: pw.TextStyle(fontSize: 9, font: ttf),
-                //     )
-                //   ]),
+                  pw.SizedBox(height: 10),
 
-                pw.SizedBox(height: 10),
+                  // Invoice details table
 
-                // Invoice details table
+                  pw.Table(
+                    children: [
+                      pw.TableRow(children: [
+                        pw.Text('Invoice No:',
+                            style: TextStyle(font: ttf, fontSize: 10)),
+                        pw.Text('$invoiceNum',
+                            style: TextStyle(font: ttf, fontSize: 10)),
+                        pw.SizedBox(width: 40),
+                        pw.Text('${dateFormat()}',
+                            style: TextStyle(font: ttf, fontSize: 10))
+                      ]),
 
-                pw.Table(
-                  children: [
-                    pw.TableRow(children: [
-                      pw.Text('Invoice No:',
-                          style: TextStyle(font: ttf, fontSize: 10)),
-                      pw.Text('$invoiceNum',
-                          style: TextStyle(font: ttf, fontSize: 10)),
-                      pw.SizedBox(width: 40),
-                      pw.Text('${dateFormat()}',
-                          style: TextStyle(font: ttf, fontSize: 10))
-                    ]),
+                      pw.TableRow(children: [
+                        pw.Text(''),
+                        pw.Text(''),
+                        pw.SizedBox(width: 40),
+                        pw.Text(
+                            '${time.substring(11,16)}',
+                            style: TextStyle(font: ttf, fontSize: 10))
+                      ])
 
-                    pw.TableRow(children: [
+                      // ...itemRows(),
+                    ],
+                  ),
+
+                  pw.Table(children: itemRows()),
+
+                  pw.Divider(),
+
+                  // Subtotal, GST, and Grand Total
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
                       pw.Text(''),
+                      pw.Text('Subtotal',
+                          textAlign: TextAlign.left,
+                          style: pw.TextStyle(fontSize: 11, font: ttf)),
+                      pw.Text('$subtotal',
+                          style: pw.TextStyle(fontSize: 11, font: ttf)),
+                    ],
+                  ),
+                  if(atLeastOneItemHasGst)
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text(''),
+                        pw.Text('GST',
+                            textAlign: TextAlign.left,
+                            textDirection: pw.TextDirection.ltr,
+                            style: pw.TextStyle(fontSize: 11, font: ttf)),
+                        pw.Text('$gstTotal',
+                            style: pw.TextStyle(fontSize: 11, font: ttf)),
+                      ],
+                    ),
+                  pw.Divider(color: PdfColor.fromHex('#808080')),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
                       pw.Text(''),
-                      pw.SizedBox(width: 40),
-                      pw.Text(
-                          '${time.substring(11,16)}',
-                          style: TextStyle(font: ttf, fontSize: 10))
-                    ])
+                      pw.Text('Grand Total',
+                          textAlign: TextAlign.left,
+                          style: pw.TextStyle(
+                              fontSize: 12,
+                              fontWeight: pw.FontWeight.bold,
+                              font: ttf)),
+                      pw.Text('$totalPrice',
+                          style: pw.TextStyle(
+                              fontSize: 12,
+                              fontWeight: pw.FontWeight.bold,
+                              font: ttf)),
+                    ],
+                  ),
 
-                    // ...itemRows(),
-                  ],
-                ),
+                  pw.SizedBox(height: 30),
 
-                pw.Table(children: itemRows()),
+                  pw.Divider(),
+                  pw.SizedBox(height: 30),
 
-                pw.Divider(),
-
-                // Subtotal, GST, and Grand Total
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Text(''),
-                    pw.Text('Subtotal',
-                        textAlign: TextAlign.left,
-                        style: pw.TextStyle(fontSize: 11, font: ttf)),
-                    pw.Text('$subtotal',
-                        style: pw.TextStyle(fontSize: 11, font: ttf)),
-                  ],
-                ),
-                if(atLeastOneItemHasGst)
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Text(''),
-                    pw.Text('GST',
-                        textAlign: TextAlign.left,
-                        textDirection: pw.TextDirection.ltr,
-                        style: pw.TextStyle(fontSize: 11, font: ttf)),
-                    pw.Text('$gstTotal',
-                        style: pw.TextStyle(fontSize: 11, font: ttf)),
-                  ],
-                ),
-                pw.Divider(color: PdfColor.fromHex('#808080')),
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Text(''),
-                    pw.Text('Grand Total',
-                        textAlign: TextAlign.left,
-                        style: pw.TextStyle(
-                            fontSize: 12,
-                            fontWeight: pw.FontWeight.bold,
-                            font: ttf)),
-                    pw.Text('$totalPrice',
-                        style: pw.TextStyle(
-                            fontSize: 12,
-                            fontWeight: pw.FontWeight.bold,
-                            font: ttf)),
-                  ],
-                ),
-
-                pw.SizedBox(height: 30),
-
-                pw.Divider(),
-                pw.SizedBox(height: 30),
-
-                // Thank You message
-                pw.Text('Thank You and see you again.',
-                    style: pw.TextStyle(fontSize: 12, font: ttf)),
-              ],
-            ),
+                  // Thank You message
+                  pw.Text('Thank You and see you again.',
+                      style: pw.TextStyle(fontSize: 12, font: ttf)),
+                ],
+              ),
+            )
           );
         },
       ),

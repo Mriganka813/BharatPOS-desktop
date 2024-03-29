@@ -108,15 +108,11 @@ class _BillingListScreenState extends State<BillingListScreen> {
     print("timer started");
     timer = Timer.periodic(Duration(seconds: 30), (_) => refreshPage());
   }
-  // @override
-  // void dispose() {
-  //   super.dispose();
-  //   timer?.cancel(); // Cancel the timer when the widget is disposed
-  // }
-
-  // void startTimer() {
-  //   timer = Timer.periodic(Duration(seconds: 10), (_) => refreshPage());
-  // }
+  @override
+  void dispose() {
+    super.dispose();
+    timer?.cancel(); // Cancel the timer when the widget is disposed
+  }
 
   void refreshPage() {
     _billingCubit.getBillingOrders();
@@ -727,7 +723,6 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                   //     : provider.removePurchaseBillItems(
                                   //     provider.purchaseBilling.keys.toList()[index]);
                                 }
-                                // startTimer();
                                 if(autoRefreshPref) {
                                   startTimer();
                                 }
@@ -977,7 +972,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
   }
 
   Future<bool?> _showDialog() {
-    // timer?.cancel();//pausing timer if this dialog is open
+    timer?.cancel();//pausing timer if this dialog is open
     return showDialog(
       context: context,
       barrierDismissible: false,
@@ -999,7 +994,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
           actions: [
             TextButton(
                 onPressed: () {
-                  // startTimer();
+                  if(autoRefreshPref)
+                    startTimer();
                   Navigator.pop(ctx, false);
                 },
                 child: Text('No')),
