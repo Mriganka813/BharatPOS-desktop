@@ -22,7 +22,7 @@ class SplashScreen extends StatefulWidget {
 }
 class _SplashScreenState extends State<SplashScreen> {
   late String _latestVersion = '';
-  String _currentVersion = '1.0.2';
+  String _currentVersion = '1.0.1';
   ///
   @override
   void initState() {
