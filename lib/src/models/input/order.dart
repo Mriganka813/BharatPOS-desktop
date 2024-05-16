@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:shopos/src/models/product.dart';
 import 'package:shopos/src/pages/checkout.dart';
 
@@ -6,7 +8,7 @@ import '../user.dart';
 
 class Order {
   Order(
-      {this.id,
+      {this.id = "-1",
         this.kotId,
         this.objId,
       this.orderItems,
@@ -22,7 +24,10 @@ class Order {
       this.invoiceNum,
         this.estimateNum,
       this.tableNo = "-1",
-      this.orderReady});
+      this.orderReady,
+        this.userName,
+        this.subUserName
+      });
 
   String? id;
   String? kotId;
@@ -41,8 +46,12 @@ class Order {
   String? estimateNum;
   String tableNo;
   bool? orderReady;
+  String? userName;
+  String? subUserName;
 
   factory Order.fromMap(Map<String, dynamic> json) => Order(
+      userName: json["userName"],
+      subUserName: json["subUserName"],
     orderReady: json["orderReady"] ?? false,
       kotId: json["kotId"].toString(),
       objId: json["_id"].toString(),
@@ -67,9 +76,11 @@ class Order {
   );
 
   factory Order.fromMapForParty(Map<String, dynamic> json) {
-    print("  ${json["_id"]} and ${json["party"]}  ");
+    // print("  ${json["_id"]} and ${json["party"]}  ");
 
     return Order(
+      userName: json["userName"],
+      subUserName: json["subUserName"],
       orderReady: json["orderReady"] ?? false,
       objId: json["_id"].toString(),
       orderItems: List<OrderItemInput>.from(
@@ -87,6 +98,8 @@ class Order {
   }
 
   Map<String, dynamic> toMap(OrderType type) => {
+    "userName": userName,
+    "subUserName": subUserName,
     "orderReady" : orderReady,
     "kotId": kotId,
         "id": id,
@@ -101,7 +114,13 @@ class Order {
         "gst": gst,
         "tableNo": tableNo
       };
-  Map<String, dynamic> toMapForCopy() => {//for making copy of Order
+  Map<String, dynamic> toMapForCopy() {
+    print("Problem can occur");
+    List<Map<String, dynamic>>? oo =  orderItems?.map((e) => e.toMapCopy()).toList();
+    print("Problem occured and passed");
+  return {//for making copy of Order
+    "userName": userName ,
+    "subUserName": subUserName ,
     "orderReady" : orderReady,
     "id": id,
     "kotId": kotId,
@@ -109,51 +128,63 @@ class Order {
     "modeOfPayment": modeOfPayment,
     "party": party?.id,
     // "user": user?.id,
-    // "createdAt": createdAt.toString(),
+    // "createdAt": createdAt ?? DateTime.now().toString(),
     "reciverName": reciverName,
     "businessName": businessName,
     "businessAddress": businessAddress,
     "gst": gst,
     "tableNo": tableNo
   };
+  }
 }
 
 class OrderItemInput {
-  OrderItemInput({this.price = 0, this.quantity = 0, this.product, this.saleSGST, this.saleCGST, this.baseSellingPrice, this.saleIGST, this.discountAmt = "0", this.originalbaseSellingPrice = ""});
+  OrderItemInput({this.price = 0, this.quantity = 0, this.product, this.saleSGST = '0', this.saleCGST = '0', this.baseSellingPrice = '0', this.saleIGST ='0', this.discountAmt, this.originalbaseSellingPrice = "0"});
 
-  double? price;
-  double quantity;
-  Product? product;
-  String? saleSGST;
-  String? saleCGST;
-  String? baseSellingPrice;
-  String? saleIGST;
-  String discountAmt = "0";
-  String originalbaseSellingPrice = "";
+  double? price = 0.0;
+  double quantity = 0.0;
+  Product? product = Product(sellingPrice: 0.0, purchasePrice: 0.0);
+  // double mrp;
+  String? saleSGST = "0";
+  String? saleCGST = "0";
+  String? baseSellingPrice = "0";
+  String? saleIGST = "0";
+  String? discountAmt = "0";
+  String? originalbaseSellingPrice = '0';
 
   factory OrderItemInput.fromMap(Map<String, dynamic> json) => OrderItemInput(
       price: double.parse(json['price'].toString()) ?? 0,
       quantity: json['quantity']!= null? json['quantity'].toDouble() : 0.0,
+      // mrp: json['mrp']!= null && json['mrp']!="null"? double.parse(json['mrp']) : 0.0,
       product: json["product"] is Map ? Product.fromMap(json["product"]) : null,
       saleCGST: json["saleCGST"].toString(),
       saleSGST: json["saleSGST"].toString(),
       baseSellingPrice: json["baseSellingPrice"].toString(),
       saleIGST: json["saleIGST"].toString(),
-      discountAmt: json['discountAmt'].toString(),
+      discountAmt: (json['discountAmt'] ?? "0").toString(),
       originalbaseSellingPrice:
           json["originalbaseSellingPrice"] == null || json["originalbaseSellingPrice"] == "null" ? "0.0" : double.parse(json["originalbaseSellingPrice"].toString()).toStringAsFixed(2));
 
-  factory OrderItemInput.fromMapForLocalDatabase(Map<String, dynamic> json) => OrderItemInput(
+  factory OrderItemInput.fromMapForLocalDatabase(Map<String, dynamic> json){
+    print("line 126 in order.dart");
+    // print(json);
+    print(json["product"] is Map);
+    return OrderItemInput(
         price: double.parse(json['price'].toString()) ?? 0,
         quantity: json['quantity']!= null? json['quantity'].toDouble() : 0.0,
-        product: json["product"],
+      // mrp: json['mrp']!= "null" && json['mrp']!=null ? json['mrp'] : 0.0,
+        product: json["product"] is Map ? Product.fromMap(json["product"]) : null,
         saleCGST: json["saleCGST"].toString(),
         saleSGST: json["saleSGST"].toString(),
         baseSellingPrice: json["baseSellingPrice"].toString(),
         saleIGST: json["saleIGST"].toString(),
-        discountAmt: json['discountAmt'].toString(),
+        discountAmt: (json['discountAmt'] ?? "0").toString(),
       );
+  }
   Map<String, dynamic> toMapCopy(){//for making copy of OrderItemInput
+    print("Problem 2 can occur");
+    Map<String,dynamic> p = product!.toMapForBilling();
+    print("Problem 2 did not occur");
     Map<String,dynamic> map= {
       "price": (product?.sellingPrice ?? 1),
       "quantity": quantity,
@@ -162,22 +193,34 @@ class OrderItemInput {
       "saleSGST": product?.salesgst == 'null' ? '0' : product!.salesgst,
       "baseSellingPrice": product?.baseSellingPriceGst == 'null' ? '0' : product!.baseSellingPriceGst,
       "saleIGST": product?.saleigst == 'null' ? '0' : product!.saleigst,
-      "discountAmt": discountAmt,
-      "originalbaseSellingPrice": (double.parse(product!.baseSellingPriceGst! == "null" ? '0' : product!.baseSellingPriceGst!) + double.parse(discountAmt!)).toString()};
+      "discountAmt": discountAmt == 'null'|| discountAmt == null ? '0' : discountAmt,
+      "originalbaseSellingPrice": (double.parse(product!.baseSellingPriceGst == "null" || product!.baseSellingPriceGst == null  ? '0' : product!.baseSellingPriceGst!) + double.parse(discountAmt ?? "0")).toString()};
 
+    print("Returning map successfully at problem 2");
     return map;
   }
-  Map<String, dynamic> toSaleMap() => {
+  Map<String, dynamic> toSaleMap() {
+    print("line 138 in order.dart tosalemap ");
+
+    print(discountAmt);
+
+    print(product?.batchNumber);
+
+
+    Map<String,dynamic> map= {
         "price": (product?.sellingPrice ?? 1),
         "quantity": quantity,
         "product": product?.id,
-        "saleCGST": product?.salecgst == 'null' ? '0' : product!.salecgst,
-        "saleSGST": product?.salesgst == 'null' ? '0' : product!.salesgst,
-        "baseSellingPrice": product?.baseSellingPriceGst == 'null' ? '0' : product!.baseSellingPriceGst,
-        "saleIGST": product?.saleigst == 'null' ? '0' : product!.saleigst,
-        "discountAmt": discountAmt,
-        "originalbaseSellingPrice": (double.parse(product!.baseSellingPriceGst! == "null" ? '0' : product!.baseSellingPriceGst!) + double.parse(discountAmt!)).toString()
+        "saleCGST": (product?.salecgst == 'null' || product?.salecgst == null || product?.salecgst == '') ? '0' : product!.salecgst,
+        "saleSGST": (product?.salesgst == 'null' || product?.salesgst == null || product?.salesgst == '') ? '0' : product!.salesgst,
+        "baseSellingPrice": (product?.baseSellingPriceGst == 'null' || product?.baseSellingPriceGst == null || product?.baseSellingPriceGst == '') ? '0' : product!.baseSellingPriceGst,
+        "saleIGST": (product?.saleigst == 'null' || product?.saleigst == null || product?.saleigst == '') ? '0' : product!.saleigst,
+        "discountAmt": (discountAmt == null || discountAmt == "" || discountAmt == "null") ? '0' : discountAmt,
+        "originalbaseSellingPrice": (double.parse((product!.baseSellingPriceGst == null ||product!.baseSellingPriceGst == "null" || product!.baseSellingPriceGst == "") ? '0' : product!.baseSellingPriceGst!) + double.parse((discountAmt == null || discountAmt == "null" || discountAmt == '') ? "0" : discountAmt!)).toString()
       };
+    print(" - ToSaleMap - \n");
+    return map;
+  }
 
   Map<String, dynamic> toSaleReturnMap() => {
         "price": (product?.sellingPrice ?? 1),

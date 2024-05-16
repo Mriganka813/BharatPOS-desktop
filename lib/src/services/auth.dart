@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 //import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:shopos/src/config/const.dart';
 import 'package:shopos/src/models/input/sign_up_input.dart';
@@ -37,8 +38,15 @@ class AuthService {
   /// Save cookies after sign in/up
   Future<void> saveCookie(Response response) async {
     List<Cookie> cookies = [Cookie("token", response.data['token'])];
+    if(response.data['token_subuser'] != null && response.data['token_subuser'] != ""){
+      // ck += ' token_subuser=${response.data['token_subuser']};';
+      // _dio.options.headers.addAll({"Authorization_subuser" : "Bearer_subuser ${response.data['token_subuser']}"});
+      cookies= [Cookie("token", response.data['token']), Cookie("token_subuser", response.data['token_subuser'])];
+      // cookies= [Cookie("token", 'abc'), Cookie("token_subuser", 'def')];
+    }
     final cj = await ApiV1Service.getCookieJar();
     await cj.saveFromResponse(Uri.parse(Const.apiUrl), cookies);
+    ApiV1Service().intercept(CookieManager(cj));
   }
 
   ///
@@ -51,11 +59,13 @@ class AuthService {
   Future<void> clearCookies() async {
     final cj = await ApiV1Service.getCookieJar();
     await cj.deleteAll();
+    ApiV1Service().remIntercept();
   }
 
   /// Send sign in request
   ///
   Future<User?> signInRequest(String email, String password) async {
+    await clearCookies();
     final response = await ApiV1Service.postRequest(
       '/login',
       data: {
@@ -66,7 +76,7 @@ class AuthService {
     if ((response.statusCode ?? 400) > 300) {
       return null;
     }
-       print('res = ${response.data}');
+    print('res = ${response.data}');
     await saveCookie(response);
     return User.fromMap(response.data['user']);
   }

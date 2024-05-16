@@ -16,8 +16,10 @@ class User {
     this.updatedAt,
     this.v,
     this.type,
+    this.upi_id,
     this.GstIN,
-    this.dlNum
+    this.dlNum,
+    this.name
   });
 
   String? email;
@@ -33,10 +35,13 @@ class User {
   DateTime? updatedAt;
   int? v;
   String? type;
+  String? upi_id;
   String? GstIN;
   String? dlNum;
+  String? name;
 
   factory User.fromMap(Map<String, dynamic> json) => User(
+      name: json["name"] ?? "",
         email: json["email"],
         password: json["password"],
         address: json["address"],
@@ -49,15 +54,20 @@ class User {
         updatedAt: DateTime.parse(json["updatedAt"]),
         v: json["__v"],
         type: json["taxFile"],
+        upi_id: json["upi_id"] ?? "",
         GstIN: json["GstIN"].toString(),
         dlNum: json["dlNum"].toString(),
       );
 
-//extracting taxfile detail from json
+  // extracting taxfile detail from json
   factory User.fromMMap(Map<String, dynamic> json) =>
-      User(id: json["_id"], type: json["taxFile"]);
+      User(id: json["_id"], type: json["taxFile"],
+        name: json["businessName"],
+        address: json["address"],
+      );
 
   Map<String, dynamic> toMap() => {
+    "name": name ?? "",
         "email": email,
         "password": password,
         "address": address,
@@ -69,5 +79,8 @@ class User {
         "createdAt": createdAt?.toIso8601String(),
         "updatedAt": updatedAt?.toIso8601String(),
         "__v": v,
-      };
+        "upi_id": upi_id,
+        "GstIN": GstIN,
+        "dlNum":dlNum
+  };
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shopos/src/blocs/product/product_cubit.dart';
 import 'package:shopos/src/blocs/report/report_cubit.dart';
 import 'package:shopos/src/config/colors.dart';
@@ -56,6 +57,7 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
   bool isAvailable = true;
   PinService _pinService = PinService();
   late final ReportCubit _reportCubit;
+  late bool _showInStockSwitch;
   final TextEditingController pinController = TextEditingController();
 
   int expiryDaysTOSearch = 7;
@@ -64,11 +66,17 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
   @override
   void initState() {
     super.initState();
+    init();
     _products = [];
     _productCubit = ProductCubit()..getProducts(_currentPage, _limit);
     scrollController.addListener(_scrollListener);
     _reportCubit = ReportCubit();
     fetchSearchedProducts();
+  }
+
+  init() async {
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    _showInStockSwitch = (await pref.getBool('in-stock-button-preference')) ?? false ;
   }
 
   //goToProductDetails(BuildContext context, int idx) {
@@ -411,6 +419,8 @@ class _SearchProductListScreenState extends State<SearchProductListScreen> {
                                     Stack(
                                       children: [
                                         ProductCardHorizontal(
+                                          isAvailable: prodList[index].available!,
+                                          showInStockSwitch: _showInStockSwitch,
                                           type: widget.args.orderType,
                                           key: ValueKey(prodList[index].id),
                                           noOfQuatityadded:

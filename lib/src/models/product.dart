@@ -26,7 +26,8 @@ class Product {
     this.batchNumber,
     this.expiryDate,
     this.mrp,
-    this.quantityToBeSold
+    this.quantityToBeSold,
+    this.available
   });
 
   String? name;
@@ -55,6 +56,7 @@ class Product {
   DateTime? expiryDate;
   double? quantityToBeSold;
   num i=0;
+  bool? available;
   
   factory Product.fromMap(Map<String, dynamic> json){ 
     
@@ -74,8 +76,8 @@ class Product {
       name: json["name"],
       sellingPrice:json["sellingPrice"]==null?0.0: double.parse(json["sellingPrice"].toString()) ,
       barCode: json["barCode"],
-        quantity:  json['quantity']!= null? json['quantity'].toDouble() : 0.0,
-      purchasePrice:json['purchasePrice']==null?0.0: double.parse(json['purchasePrice'].toString()),
+      quantity:  json['quantity']!= null? json['quantity'].toDouble() : 0.0,
+      purchasePrice:json['purchasePrice'] == null ? 0.0: double.parse(json['purchasePrice'].toString()),
       user: json["user"],
       image: json['image'],
       id: json["_id"],
@@ -94,6 +96,7 @@ class Product {
       basePurchasePriceGst: json['basePurchasePrice'].toString(),
         quantityToBeSold: json['quantityToBeSold'] is int ? json['quantityToBeSold'].toDouble() : json['quantityToBeSold'] ,
         sellerName: json['sellerName'].toString(),
+        available: json['available'],
       batchNumber: json['batchNumber'] ?? null,
       expiryDate: json['expiryDate'] != null
           ? DateTime.parse((json['expiryDate']).toString().substring(0, 10))
@@ -129,6 +132,7 @@ class Product {
         "purchaseIGST": purchaseigst,
         "basePurchasePrice": basePurchasePriceGst,
         "sellerName": sellerName,
+      "available": available,
         "batchNumber": batchNumber,
         "expiryDate": expiryDate,
       "quantityToBeSold": quantityToBeSold
@@ -149,7 +153,7 @@ class Product {
         "quantity": quantity,
         "user": user,
         "hsn":hsn,
-        if(mrp != null && mrp!="null") "mrp":mrp,
+        if(mrp != null && mrp != "null") "mrp":mrp,
         "_id": id,
         'purchasePrice': purchasePrice,
         "createdAt": createdAt?.toString(),

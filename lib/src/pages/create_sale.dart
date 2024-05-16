@@ -60,6 +60,7 @@ class _CreateSaleState extends State<CreateSale> {
   late SharedPreferences prefs;
   bool skipPendingOrdersPref = false;
   bool barcodePref = true;
+  bool _isPercentPref = false;
   @override
   void initState() {
     super.initState();
@@ -86,6 +87,7 @@ class _CreateSaleState extends State<CreateSale> {
     prefs = await SharedPreferences.getInstance();
     skipPendingOrdersPref = (await prefs.getBool('pending-orders-preference'))!;
     barcodePref = (await prefs.getBool('barcode-button-preference'))!;
+    _isPercentPref = (await prefs.getBool('discount-type-preference'))!;
     if(!barcodePref && widget.args!.editOrders!.isEmpty){
       _onAddManually(context);
     }
@@ -93,8 +95,8 @@ class _CreateSaleState extends State<CreateSale> {
   }
   void _onAdd(OrderItemInput orderItem) {
     final qty = orderItem.quantity + 1;
-    double discountForOneItem = double.parse(orderItem.discountAmt) / orderItem.quantity;
-    orderItem.discountAmt = (double.parse(orderItem.discountAmt) + discountForOneItem).toStringAsFixed(2);
+    double discountForOneItem = double.parse(orderItem.discountAmt ?? "0") / orderItem.quantity;
+    orderItem.discountAmt = (double.parse(orderItem.discountAmt ?? "0") + discountForOneItem).toStringAsFixed(2);
     final availableQty = orderItem.product?.quantity ?? 0;
     if (qty > availableQty) {
       locator<GlobalServices>().infoSnackBar("Quantity not available");
@@ -319,9 +321,12 @@ class _CreateSaleState extends State<CreateSale> {
                               child: ProductCardPurchase(
                                 type: "sale",
                                 product: _orderItems[index].product!,
-                                discount: _orderItems[index].discountAmt,
+                                discount: _orderItems[index].discountAmt ?? "0.0",
                                 onQuantityFieldChange: (double value){
-                                  setQuantityToBeSold(_orderItems[index], value, index);
+
+                                  setState(() {
+                                    setQuantityToBeSold(_orderItems[index], value, index);
+                                  });
                                 },
                                 onAdd: () {
                                   print("toched");
@@ -530,7 +535,7 @@ class _CreateSaleState extends State<CreateSale> {
   void showaddDiscountDialouge(List<OrderItemInput> _orderItems, int index) async {
     final _orderItem = _orderItems[index];
 
-    double discount = double.parse(_orderItem.discountAmt);
+    double discount = double.parse(_orderItem.discountAmt!);
     final product = _orderItems[index].product!;
     final tappedProduct = await ProductService().getProduct(_orderItems[index].product!.id!);
     final productJson = Product.fromMap(tappedProduct.data['inventory']);
@@ -560,9 +565,20 @@ class _CreateSaleState extends State<CreateSale> {
                     ),
                     CustomTextField(
                       inputType: TextInputType.number,
-                      onChanged: (val) {
-                        localSellingPrice = val;
-                      },
+                        onChanged: (val) {
+                          if(_isPercentPref) {
+                            double? taxableValue = ((_orderItem.product!
+                                .gstRate != "null" && _orderItem.product!
+                                .gstRate != "")
+                                ? double.parse(baseSellingPriceToShow as String)
+                                : sellingPriceToShow);
+                            localSellingPrice = (taxableValue! - double.parse(
+                                val) / 100 * taxableValue).toString();
+                          }
+                          else localSellingPrice = val;
+                          print("LOCAL SELLING PRICE: $localSellingPrice");
+                        },
+                        suffixIcon: _isPercentPref ?Icon(Icons.percent) : null,
                         hintText: 'Enter Taxable Value   (${_orderItem.product!.gstRate != "null"  && _orderItem.product!.gstRate!="" ?
                         baseSellingPriceToShow : sellingPriceToShow})'
                     ),
@@ -573,9 +589,15 @@ class _CreateSaleState extends State<CreateSale> {
                     ) : SizedBox.shrink(),
                     _orderItem.product!.gstRate != "null"  && _orderItem.product!.gstRate!="" ?
                     CustomTextField(
+                      suffixIcon: _isPercentPref ? Icon(Icons.percent) : null,
                       inputType: TextInputType.number,
                       onChanged: (val) {
-                        discountedPrice = val;
+                        if(_isPercentPref) {
+                          discountedPrice = (sellingPriceToShow! - double.parse(
+                              val) / 100 * sellingPriceToShow).toString();
+                        }
+                        else discountedPrice = val;
+                        print("DISCOUNTED PRICE: $discountedPrice");
                       },
                       hintText: 'Enter total value   (${sellingPriceToShow})',
                       validator: (val) {
@@ -600,11 +622,11 @@ class _CreateSaleState extends State<CreateSale> {
                             // print(_orderItem.product!.baseSellingPriceGst!);
                             if(_orderItem.product!.baseSellingPriceGst =="null"){
                               print("---line 467 in createsale.dart");
-                              discount = (_orderItem.product!.sellingPrice!  + double.parse(_orderItem.discountAmt) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
+                              discount = (_orderItem.product!.sellingPrice!  + double.parse(_orderItem.discountAmt!) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
 
                             }else{
                               print("---line 470 in createsale.dart");
-                              discount = (double.parse(_orderItem.product!.baseSellingPriceGst!) + double.parse(_orderItem.discountAmt) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
+                              discount = (double.parse(_orderItem.product!.baseSellingPriceGst!) + double.parse(_orderItem.discountAmt!) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
                             }
 
                             _orderItems[index].discountAmt = discount.toStringAsFixed(2);
@@ -622,7 +644,7 @@ class _CreateSaleState extends State<CreateSale> {
                             _onTotalChange(product, discountedPrice);
                             print("realbase selling price=${realBaseSellingPrice}");
                             print("discount=${discount}");
-                            discount = (realBaseSellingPrice + discount - double.parse(_orderItem.product!.baseSellingPriceGst!)) * _orderItem.quantity;
+                            discount = (realBaseSellingPrice + (discount/_orderItem.quantity) - double.parse(_orderItem.product!.baseSellingPriceGst!)) * _orderItem.quantity;
                             _orderItems[index].discountAmt = discount.toStringAsFixed(2);
 
                             setState(() {});

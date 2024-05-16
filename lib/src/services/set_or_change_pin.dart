@@ -42,7 +42,7 @@ class PinService {
     final response = await ApiV1Service.getRequest(
       '/pinstatus',
     );
-    print(response.data);
+    print("Pinstatus response = ${response.data}");
     bool status = false;
     try {
       status = response.data;

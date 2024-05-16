@@ -19,9 +19,16 @@ class _DefaultPreferencesState extends State<DefaultPreferences> {
   bool skipPendingOrderSwitch = false;
   bool autoRefreshPendingOrdersSwitch = false;
   bool showReadySwitch = false;
+  bool showNamePref = false;
+  bool showInStockSwitch = false;
+  bool buzzerSoundPref = false;
+  bool isPercentageDiscount = false;
   // bool multiplePaymentModeSwitch = false;
+  String? _type;
   String? defaultBillSize;
   String? defaultKotBillSize;
+  String? defaultPurchaseGst;
+  String? defaultSaleGst;
   late SharedPreferences prefs;
   @override
   void initState() {
@@ -36,6 +43,25 @@ class _DefaultPreferencesState extends State<DefaultPreferences> {
     }else{//by default it will be true
       await prefs.setBool('share-button-preference', false);
       shareButtonSwitch = false;
+    }
+    if(prefs.containsKey('buzzer-qr-order-preference')){
+      buzzerSoundPref = (await prefs.getBool('buzzer-qr-order-preference'))!;
+    }else{//by default it will be false
+      await prefs.setBool('buzzer-qr-order-preference', false);
+      buzzerSoundPref = false;
+    }
+    if(prefs.containsKey('show-name-preference')){
+      showNamePref = (await prefs.getBool('show-name-preference'))!;
+    }else{//by default it will be false
+      await prefs.setBool('show-name-preference', false);
+      showNamePref = false;
+    }
+
+    if(prefs.containsKey('in-stock-button-preference')){
+      showInStockSwitch = (await prefs.getBool('in-stock-button-preference'))!;
+    }else{//by default it will be false
+      await prefs.setBool('in-stock-button-preference', false);
+      showInStockSwitch = false;
     }
 
     if(prefs.containsKey('barcode-button-preference')){
@@ -70,6 +96,16 @@ class _DefaultPreferencesState extends State<DefaultPreferences> {
     //   await prefs.setBool('payment-mode-preference', true);
     //   multiplePaymentModeSwitch = true;
     // }
+
+    if(prefs.containsKey('discount-type-preference')) {
+      _type = (await prefs.getBool('discount-type-preference'))! ? "percent" : "amount";
+    }
+    if(prefs.containsKey('sale-gst-preference')){
+      defaultSaleGst = (await prefs.getBool('sale-gst-preference'))! ? "GST" : "Simple";
+    }
+    if(prefs.containsKey('purchase-gst-preference')){
+      defaultPurchaseGst = (await prefs.getBool('purchase-gst-preference'))! ? "GST" : "Simple";
+    }
 
     if(prefs.containsKey('defaultBill')){
       defaultBillSize = (await prefs.getString('defaultBill'))!;
@@ -182,6 +218,54 @@ class _DefaultPreferencesState extends State<DefaultPreferences> {
                                 }),
                           ),
                         ),
+                        Divider(thickness: 1,),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ListTile(
+                            title: Text('In stock'),
+                            subtitle: Text('You can mark items in/out of stock\n'),
+                            trailing:  Switch(
+                                value: showInStockSwitch,
+                                onChanged: (value) async {
+                                  setState(() {
+                                    showInStockSwitch = value;
+                                  });
+                                  await prefs.setBool('in-stock-button-preference', value);
+                                }),
+                          ),
+                        ),
+                        Divider(thickness: 1,),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ListTile(
+                            title: Text('Save Name'),
+                            subtitle: Text('Save name of user who has created the order'),
+                            trailing:  Switch(
+                                value: showNamePref,
+                                onChanged: (value) async {
+                                  setState(() {
+                                    showNamePref = value;
+                                  });
+                                  await prefs.setBool('show-name-preference', value);
+                                }),
+                          ),
+                        ),
+                        Divider(thickness: 1,),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ListTile(
+                            title: Text('Notification'),
+                            subtitle: Text('Turn this on to get notification when you receive a new order'),
+                            trailing:  Switch(
+                                value: buzzerSoundPref,
+                                onChanged: (value) async {
+                                  setState(() {
+                                    buzzerSoundPref = value;
+                                  });
+                                  await prefs.setBool('buzzer-qr-order-preference', value);
+                                }),
+                          ),
+                        ),
                         // Divider(thickness: 1,),
                         // Padding(
                         //   padding: const EdgeInsets.all(8.0),
@@ -198,6 +282,86 @@ class _DefaultPreferencesState extends State<DefaultPreferences> {
                         //         }),
                         //   ),
                         // ),
+                        Divider(thickness: 1,),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ListTile(
+                            title: Text('Choose a discounting method'),
+                            subtitle:  Text('Select which type of discounting you want(percent or amount)'),
+                            trailing:  SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.25,
+                              child: CustomDropDownField(
+                                items: const <String> ["percent","amount"],
+                                initialValue: _type == 'percent' ? "percent" : "amount",
+                                onSelected: (e) async {
+                                  await prefs.setBool('discount-type-preference', e == "percent");
+                                  setState(() {});
+                                },
+                                // validator: (e) {
+                                //   if ((e ?? "").isEmpty) {
+                                //     return 'Please select a mode of payment';
+                                //   }
+                                //   return null;
+                                // },
+                                hintText: "select",
+                              ),
+                            ),
+                          ),
+                        ),
+                        Divider(thickness: 1,),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ListTile(
+                            title: Text('Sale GST Report'),
+                            subtitle:  Text('Select which type of report you want'),
+                            trailing:  SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.25,
+                              child: CustomDropDownField(
+                                items: const <String> ["GST","Simple"],
+                                initialValue: defaultSaleGst,
+                                onSelected: (e) async {
+                                  defaultSaleGst = e;
+                                  await prefs.setBool('sale-gst-preference', e == "GST");
+                                  setState(() {});
+                                },
+                                // validator: (e) {
+                                //   if ((e ?? "").isEmpty) {
+                                //     return 'Please select a mode of payment';
+                                //   }
+                                //   return null;
+                                // },
+                                hintText: "select",
+                              ),
+                            ),
+                          ),
+                        ),
+                        Divider(thickness: 1,),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ListTile(
+                            title: Text('Purchase GST Report'),
+                            subtitle:  Text('Select which type of report you want'),
+                            trailing:  SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.25,
+                              child: CustomDropDownField(
+                                items: const <String> ["GST" , "Simple"],
+                                initialValue: defaultPurchaseGst,
+                                onSelected: (e) async {
+                                  defaultPurchaseGst = e;
+                                  await prefs.setBool('purchase-gst-preference', e == "GST");
+                                  setState(() {});
+                                },
+                                // validator: (e) {
+                                //   if ((e ?? "").isEmpty) {
+                                //     return 'Please select a mode of payment';
+                                //   }
+                                //   return null;
+                                // },
+                                hintText: "select",
+                              ),
+                            ),
+                          ),
+                        ),
                         Divider(thickness: 1,),
                         Padding(
                           padding: const EdgeInsets.all(8.0),

@@ -11,11 +11,16 @@ String invoiceTemplatewithGST({
   String? dlNum,
   String? subtotal,
   String? gsttotal,
+  String? totalAmount,
+  String? discountTotal,
   required String date,
   required String type,
   String? invoiceNum,
 }) {
+  print(gsttotal);
+  print(" = GSTTOTAL");
   ///
+  // String dateFormat() => '${date.day}/${date.month}/${date.year}';
   String dateFormat(){
     if(date != "null" && date!= ""){
       date = date.substring(0, 10);
@@ -38,9 +43,13 @@ String invoiceTemplatewithGST({
 
   ///
   String headerRows() => List.generate(
-        headers.length,
-        (int index) => '<th class="left">${headers[index]}</th>',
-      ).join(' ');
+      headers.length,
+          (int index) {
+        return
+          (gsttotal == "0.00"  && (headers[index] == "GST" || headers[index] == "Taxable value")) ? '<th class="left"> </th>':
+          '<th class="left">${headers[index]}</th>';
+      }
+  ).join(' ');
 
   ///
   String billedTo() {
@@ -81,13 +90,19 @@ String invoiceTemplatewithGST({
     return '';
   }
   String userdlNum() {
-    if ( dlNum != null && dlNum!="") {
+    if ( dlNum != null && dlNum!="" && dlNum!="null") {
       return '<div><strong>DL Number: </strong>${dlNum}</div>';
     }
     return '';
   }
+
+  bool atleastOneItemhaveGST = false;
+  bool atleastOneItemHaveDiscount = false;
+
+
   bool expirydateAvailableFlag = false;
   bool hsnAvailableFlag = false;
+  bool mrpAvailableFlag=false;
   order.orderItems!.forEach((element) {
     if (element.product!.expiryDate != null &&
         element.product!.expiryDate != "null" &&
@@ -99,14 +114,22 @@ String invoiceTemplatewithGST({
         element.product!.hsn != "") {
       hsnAvailableFlag = true;
     }
+    if (element.product!.mrp != null &&
+        element.product!.mrp != "null" &&
+        element.product!.mrp != "") {
+      mrpAvailableFlag = true;
+    }
   });
   String shopkeepergstin() {
-    bool atleastOneItemhaveGST = false;
+
     print("Value OF GST");
     order.orderItems!.forEach((element) {
       print(element.product!.gstRate);
       if (element.product!.gstRate != "null") {
         atleastOneItemhaveGST = true;
+      }
+      if(element.discountAmt != null && element.discountAmt != "null" && element.discountAmt != '' && double.parse(element.discountAmt!) > 0) {
+        atleastOneItemHaveDiscount = true;
       }
     });
     if (user.GstIN != null && user.GstIN!.isNotEmpty&&atleastOneItemhaveGST) {
@@ -123,14 +146,26 @@ String invoiceTemplatewithGST({
           double baseprice = 0;
           String gstrate = "";
 
-          if (type == "OrderType.sale" || type == "OrderType.estimate") {
-            if (orderItem.product!.gstRate == "null") {
-              baseprice = orderItem.product!.sellingPrice!.toDouble();
-              gstrate = "NA";
-            } else {
-              baseprice = double.parse(orderItem.product!.baseSellingPriceGst!);
-              gstrate = orderItem.product!.gstRate!;
-            }
+        if (orderItem.product!.gstRate == "null") {
+        double? sp =orderItem.product!.sellingPrice;
+        baseprice = sp == null ? 0.0 : sp;
+        // String ? bspg = orderItem.baseSellingPrice;
+        // baseprice = double.parse(bspg == null || bspg == "null" ? '0.0' : bspg);
+        gstrate = "NA";
+      } else {
+        String ? bspg = orderItem.baseSellingPrice;
+        baseprice = double.parse(bspg == null || bspg == "null" ? '0.0' : bspg);
+        gstrate = orderItem.product!.gstRate!;
+      }
+      print("Orderitem DETAILS ----------\n");
+      print((orderItem.quantity));
+      print(double.parse(baseprice.toString()));
+      print(double.parse(orderItem.discountAmt!));
+
+      if (type == "OrderType.sale" || type == "OrderType.estimate" || type == "OrderType.saleReturn") {
+        print("--------------------------JOT--------------------");
+        print(orderItem.product!.gstRate);
+        print("\n\n\n");
             if (gstrate != "NA")
               return '<tr>'
                   '<td class="left product-name">${orderItem.product?.name}</td>'
@@ -142,33 +177,66 @@ String invoiceTemplatewithGST({
                       : '') +
                   (hsnAvailableFlag
                       ? orderItem.product!.hsn != null
-                      ? '<td class="left"> ${orderItem.product!.hsn}</td>'
+                      ? '<td class="left"> ${orderItem.product!.hsn != 'null' ? orderItem.product!.hsn : ''}</td>'
                       : '<td class="left"></td>'
                       : '') +
-                  '<td class="left">₹ ${baseprice.toStringAsFixed(2)}</td>'
-                      '<td class="left">${orderItem.product?.saleigst}<p style="text-align:left"><small>(${gstrate}%)</small></p></td>'
-                      '<td class="left">₹ ${((orderItem.quantity) * (orderItem.product?.sellingPrice ?? 0)).toStringAsFixed(2)}</td>'
-                      '</tr>';
-            else {
-              print("llll");
-              print(hsnAvailableFlag);
-              return '<tr>'
-                  '<td class="left product-name">${orderItem.product?.name}</td>'
-                  '<td class="left">${orderItem.quantity}</td>'+
+              '<td class="left">${(((orderItem.quantity) * double.parse(baseprice.toString()) + double.parse(orderItem.discountAmt![0] =='-' ? '0' : orderItem.discountAmt!))/(orderItem.quantity)).toStringAsFixed(2)}</td>'
+                  '<td class="left">₹ ${((orderItem.quantity) * double.parse(baseprice.toString()) + double.parse(orderItem.discountAmt![0] == '-' ? '0' : orderItem.discountAmt!)).toStringAsFixed(2)}</td>'
+              +
+              (atleastOneItemHaveDiscount
+                  ? orderItem.discountAmt != null && orderItem.discountAmt != "null" && orderItem.discountAmt != ''  && orderItem.discountAmt![0] != '-'
+                  ? '<td class="left">${orderItem.discountAmt }</td>'
+                  : '<td class="left">0.0</td>'
+                  : '') +
 
-                  (expirydateAvailableFlag
-                      ? orderItem.product!.expiryDate != null
-                      ? '<td class="left">${orderItem.product!.expiryDate!.day}/${orderItem.product!.expiryDate!.month}/${orderItem.product!.expiryDate!.year}</td>'
-                      : '<td class="left"></td>'
-                      : '') +
-                  (hsnAvailableFlag
-                      ? orderItem.product!.hsn != null
-                      ? '<td class="left"> ${orderItem.product!.hsn}</td>'
-                      : '<td class="left"></td>'
-                      : '') +
-                  '<td class="left">₹ ${baseprice.toStringAsFixed(2)}</td>' +
+              (mrpAvailableFlag
+                  ? (orderItem.product!.mrp != null && orderItem.product!.mrp != 0.0)
+                  ? '<td class="left"> ${orderItem.product!.mrp!="null"?orderItem.product!.mrp :''}</td>'
+                  : ''
+                  : '') +
+              (atleastOneItemhaveGST
+                  ? '<td class="left">₹ ${((orderItem.quantity) * double.parse(baseprice.toString())).toStringAsFixed(2)}</td>'
+                  '<td class="left">${(orderItem.quantity) * double.parse(orderItem.product!.saleigst.toString())}<p style="text-align:left"><small>(${gstrate}%)</small></p></td>'
+                  : '')+
+              '<td class="left">₹ ${((orderItem.quantity) * (orderItem.product?.sellingPrice ?? 0)).toStringAsFixed(2)}</td>'
+                  '</tr>';
+        else {
+          print("llll");
+          print(hsnAvailableFlag);
+          return '<tr>'
+              '<td class="left product-name">${orderItem.product?.name}</td>'
+              '<td class="left">${orderItem.quantity}</td>' +
+              (expirydateAvailableFlag
+                  ? orderItem.product!.expiryDate != null
+                  ? '<td class="left">${orderItem.product!.expiryDate!.day}/${orderItem.product!.expiryDate!.month}/${orderItem.product!.expiryDate!.year}</td>'
+                  : '<td class="left"> </td>'
+                  : '') +
+              (hsnAvailableFlag
+                  ? orderItem.product!.hsn != null
+                  ? '<td class="left"> ${orderItem.product!.hsn != 'null' ? orderItem.product!.hsn : ''}</td>'
+                  : '<td class="left"></td>'
+                  : '') +
+              '<td class="left">${(((orderItem.quantity) * double.parse(baseprice.toString()) + double.parse(orderItem.discountAmt![0] =='-' ? '0' : orderItem.discountAmt!))/(orderItem.quantity)).toStringAsFixed(2)}</td>'
+                  '<td class="left">₹ ${((orderItem.quantity) * double.parse(baseprice.toString()) + double.parse(orderItem.discountAmt![0] =='-' ? '0' : orderItem.discountAmt!)).toStringAsFixed(2)}</td>'
+              +
+              (atleastOneItemHaveDiscount
+                  ? orderItem.discountAmt != null && orderItem.discountAmt != "null" && orderItem.discountAmt != '' && orderItem.discountAmt![0] != '-'
+                  ? '<td class="left">${orderItem.discountAmt }</td>'
+                  : '<td class="left">0.0</td>'
+                  : '') +
+
+
+              (mrpAvailableFlag
+                  ? (orderItem.product!.mrp != null && orderItem.product!.mrp != 0.0)
+                  ? '<td class="left"> ${orderItem.product!.mrp!="null"?orderItem.product!.mrp :''}</td>'
+                  : ''
+                  : '') +
+              (atleastOneItemhaveGST
+                  ?  '<td class="left">₹ ${((orderItem.quantity) * double.parse(baseprice.toString())).toStringAsFixed(2)}</td>' +
                   '<td class="left">NA<p style="text-align:left"><small>(NA%)</small></p></td>'
-                      '<td class="left">₹ ${((orderItem.quantity) * (orderItem.product?.sellingPrice ?? 1)).toStringAsFixed(2)}</td>'
+                  :  '')+
+
+              '<td class="left">₹ ${((orderItem.quantity) * (orderItem.product?.sellingPrice ?? 1)).toStringAsFixed(2)}</td>'
                       '</tr>';
             }
           } else {
@@ -193,25 +261,65 @@ String invoiceTemplatewithGST({
               return '<tr>'
                   '<td class="left product-name">${orderItem.product?.name}</td>'
                   '<td class="left">${orderItem.quantity}</td>'
-                  '<td class="left">₹ ${baseprice.toStringAsFixed(2)}</td>'
-                  '<td class="left">${orderItem.product?.purchaseigst}<p style="text-align:left"><small>(${gstrate}%)</small></p></td>'
+                  '<td class="left">${baseprice.toStringAsFixed(2)}</td>'
+                  '<td class="left">₹ ${((orderItem.quantity) * double.parse(baseprice.toString())).toStringAsFixed(2)}</td>'
+              +
+              (atleastOneItemHaveDiscount
+                  ? orderItem.discountAmt != null && orderItem.discountAmt != "null" && orderItem.discountAmt != ''
+                  ? '<td class="left">${orderItem.discountAmt }</td>'
+                  : '<td class="left">0.0</td>'
+                  : '') +
+              (mrpAvailableFlag
+                  ? '<td class="left">${mrpAvailableFlag? orderItem.product?.mrp:''}</td>'
+                  : '') +
+              (atleastOneItemhaveGST
+                  ? '<td class="left">₹ ${((orderItem.quantity) * double.parse(baseprice.toString())).toStringAsFixed(2)}</td>'
+                  '<td class="left">${(orderItem.quantity) * double.parse(orderItem.product!.purchaseigst.toString())}<p style="text-align:left"><small>(${gstrate}%)</small></p></td>'
+                  : '')+
+
                   '<td class="left">₹ ${((orderItem.quantity) * (orderItem.product?.purchasePrice ?? 0)).toStringAsFixed(2)}</td>'
                   '</tr>';
             } else if (gstrate != "NA" && baseprice == 0) {
               return '<tr>'
                   '<td class="left product-name">${orderItem.product?.name}</td>'
                   '<td class="left">${orderItem.quantity}</td>'
-                  '<td class="left">₹ ${baseprice.toStringAsFixed(2)}</td>'
+                  '<td class="left">${baseprice.toStringAsFixed(2)}</td>'
+                  '<td class="left">₹ ${((orderItem.quantity) * double.parse(baseprice.toString())).toStringAsFixed(2)}</td>'
+              +
+              (atleastOneItemHaveDiscount
+                  ? orderItem.discountAmt != null && orderItem.discountAmt != "null" && orderItem.discountAmt != ''
+                  ? '<td class="left">${orderItem.discountAmt }</td>'
+                  : '<td class="left">0.0</td>'
+                  : '') +
+              (mrpAvailableFlag
+                  ? '<td class="left">${mrpAvailableFlag? orderItem.product?.mrp:''}</td>'
+                  : '') +
+              (atleastOneItemhaveGST
+                  ? '<td class="left">₹ ${((orderItem.quantity) * double.parse(baseprice.toString())).toStringAsFixed(2)}</td>'
                   '<td class="left">NA<p style="text-align:left"><small>(NA%)</small></p></td>'
-                  '<td class="left">₹ 0</td>'
+                  : '') +
+              '<td class="left">₹ 0</td>'
                   '</tr>';
             } else {
               return '<tr>'
                   '<td class="left product-name">${orderItem.product?.name}</td>'
                   '<td class="left">${orderItem.quantity}</td>'
-                  '<td class="left">₹ ${baseprice.toStringAsFixed(2)}</td>'
+                  '<td class="left">${baseprice.toStringAsFixed(2)}</td>'
+              '<td class="left">₹ ${((orderItem.quantity) * double.parse(baseprice.toString())).toStringAsFixed(2)}</td>'
+              +
+              (atleastOneItemHaveDiscount
+                  ? orderItem.discountAmt != null && orderItem.discountAmt != "null" && orderItem.discountAmt != ''
+                  ? '<td class="left">${orderItem.discountAmt }</td>'
+                  : '<td class="left">0.0</td>'
+                  : '') +
+              (mrpAvailableFlag
+                  ? '<td class="left">${mrpAvailableFlag? orderItem.product?.mrp:''}</td>'
+                  : '') +
+              (atleastOneItemhaveGST
+                  ? '<td class="left">₹ ${((orderItem.quantity) * double.parse(baseprice.toString())).toStringAsFixed(2)}</td>'
                   '<td class="left">NA<p style="text-align:left"><small>(NA%)</small></p></td>'
-                  '<td class="left">₹ ${((orderItem.quantity) * (orderItem.product?.purchasePrice ?? 0)).toStringAsFixed(2)}</td>'
+                  : '') +
+              '<td class="left">₹ ${((orderItem.quantity) * (orderItem.product?.purchasePrice ?? 0)).toStringAsFixed(2)}</td>'
                   '</tr>';
             }
           }
@@ -231,9 +339,19 @@ String invoiceTemplatewithGST({
       }
       .table {
         width: 100%;
+        table-layout: fixed;
       }
       .table th, .table td {
-        white-space: nowrap;
+        text-align: left;
+        padding: 8px;
+        border: 1px solid #ddd;
+      }
+      .table thead th {
+        background-color: #f2f2f2;
+        font-size: 11px;
+      }
+      tbody {
+        font-size: 11px;
       }
     .receiver {
               width: 250px;
@@ -267,6 +385,7 @@ String invoiceTemplatewithGST({
               ${addressRows()}
               <div>Email: ${user.email ?? ""}</div>
               <div>Phone: ${user.phoneNumber}</div>
+              ${user.dlNum == null ? "": "<div>DL Number: ${user.dlNum}</div>"}
             </div>
             <div class="receiver">
              ${billedTo()}
@@ -294,21 +413,26 @@ String invoiceTemplatewithGST({
               <tbody>
                 <tr>
                 <td></td>
-                <td></td>
-                <td></td>
-                  <td class="left">
-                    <strong>Sub Total</strong>
-                    <br>
-                    <strong>GST Total</strong>
-                    <br>
-                    <strong>Net Total</strong>
+                ${headers.contains("Discount")?"<td></td>":""}
+                ${headers.contains("HSN")?"<td></td>":""}
+                ${headers.contains("MRP")?"<td></td>":""}
+                ${headers.contains("Expiry")?"<td></td>":""}
+                ${headers.contains("Taxable value")?"<td></td>":""}
+                ${headers.contains("GST")?"<td></td>":""}
+                  <td class="right" colspan="2" align="right">
+                    
+                    ${(discountTotal != "null" && discountTotal != null && discountTotal != "" && double.parse(discountTotal) > 0.00)
+      ? "<strong>Total Amount </strong><br><strong>Discount</strong><br>" : ""}
+                     <strong>Sub Total</strong><br>
+                    ${atleastOneItemhaveGST ? "<strong>GST Total</strong><br>" : ""}
+                    <strong>Grand Total</strong>
                   </td>
-                  <td class="right">
-                    ₹ $subtotal
-                    <br>
-                    ₹ $gsttotal
-                    <br>
-                    ₹ $total
+                  <td class="right" colspan="2">
+                      ${(discountTotal != "null" && discountTotal != null && discountTotal != "" && double.parse(discountTotal) > 0.00) ?
+  "<div align=\"right\";>₹ $totalAmount </div><div align=\"right\";>₹ ${((double.parse(discountTotal)).toStringAsFixed(2))}</div>" : ""}
+                        <div align=\"right\";>₹ $subtotal</div>
+                      ${atleastOneItemhaveGST ? "<div align=\"right\";>₹ $gsttotal</div>" : ""}
+                      <div align="right";>₹ $total </div>
                   </td>
                 </tr>
               </tbody>

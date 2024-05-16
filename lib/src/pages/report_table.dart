@@ -38,8 +38,12 @@ class tableArg {
   final List<Expense>? expenses;
   final List<Product>? products;
   final String type;
+  final bool showNamePreference;
+  final bool salegstreport;
+  final bool purchasegstreport;
 
-  tableArg({this.orders, required this.type, this.expenses, this.products});
+  tableArg({this.orders, required this.type, this.expenses, this.products,required this.showNamePreference, required this.salegstreport, required this.purchasegstreport
+  });
 }
 
 class ReportTable extends StatefulWidget {
@@ -73,6 +77,10 @@ class _ReportTableState extends State<ReportTable> {
   List<String> discountAmt = [];
   List<String> invoiceNum = [];
   List<String> orginalbasePurchasePrice = [];
+  List<String> names = [];
+  bool _showNamePreference = false;
+  bool _salegstreport = false;
+  bool _purchasegstreport = false;
 
   String taxfileType = "initailized";
 
@@ -88,10 +96,18 @@ class _ReportTableState extends State<ReportTable> {
   @override
   void initState() {
     super.initState();
+    _salegstreport = widget.args.salegstreport;
+    _purchasegstreport = widget.args.purchasegstreport;
+    _showNamePreference = widget.args.showNamePreference;
     if (widget.args.type == "ReportType.sale" || widget.args.type == "ReportType.purchase" || widget.args.type == "ReportType.estimate" || widget.args.type == "ReportType.saleReturn") {
+      print("line 78 in report table");
       itemSPRows();
+      print("line 80 in report table");
+      print(datelist.length);
+      print(estimateNum.length);
       datelist.add("");
       timelist.add("");
+      names.add("");
       estimateNum.add("");
       partynamelist.add("");
       productnamelist.add("");
@@ -118,38 +134,60 @@ class _ReportTableState extends State<ReportTable> {
       'Party',
       'Mode of Payment',
       'Product',
-      'Hsn',
+      // 'Hsn',
       "Rate",
       "Discount",
-      "Taxable value", // 'Amount/Unit',
-      'GST Rate',
-      'CGST',
-      'SGST',
-      'GST',
+      // "Taxable value", // 'Amount/Unit',
+      // 'GST Rate',
+      // 'CGST',
+      // 'SGST',
+      // 'GST',
       'Total',
     ];
+    if (_salegstreport)  {
+      headersS.insert(5, 'HSN');
+      headersS.insert(8, 'GST');
+      headersS.insert(8, 'SGST');
+      headersS.insert(8, 'CGST');
+      headersS.insert(8, 'GST Rate');
+      headersS.insert(8, 'Taxable value');
+    }
+    if(_showNamePreference) {
+      headersS.insert(2, 'Name');
+    }
     final headersSaleReturn = [
       'Date',
       'Time',
       'Invoice No',
       'Party',
       'Product',
-      'Hsn',
+      // 'HSN',
       "Rate",
       "Discount",
-      "Taxable value", // 'Amount/Unit',
-      'GST Rate',
-      'CGST',
-      'SGST',
-      'GST',
+      // "Taxable value", // 'Amount/Unit',
+      // 'GST Rate',
+      // 'CGST',
+      // 'SGST',
+      // 'GST',
       'Total',
     ];
+    if (_salegstreport)  {
+      headersSaleReturn.insert(5, 'HSN');
+      headersSaleReturn.insert(8, 'GST');
+      headersSaleReturn.insert(8, 'SGST');
+      headersSaleReturn.insert(8, 'CGST');
+      headersSaleReturn.insert(8, 'GST Rate');
+      headersSaleReturn.insert(8, 'Taxable value');
+    }
+    if(_showNamePreference) {
+      headersSaleReturn.insert(2, 'Name');
+    }
     final headersEstimate = [
       'Date',
       'Time',
       'Estimate No',
       'Product',
-      'Hsn',
+      'HSN',
       "Rate",
       "Discount",
       "Taxable value", // 'Amount/Unit',
@@ -159,22 +197,37 @@ class _ReportTableState extends State<ReportTable> {
       'GST',
       'Total',
     ];
+
+    if(_showNamePreference) {
+      headersEstimate.insert(2, 'Name');
+    }
     final headersP = [
       'Date',
       'Time',
       'Party',
       'Mode of Payment',
       'Product',
-      'Hsn',
+      // 'HSN',
       "Rate",
       "Discount",
-      "Taxable value", // 'Amount/Unit',
-      'GST Rate',
-      'CGST',
-      'SGST',
-      'GST',
+      // "Taxable value", // 'Amount/Unit',
+      // 'GST Rate',
+      // 'CGST',
+      // 'SGST',
+      // 'GST',
       'Total',
     ];
+    if (_purchasegstreport)  {
+      headersP.insert(5, 'HSN');
+      headersP.insert(8, 'GST');
+      headersP.insert(8, 'SGST');
+      headersP.insert(8, 'CGST');
+      headersP.insert(8, 'GST Rate');
+      headersP.insert(8, 'Taxable value');
+    }
+    if(_showNamePreference) {
+      headersP.insert(2, 'Name');
+    }
 
     final headersQuaterly = [
       'Date',
@@ -209,6 +262,8 @@ class _ReportTableState extends State<ReportTable> {
         );
       }
     } else if (widget.args.type == "ReportType.purchase") {
+      print("lline 212 in report table");
+      print(headersP.length);
       return List.generate(
         headersP.length,
         (int index) => DataColumn(
@@ -254,6 +309,10 @@ class _ReportTableState extends State<ReportTable> {
 
   showSaleRow() {
     if (taxfileType == "quarterly") {
+
+      // print(partynamelist[0]);
+      // print(partynamelist[1]);
+      // print(partynametoFilter);
       List<DataRow> list = [];
       var total = 0;
       for (int i = 0; i < datelist.length; i++) {
@@ -262,7 +321,7 @@ class _ReportTableState extends State<ReportTable> {
             DataCell(Text(datelist[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(timelist[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(partynamelist[i], style: TextStyle(fontSize: 6))),
-            DataCell(Text(moplist[i].map((map) => "${map['mode'] ?? "N/A"} : ${map['amount'] ?? ""}")
+            DataCell(Text(moplist[i].map((map) => "${map['mode'] ?? " "} : ${map['amount'] ?? ""}")
                 .join(', '), style: TextStyle(fontSize: 6))),
             DataCell(Text(productnamelist[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(mrplist[i], style: TextStyle(fontSize: 6))),
@@ -278,7 +337,7 @@ class _ReportTableState extends State<ReportTable> {
           DataCell(Text(datelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
           DataCell(Text(timelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
           DataCell(Text(partynamelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          DataCell(Text(moplist[datelist.length - 1].map((map) => "${map['mode'] ?? "N/A"} : ${map['amount'] ?? ""}")
+          DataCell(Text(moplist[datelist.length - 1].map((map) => "${map['mode'] ?? " "} : ${map['amount'] ?? ""}")
               .join(', '), style: TextStyle(fontSize: 6))),
           DataCell(Text(productnamelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
           DataCell(Text(mrplist[datelist.length - 1], style: TextStyle(fontSize: 6))),
@@ -288,6 +347,8 @@ class _ReportTableState extends State<ReportTable> {
 
       return list;
     } else {
+      print("line 219 in report table.dart");
+      // print(invoiceNum[0]);
       List<DataRow> list = [];
 
       /* for printing in the last row */
@@ -341,8 +402,14 @@ class _ReportTableState extends State<ReportTable> {
 
       //adding cells in the report table
       for (int i = 0; i < datelist.length; i++) {
+        // print('partynametofiler= $partynametoFilter');
+        // print("1: ${partynamelist[i] == partynametoFilter}");
+        // print("2: ${moplist[i].any((map)=> map['mode']==filterPaymentModeSelected)}");
+        // print("3: ${partynametoFilter == "" && filterPaymentModeSelected==""}");
+        // print("mop list at i=$i is ${moplist[i]}");
+        // print(totalsplist[i]);
         if ((partynamelist[i] == partynametoFilter && partynametoFilter!="") || moplist[i].any((map)=> map['mode']==filterPaymentModeSelected) ||(partynametoFilter == "" && filterPaymentModeSelected=="")) {
-
+          // print(moplist[i].toString());
           if (i != datelist.length - 1 && totalsplist[i].length != 0 && totalsplist[i] != "null") total += double.parse(totalsplist[i]);
 
           if (i != datelist.length - 1 && basesplist[i].length != 0 && basesplist[i] != "N/A" && basesplist[i] != "null") basesplitTotal += double.parse(basesplist[i]);
@@ -351,47 +418,99 @@ class _ReportTableState extends State<ReportTable> {
           if (i != datelist.length - 1 && sgstlist[i].length != 0 && sgstlist[i] != "N/A" && sgstlist[i] != "null") sgstTotal += double.parse(sgstlist[i]);
           if (i != datelist.length - 1 && igstlist[i].length != 0 && igstlist[i] != "N/A" && igstlist[i] != "null") igstTotal += double.parse(igstlist[i]);
           if (i != datelist.length - 1 && mrplist[i].length != 0 && mrplist[i] != "N/A" && mrplist[i] != "null") mrpTotal += double.parse(mrplist[i]);
-          list.add(DataRow(cells: [
+          List<DataCell> cells = [
             DataCell(Text(datelist[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(timelist[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(invoiceNum[i], style: TextStyle(fontSize: 6),)),
             DataCell(Text(partynamelist[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(i == datelist.length - 1 ? totalMop :
-                moplist[i].map((map) => "${map['mode'] ?? "N/A"} : ${map['amount'] ?? ""}").join(', '), style: TextStyle(fontSize: 6))),
+            moplist[i].map((map) => "${map['mode'] ?? " "} : ${map['amount'] ?? ""}").join(', '), style: TextStyle(fontSize: 6))),
+            /*used if cash credit bankTransfer UPI would be 4 different columns*/
+            // DataCell(Text(moplist[i].isEmpty? "":
+            //     moplist[i].firstWhere((entry) => entry['mode'] == 'Cash',orElse: () => {'amount': 'N/A'})['amount'].toString(),style: TextStyle(fontSize: 6))),
+            // DataCell(Text(moplist[i].isEmpty? "":
+            //     moplist[i].firstWhere((entry) => entry['mode'] == 'Bank Transfer',orElse: () => {'amount': 'N/A'})['amount'].toString(), style: TextStyle(fontSize: 6))),
+            // DataCell(Text(moplist[i].isEmpty? "":
+            //     moplist[i].firstWhere((entry) => entry['mode'] == 'UPI',orElse: () => {'amount': 'N/A'})['amount'].toString(), style: TextStyle(fontSize: 6))),
+            // DataCell(Text(moplist[i].isEmpty? "":
+            //     moplist[i].firstWhere((entry) => entry['mode'] == 'Credit',orElse: () => {'amount': 'N/A'})['amount'].toString(), style: TextStyle(fontSize: 6))),
+
             DataCell(Text(productnamelist[i], style: TextStyle(fontSize: 6))),
-            DataCell(Text(hsn[i], style: TextStyle(fontSize: 6))),
+            // DataCell(Text(hsn[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(orginalbasePurchasePrice[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(discountAmt[i], style: TextStyle(fontSize: 6))),
-            DataCell(Text(i == datelist.length - 1 ? basesplitTotal.toStringAsFixed(2) : basesplist[i], style: TextStyle(fontSize: 6))),
-            DataCell(Text(gstratelist[i], style: TextStyle(fontSize: 6))),
-            DataCell(Text(i == datelist.length - 1 ? cgstTotal.toStringAsFixed(2) : cgstlist[i], style: TextStyle(fontSize: 6))),
-            DataCell(Text(i == datelist.length - 1 ? sgstTotal.toStringAsFixed(2) : sgstlist[i], style: TextStyle(fontSize: 6))),
-            DataCell(Text(i == datelist.length - 1 ? igstTotal.toStringAsFixed(2) : igstlist[i], style: TextStyle(fontSize: 6))),
+            ///
+            // DataCell(Text(i == datelist.length - 1 ? basesplitTotal.toStringAsFixed(2) : basesplist[i], style: TextStyle(fontSize: 6))),
+            // DataCell(Text(gstratelist[i], style: TextStyle(fontSize: 6))),
+            // DataCell(Text(i == datelist.length - 1 ? cgstTotal.toStringAsFixed(2) : cgstlist[i], style: TextStyle(fontSize: 6))),
+            // DataCell(Text(i == datelist.length - 1 ? sgstTotal.toStringAsFixed(2) : sgstlist[i], style: TextStyle(fontSize: 6))),
+            // DataCell(Text(i == datelist.length - 1 ? igstTotal.toStringAsFixed(2) : igstlist[i], style: TextStyle(fontSize: 6))),
             // DataCell(Text(i == datelist.length - 1 ? mrpTotal.toStringAsFixed(2) : mrplist[i], style: TextStyle(fontSize: 6))),
             DataCell(Text(totalsplist[i], style: TextStyle(fontSize: 6))),
-          ]));
+          ];
+          if(_salegstreport) {
+            cells.insert(8, DataCell(Text(i == datelist.length - 1 ? igstTotal.toStringAsFixed(2) : igstlist[i], style: TextStyle(fontSize: 6))),);
+            cells.insert(8, DataCell(Text(i == datelist.length - 1 ? sgstTotal.toStringAsFixed(2) : sgstlist[i], style: TextStyle(fontSize: 6))),);
+            cells.insert(8, DataCell(Text(i == datelist.length - 1 ? cgstTotal.toStringAsFixed(2) : cgstlist[i], style: TextStyle(fontSize: 6))),);
+            cells.insert(8, DataCell(Text(gstratelist[i], style: TextStyle(fontSize: 6))),);
+            cells.insert(8, DataCell(Text(i == datelist.length - 1 ? basesplitTotal.toStringAsFixed(2) : basesplist[i], style: TextStyle(fontSize: 6))),);
+            cells.insert(6, DataCell(Text(hsn[i], style: TextStyle(fontSize: 6))),);
+          }
+          if(_showNamePreference) {
+            cells.insert(2, DataCell(Text(names[i], style: TextStyle(fontSize: 6),)),);
+          }
+
+          list.add(DataRow(cells: cells));
         }
       }
-      if (partynametoFilter != ""|| filterPaymentModeSelected!="")
-        list.add(DataRow(cells: [
+      if (partynametoFilter != "" || filterPaymentModeSelected!=""){//for adding the last row in the table
+        print("line 277 in report table.dart");
+        print(datelist[datelist.length - 1]);
+        List<DataCell> cells = [
           DataCell(Text(datelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
           DataCell(Text(timelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
           DataCell(Text(invoiceNum[datelist.length - 1], style: TextStyle(fontSize: 6),)),
           DataCell(Text(partynamelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          DataCell(Text(moplist[datelist.length - 1].map((map) => "${map['mode'] ?? "N/A"} : ${map['amount'] ?? ""}")
+          DataCell(Text(moplist[datelist.length - 1].map((map) => "${map['mode'] ?? " "} : ${map['amount'] ?? ""}")
               .join(', '), style: TextStyle(fontSize: 6))),
+          // DataCell(Text(moplist[datelist.length-1].isEmpty? "":
+          //     moplist[datelist.length-1].firstWhere((entry) => entry['mode'] == 'Cash',orElse: () => {'amount': 'N/A'})['amount'].toString(), style: TextStyle(fontSize: 6))),
+          // DataCell(Text(moplist[datelist.length-1].isEmpty? "":
+          //     moplist[datelist.length-1].firstWhere((entry) => entry['mode'] == 'Bank Transfer',orElse: () => {'amount': 'N/A'})['amount'].toString(), style: TextStyle(fontSize: 6))),
+          // DataCell(Text(moplist[datelist.length-1].isEmpty? "":
+          //     moplist[datelist.length-1].firstWhere((entry) => entry['mode'] == 'UPI',orElse: () => {'amount': 'N/A'})['amount'].toString(), style: TextStyle(fontSize: 6))),
+          // DataCell(Text(moplist[datelist.length-1].isEmpty? "":
+          //     moplist[datelist.length-1].firstWhere((entry) => entry['mode'] == 'Credit',orElse: () => {'amount': 'N/A'})['amount'].toString(), style: TextStyle(fontSize: 6))),
+
           DataCell(Text(productnamelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          DataCell(Text(hsn[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          ///
+          // DataCell(Text(hsn[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          ///
           DataCell(Text(orginalbasePurchasePrice[datelist.length - 1], style: TextStyle(fontSize: 6))),
           DataCell(Text(discountAmt[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          DataCell(Text(basesplist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          DataCell(Text(gstratelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          DataCell(Text(cgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          DataCell(Text(sgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          DataCell(Text(igstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // ///
+          // DataCell(Text(basesplist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(gstratelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(cgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(sgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(igstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // ///
           // DataCell(Text(mrplist[datelist.length - 1], style: TextStyle(fontSize: 6))),
           DataCell(Text(total.toStringAsFixed(2), style: TextStyle(fontSize: 6))),
-        ]));
+        ];
+        if(_salegstreport) {
+          cells.insert(8, DataCell(Text(igstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+          cells.insert(8,DataCell(Text(sgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+          cells.insert(8, DataCell(Text(cgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+          cells.insert(8, DataCell(Text(gstratelist[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+          cells.insert(8, DataCell(Text(basesplist[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+          cells.insert(6, DataCell(Text(hsn[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+        }
+        if(_showNamePreference) {
+          cells.insert(2, DataCell(Text(names[datelist.length-1], style: TextStyle(fontSize: 6),)),);
+        }
+        list.add(DataRow(cells: cells));
+      }
       return list;
     }
   }
@@ -417,11 +536,110 @@ class _ReportTableState extends State<ReportTable> {
         if (i != datelist.length - 1 && sgstlist[i].length != 0 && sgstlist[i] != "N/A" && sgstlist[i] != "null") sgstTotal += double.parse(sgstlist[i]);
         if (i != datelist.length - 1 && igstlist[i].length != 0 && igstlist[i] != "N/A" && igstlist[i] != "null") igstTotal += double.parse(igstlist[i]);
         if (i != datelist.length - 1 && mrplist[i].length != 0 && mrplist[i] != "N/A" && mrplist[i] != "null") mrpTotal += double.parse(mrplist[i]);
+        List<DataCell> cells = [
+          DataCell(Text(datelist[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(timelist[i], style: TextStyle(fontSize: 6))),
+          ///
+          // DataCell(Text(names[i], style: TextStyle(fontSize: 6),)),
+          DataCell(Text(invoiceNum[i], style: TextStyle(fontSize: 6),)),
+          DataCell(Text(partynamelist[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(productnamelist[i], style: TextStyle(fontSize: 6))),
+          ///
+          // DataCell(Text(hsn[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(orginalbasePurchasePrice[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(discountAmt[i], style: TextStyle(fontSize: 6))),
+          ///
+          // DataCell(Text(i == datelist.length - 1 ? basesplitTotal.toStringAsFixed(2) : basesplist[i], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(gstratelist[i], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(i == datelist.length - 1 ? cgstTotal.toStringAsFixed(2) : cgstlist[i], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(i == datelist.length - 1 ? sgstTotal.toStringAsFixed(2) : sgstlist[i], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(i == datelist.length - 1 ? igstTotal.toStringAsFixed(2) : igstlist[i], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(i == datelist.length - 1 ? mrpTotal.toStringAsFixed(2) : mrplist[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(totalsplist[i], style: TextStyle(fontSize: 6))),
+        ];
+        if(_salegstreport) {
+          cells.insert(8, DataCell(Text(i == datelist.length - 1 ? igstTotal.toStringAsFixed(2) : igstlist[i], style: TextStyle(fontSize: 6))),);
+          cells.insert(8, DataCell(Text(i == datelist.length - 1 ? sgstTotal.toStringAsFixed(2) : sgstlist[i], style: TextStyle(fontSize: 6))),);
+          cells.insert(8, DataCell(Text(i == datelist.length - 1 ? cgstTotal.toStringAsFixed(2) : cgstlist[i], style: TextStyle(fontSize: 6))),);
+          cells.insert(8, DataCell(Text(gstratelist[i], style: TextStyle(fontSize: 6))),);
+          cells.insert(8, DataCell(Text(i == datelist.length - 1 ? basesplitTotal.toStringAsFixed(2) : basesplist[i], style: TextStyle(fontSize: 6))),);
+          cells.insert(6, DataCell(Text(hsn[i], style: TextStyle(fontSize: 6))),);
+        }
+        if(_showNamePreference) {
+          cells.insert(2, DataCell(Text(names[i], style: TextStyle(fontSize: 6),)),);
+        }
+        list.add(DataRow(cells: cells));;
+      }
+    }
+    if (partynametoFilter != "" || filterPaymentModeSelected!=""){
+      print("line 277 in report table.dart");
+      List<DataCell> cells = [
+        DataCell(Text(datelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        DataCell(Text(timelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        ///
+        // DataCell(Text(names[datelist.length - 1], style: TextStyle(fontSize: 6),)),
+        DataCell(Text(invoiceNum[datelist.length - 1], style: TextStyle(fontSize: 6),)),
+        DataCell(Text(partynamelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        DataCell(Text(productnamelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        ///
+        // DataCell(Text(hsn[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        DataCell(Text(orginalbasePurchasePrice[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        DataCell(Text(discountAmt[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        ///
+        // DataCell(Text(basesplist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        // DataCell(Text(gstratelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        // DataCell(Text(cgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        // DataCell(Text(sgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        // DataCell(Text(igstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        // DataCell(Text(mrplist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        DataCell(Text(total.toString(), style: TextStyle(fontSize: 6))),
+      ];
+      if(_salegstreport) {
+        cells.insert(8, DataCell(Text(igstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+        cells.insert(8,DataCell(Text(sgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+        cells.insert(8, DataCell(Text(cgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+        cells.insert(8, DataCell(Text(gstratelist[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+        cells.insert(8, DataCell(Text(basesplist[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+        cells.insert(6, DataCell(Text(hsn[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+      }
+      if(_showNamePreference) {
+        cells.insert(2, DataCell(Text(names[datelist.length-1], style: TextStyle(fontSize: 6),)),);
+      }
+
+      list.add(DataRow(cells: cells));
+    }
+    // print("printing list in 287 in reporttable");
+    // print(list[0].toString());
+    return list;
+  }
+  showEstimateRow(){
+    List<DataRow> list = [];
+
+    double total = 0;
+    double basesplitTotal = 0;
+    double gstrateTotal = 0;
+    double cgstTotal = 0;
+    double sgstTotal = 0;
+    double igstTotal = 0;
+    double mrpTotal = 0;
+
+    for (int i = 0; i < datelist.length; i++) {
+      if ((partynamelist[i] == partynametoFilter && partynametoFilter!="") || moplist[i].any((map)=> map['mode']==filterPaymentModeSelected) ||(partynametoFilter == "" && filterPaymentModeSelected=="")) {
+        print("line 452 in report table.dart");
+        if (i != datelist.length - 1 && totalsplist[i].length != 0 && totalsplist[i] != "null") total += double.parse(totalsplist[i]);
+
+        if (i != datelist.length - 1 && basesplist[i].length != 0 && basesplist[i] != "N/A" && basesplist[i] != "null") basesplitTotal += double.parse(basesplist[i]);
+        if (i != datelist.length - 1 && gstratelist[i].length != 0 && gstratelist[i] != "N/A%" && gstratelist[i] != "null%") gstrateTotal += double.parse(gstratelist[i].split("%")[0]);
+        if (i != datelist.length - 1 && cgstlist[i].length != 0 && cgstlist[i] != "N/A" && cgstlist[i] != "null") cgstTotal += double.parse(cgstlist[i]);
+        if (i != datelist.length - 1 && sgstlist[i].length != 0 && sgstlist[i] != "N/A" && sgstlist[i] != "null") sgstTotal += double.parse(sgstlist[i]);
+        if (i != datelist.length - 1 && igstlist[i].length != 0 && igstlist[i] != "N/A" && igstlist[i] != "null") igstTotal += double.parse(igstlist[i]);
+        if (i != datelist.length - 1 && mrplist[i].length != 0 && mrplist[i] != "N/A" && mrplist[i] != "null") mrpTotal += double.parse(mrplist[i]);
+        _showNamePreference ?
         list.add(DataRow(cells: [
           DataCell(Text(datelist[i], style: TextStyle(fontSize: 6))),
           DataCell(Text(timelist[i], style: TextStyle(fontSize: 6))),
-          DataCell(Text(invoiceNum[i], style: TextStyle(fontSize: 6),)),
-          DataCell(Text(partynamelist[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(names[i], style: TextStyle(fontSize: 6),)),
+          DataCell(Text(estimateNum[i], style: TextStyle(fontSize: 6),)),
           DataCell(Text(productnamelist[i], style: TextStyle(fontSize: 6))),
           DataCell(Text(hsn[i], style: TextStyle(fontSize: 6))),
           DataCell(Text(orginalbasePurchasePrice[i], style: TextStyle(fontSize: 6))),
@@ -433,31 +651,53 @@ class _ReportTableState extends State<ReportTable> {
           DataCell(Text(i == datelist.length - 1 ? igstTotal.toStringAsFixed(2) : igstlist[i], style: TextStyle(fontSize: 6))),
           // DataCell(Text(i == datelist.length - 1 ? mrpTotal.toStringAsFixed(2) : mrplist[i], style: TextStyle(fontSize: 6))),
           DataCell(Text(totalsplist[i], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(datelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(timelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(estimateNum[datelist.length - 1], style: TextStyle(fontSize: 6),)),
+          // DataCell(Text(productnamelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(hsn[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(orginalbasePurchasePrice[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(discountAmt[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(basesplist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(gstratelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(cgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(sgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(igstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(mrplist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(total.toString(), style: TextStyle(fontSize: 6))),
+        ])):
+        list.add(DataRow(cells: [
+          DataCell(Text(datelist[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(timelist[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(estimateNum[i], style: TextStyle(fontSize: 6),)),
+          DataCell(Text(productnamelist[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(hsn[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(orginalbasePurchasePrice[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(discountAmt[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(i == datelist.length - 1 ? basesplitTotal.toStringAsFixed(2) : basesplist[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(gstratelist[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(i == datelist.length - 1 ? cgstTotal.toStringAsFixed(2) : cgstlist[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(i == datelist.length - 1 ? sgstTotal.toStringAsFixed(2) : sgstlist[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(i == datelist.length - 1 ? igstTotal.toStringAsFixed(2) : igstlist[i], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(i == datelist.length - 1 ? mrpTotal.toStringAsFixed(2) : mrplist[i], style: TextStyle(fontSize: 6))),
+          DataCell(Text(totalsplist[i], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(datelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(timelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(estimateNum[datelist.length - 1], style: TextStyle(fontSize: 6),)),
+          // DataCell(Text(productnamelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(hsn[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(orginalbasePurchasePrice[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(discountAmt[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(basesplist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(gstratelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(cgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(sgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(igstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(mrplist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(total.toString(), style: TextStyle(fontSize: 6))),
         ]));
       }
     }
-    if (partynametoFilter != "" || filterPaymentModeSelected!=""){
-      print("line 277 in report table.dart");
-      list.add(DataRow(cells: [
-        DataCell(Text(datelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(timelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(invoiceNum[datelist.length - 1], style: TextStyle(fontSize: 6),)),
-        DataCell(Text(partynamelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(productnamelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(hsn[datelist.length - 1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(orginalbasePurchasePrice[datelist.length - 1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(discountAmt[datelist.length - 1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(basesplist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(gstratelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(cgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(sgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(igstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-        // DataCell(Text(mrplist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(total.toString(), style: TextStyle(fontSize: 6))),
-      ]));
-    }
-    // print("printing list in 287 in reporttable");
-    // print(list[0].toString());
     return list;
   }
 
@@ -522,102 +762,90 @@ class _ReportTableState extends State<ReportTable> {
         if (index != datelist.length - 1 && sgstlist[index].length != 0 && sgstlist[index] != "N/A" && basesplist[index] != "null") sgstTotal += double.parse(sgstlist[index]);
         if (index != datelist.length - 1 && igstlist[index].length != 0 && igstlist[index] != "N/A" && basesplist[index] != "null") igstTotal += double.parse(igstlist[index]);
         if (index != datelist.length - 1 && mrplist[index].length != 0 && mrplist[index] != "N/A" && basesplist[index] != "null") mrpTotal += double.parse(mrplist[index]);
-
-        list.add(DataRow(cells: [
+        List<DataCell> cells = [
           DataCell(Text(datelist[index], style: TextStyle(fontSize: 6))),
           DataCell(Text(timelist[index], style: TextStyle(fontSize: 6))),
+
+          ///
+          //DataCell(Text(names[index], style: TextStyle(fontSize: 6))),
           DataCell(Text(partynamelist[index], style: TextStyle(fontSize: 6))),
           DataCell(Text(index == datelist.length - 1 ? totalMop :
-              moplist[index].map((map) => "${map['mode'] ?? "N/A"} : ${map['amount'] ?? ""}").join(', '), style: TextStyle(fontSize: 6))),
+          moplist[index].map((map) => "${map['mode'] ?? " "} : ${map['amount'] ?? ""}").join(', '), style: TextStyle(fontSize: 6))),
           DataCell(Text(productnamelist[index], style: TextStyle(fontSize: 6))),
-          DataCell(Text(hsn[index], style: TextStyle(fontSize: 6))),
+          ///
+          // DataCell(Text(hsn[index], style: TextStyle(fontSize: 6))),
           DataCell(Text(orginalbasePurchasePrice[index], style: TextStyle(fontSize: 6))),
           DataCell(Text(discountAmt[index], style: TextStyle(fontSize: 6))),
-          DataCell(Text(index == datelist.length - 1 ? basesplitTotal.toStringAsFixed(2) : basesplist[index], style: TextStyle(fontSize: 6))),
-          DataCell(Text(gstratelist[index], style: TextStyle(fontSize: 6))),
-          DataCell(Text(index == datelist.length - 1 ? cgstTotal.toStringAsFixed(2) : cgstlist[index], style: TextStyle(fontSize: 6))),
-          DataCell(Text(index == datelist.length - 1 ? sgstTotal.toStringAsFixed(2) : sgstlist[index], style: TextStyle(fontSize: 6))),
-          DataCell(Text(index == datelist.length - 1 ? igstTotal.toStringAsFixed(2) : igstlist[index], style: TextStyle(fontSize: 6))),
+          ///
+          // DataCell(Text(index == datelist.length - 1 ? basesplitTotal.toStringAsFixed(2) : basesplist[index], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(gstratelist[index], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(index == datelist.length - 1 ? cgstTotal.toStringAsFixed(2) : cgstlist[index], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(index == datelist.length - 1 ? sgstTotal.toStringAsFixed(2) : sgstlist[index], style: TextStyle(fontSize: 6))),
+          // DataCell(Text(index == datelist.length - 1 ? igstTotal.toStringAsFixed(2) : igstlist[index], style: TextStyle(fontSize: 6))),
+
           // DataCell(Text(index == datelist.length - 1 ? mrpTotal.toStringAsFixed(2) : mrplist[index], style: TextStyle(fontSize: 6))),
           DataCell(Text(totalsplist[index], style: TextStyle(fontSize: 6))),
-        ]));
+        ];
+        if (_purchasegstreport) {
+          cells.insert(7, DataCell(Text(index == datelist.length - 1
+              ? igstTotal.toStringAsFixed(2)
+              : igstlist[index], style: TextStyle(fontSize: 6))),);
+          cells.insert(7, DataCell(Text(index == datelist.length - 1
+              ? sgstTotal.toStringAsFixed(2)
+              : sgstlist[index], style: TextStyle(fontSize: 6))),);
+          cells.insert(7, DataCell(Text(index == datelist.length - 1
+              ? cgstTotal.toStringAsFixed(2)
+              : cgstlist[index], style: TextStyle(fontSize: 6))),);
+          cells.insert(7,
+            DataCell(Text(gstratelist[index], style: TextStyle(fontSize: 6))),);
+          cells.insert(7, DataCell(Text(index == datelist.length - 1
+              ? basesplitTotal.toStringAsFixed(2)
+              : basesplist[index], style: TextStyle(fontSize: 6))),);
+          cells.insert(
+            5, DataCell(Text(hsn[index], style: TextStyle(fontSize: 6))),);
+        }
+        if (_showNamePreference) {
+          cells.insert(
+            2, DataCell(Text(names[index], style: TextStyle(fontSize: 6),)),);
+        }
+        list.add(DataRow(cells: cells));
       }
     }
 
-    if (partynametoFilter != "" || filterPaymentModeSelected!="")
-      list.add(DataRow(cells: [
+    if (partynametoFilter != "" || filterPaymentModeSelected != "") {
+      List<DataCell> cells = [
         DataCell(Text(datelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
         DataCell(Text(timelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
         DataCell(Text(partynamelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(moplist[datelist.length - 1].map((map) => "${map['mode'] ?? "N/A"} : ${map['amount'] ?? ""}")
+        DataCell(Text(moplist[datelist.length - 1].map((map) => "${map['mode'] ?? " "} : ${map['amount'] ?? ""}")
             .join(', '), style: TextStyle(fontSize: 6))),
         DataCell(Text(productnamelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(hsn[datelist.length-1], style: TextStyle(fontSize: 6))),
+        // DataCell(Text(hsn[datelist.length - 1], style: TextStyle(fontSize: 6))),
         DataCell(Text(orginalbasePurchasePrice[datelist.length-1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(gstratelist[datelist.length-1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(cgstlist[datelist.length-1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(sgstlist[datelist.length-1], style: TextStyle(fontSize: 6))),
-        DataCell(Text(igstlist[datelist.length-1], style: TextStyle(fontSize: 6))),
+        // DataCell(Text(
+        //     gstratelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        // DataCell(
+        //     Text(cgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        // DataCell(
+        //     Text(sgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
+        // DataCell(
+        //     Text(igstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
         // DataCell(Text(mrplist[datelist.length-1], style: TextStyle(fontSize: 6))),
         DataCell(Text("", style: TextStyle(fontSize: 6))),
         DataCell(Text(" ", style: TextStyle(fontSize: 6))),
         DataCell(Text(total.toStringAsFixed(2), style: TextStyle(fontSize: 6))),
-      ]));
-    return list;
-  }
-  showEstimateRow(){
-    List<DataRow> list = [];
-
-    double total = 0;
-    double basesplitTotal = 0;
-    double gstrateTotal = 0;
-    double cgstTotal = 0;
-    double sgstTotal = 0;
-    double igstTotal = 0;
-    double mrpTotal = 0;
-
-    for (int i = 0; i < datelist.length; i++) {
-      if ((partynamelist[i] == partynametoFilter && partynametoFilter!="") || moplist[i].any((map)=> map['mode']==filterPaymentModeSelected) ||(partynametoFilter == "" && filterPaymentModeSelected=="")) {
-        print("line 452 in report table.dart");
-        if (i != datelist.length - 1 && totalsplist[i].length != 0 && totalsplist[i] != "null") total += double.parse(totalsplist[i]);
-
-        if (i != datelist.length - 1 && basesplist[i].length != 0 && basesplist[i] != "N/A" && basesplist[i] != "null") basesplitTotal += double.parse(basesplist[i]);
-        if (i != datelist.length - 1 && gstratelist[i].length != 0 && gstratelist[i] != "N/A%" && gstratelist[i] != "null%") gstrateTotal += double.parse(gstratelist[i].split("%")[0]);
-        if (i != datelist.length - 1 && cgstlist[i].length != 0 && cgstlist[i] != "N/A" && cgstlist[i] != "null") cgstTotal += double.parse(cgstlist[i]);
-        if (i != datelist.length - 1 && sgstlist[i].length != 0 && sgstlist[i] != "N/A" && sgstlist[i] != "null") sgstTotal += double.parse(sgstlist[i]);
-        if (i != datelist.length - 1 && igstlist[i].length != 0 && igstlist[i] != "N/A" && igstlist[i] != "null") igstTotal += double.parse(igstlist[i]);
-        if (i != datelist.length - 1 && mrplist[i].length != 0 && mrplist[i] != "N/A" && mrplist[i] != "null") mrpTotal += double.parse(mrplist[i]);
-        list.add(DataRow(cells: [
-          DataCell(Text(datelist[i], style: TextStyle(fontSize: 6))),
-          DataCell(Text(timelist[i], style: TextStyle(fontSize: 6))),
-          DataCell(Text(estimateNum[i], style: TextStyle(fontSize: 6),)),
-          DataCell(Text(productnamelist[i], style: TextStyle(fontSize: 6))),
-          DataCell(Text(hsn[i], style: TextStyle(fontSize: 6))),
-          DataCell(Text(orginalbasePurchasePrice[i], style: TextStyle(fontSize: 6))),
-          DataCell(Text(discountAmt[i], style: TextStyle(fontSize: 6))),
-          DataCell(Text(i == datelist.length - 1 ? basesplitTotal.toStringAsFixed(2) : basesplist[i], style: TextStyle(fontSize: 6))),
-          DataCell(Text(gstratelist[i], style: TextStyle(fontSize: 6))),
-          DataCell(Text(i == datelist.length - 1 ? cgstTotal.toStringAsFixed(2) : cgstlist[i], style: TextStyle(fontSize: 6))),
-          DataCell(Text(i == datelist.length - 1 ? sgstTotal.toStringAsFixed(2) : sgstlist[i], style: TextStyle(fontSize: 6))),
-          DataCell(Text(i == datelist.length - 1 ? igstTotal.toStringAsFixed(2) : igstlist[i], style: TextStyle(fontSize: 6))),
-          // DataCell(Text(i == datelist.length - 1 ? mrpTotal.toStringAsFixed(2) : mrplist[i], style: TextStyle(fontSize: 6))),
-          DataCell(Text(totalsplist[i], style: TextStyle(fontSize: 6))),
-          // DataCell(Text(datelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          // DataCell(Text(timelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          // DataCell(Text(estimateNum[datelist.length - 1], style: TextStyle(fontSize: 6),)),
-          // DataCell(Text(productnamelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          // DataCell(Text(hsn[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          // DataCell(Text(orginalbasePurchasePrice[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          // DataCell(Text(discountAmt[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          // DataCell(Text(basesplist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          // DataCell(Text(gstratelist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          // DataCell(Text(cgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          // DataCell(Text(sgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          // DataCell(Text(igstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          // DataCell(Text(mrplist[datelist.length - 1], style: TextStyle(fontSize: 6))),
-          // DataCell(Text(total.toString(), style: TextStyle(fontSize: 6))),
-        ]));
+      ];
+      if(_purchasegstreport) {
+        cells.insert(6, DataCell(Text(igstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+        cells.insert(6,DataCell(Text(sgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+        cells.insert(6, DataCell(Text(cgstlist[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+        cells.insert(6, DataCell(Text(gstratelist[datelist.length - 1], style: TextStyle(fontSize: 6))),);
+        cells.insert(5, DataCell(Text(hsn[datelist.length - 1], style: TextStyle(fontSize: 6))),);
       }
+      if(_showNamePreference) {
+        cells.insert(2, DataCell(Text(names[datelist.length-1], style: TextStyle(fontSize: 6),)),);
+      }
+      list.add(DataRow(cells: cells));
     }
     return list;
   }
@@ -695,12 +923,14 @@ class _ReportTableState extends State<ReportTable> {
     return widget.args.orders!.map((Order e) {
       print("line 430 in report table");
       // print(e.estimateNum);
+      int len = e.orderItems!.length;
       return e.orderItems!.map((OrderItemInput item) {
         // print(e.user!.type);
         taxfileType = e.user?.type ?? "notdone";
         if (breakruler != DateFormat('hh:mm a').format(DateTime.tryParse(e.createdAt.toString())!)) {
           datelist.add("");
           timelist.add("");
+          names.add("");
           estimateNum.add("");
           partynamelist.add("");
           productnamelist.add("");
@@ -719,6 +949,7 @@ class _ReportTableState extends State<ReportTable> {
         }
         datelist.add(DateFormat('dd MMM, yyyy').format(DateTime.tryParse(e.createdAt.toString())!));
         timelist.add(DateFormat('hh:mm a').format(DateTime.tryParse(e.createdAt.toString())!));
+        names.add((e.subUserName != null && e.subUserName != "" ? e.subUserName : (e.userName != null && e.userName != "" ? e.userName : (e.user?.name != null && e.user?.name != "" ? e.user?.name : "N/A")))!);
         partynamelist.add(e.party?.name ?? "N/A");
         productnamelist.add("${item.quantity} x ${item.product?.name ?? ""}");
         gstratelist.add("${item.product?.gstRate == "null" || item.product?.gstRate == null ? "N/A" : (item.product?.gstRate != "null" ? item.product?.gstRate : "N/A")}%");
@@ -739,15 +970,20 @@ class _ReportTableState extends State<ReportTable> {
             ? mrplist.add("${item.price?.toStringAsFixed(2)}") : mrplist.add("${item.product?.purchasePrice == "null" || item.product?.purchasePrice == null ? "N/A" : item.product?.purchasePrice}");
         hsn.add("${item.product?.hsn == "null" || item.product?.hsn == null ? "N/A" : item.product?.hsn}");
         discountAmt.add("${item.discountAmt == "null" ? "N/A" : item.discountAmt}");
-
-        invoiceNum.add("${e.invoiceNum == null ? "N/A" : e.invoiceNum}");
+        if(len == 1)
+          invoiceNum.add("${e.invoiceNum == null ? "N/A" : e.invoiceNum}");
+        else
+          invoiceNum.add("");
         estimateNum.add("${e.estimateNum == null? "N/A": e.estimateNum}");
         orginalbasePurchasePrice.add(item.product?.sellingPrice=="null" || item.product?.sellingPrice==null ? "N/A" : "${item.product?.sellingPrice}");
         widget.args.type == "ReportType.sale" || widget.args.type == "ReportType.estimate"
             ? totalsplist.add("${((item.quantity) * (item.price ?? 0)).toStringAsFixed(2)}") : totalsplist.add("${((item.quantity) * (item.product?.purchasePrice ?? 0)).toStringAsFixed(2)}");
-
-        moplist.add(e.modeOfPayment ?? [{"N/A":0}]);
+        if(len == 1)
+          moplist.add(e.modeOfPayment ?? [{"N/A":0}]);
+        else
+          moplist.add([{'mode': null}]);
         breakruler = DateFormat('hh:mm a').format(DateTime.tryParse(e.createdAt.toString())!);
+        len--;
       }).toList();
     }).toList();
   }
@@ -866,7 +1102,7 @@ class _ReportTableState extends State<ReportTable> {
       'Invoice No',
       'Party',
       'Product',
-      'Hsn',
+      'HSN',
       "Rate",
       "Discount",
       "Taxable value", // 'Amount/Unit',
@@ -915,6 +1151,7 @@ class _ReportTableState extends State<ReportTable> {
   }
 
   saleExcelReport() async {
+    print('line 509 in report_table.dart');
     final headersSP = [
       'Date',
       'Time',
@@ -922,7 +1159,7 @@ class _ReportTableState extends State<ReportTable> {
       'Party',
       'M.O.P.',
       'Product',
-      'Hsn',
+      'HSN',
       "Rate",
       "Discount",
       "Taxable value", // 'Amount/Unit',
@@ -947,7 +1184,7 @@ class _ReportTableState extends State<ReportTable> {
         sheet.getRangeByIndex(i + 2, 2).setText(timelist[i]);
         sheet.getRangeByIndex(i + 2, 3).setText(invoiceNum[i]);
         sheet.getRangeByIndex(i + 2, 4).setText(partynamelist[i]);
-        sheet.getRangeByIndex(i + 2, 5).setText(moplist[i].map((map) => "${map['mode'] ?? "N/A"} : ${map['amount'] ?? ""}")
+        sheet.getRangeByIndex(i + 2, 5).setText(moplist[i].map((map) => "${map['mode'] ?? " "} : ${map['amount'] ?? ""}")
             .join(', '));
         sheet.getRangeByIndex(i + 2, 6).setText(productnamelist[i]);
         sheet.getRangeByIndex(i + 2, 7).setText(mrplist[i]);
@@ -957,7 +1194,7 @@ class _ReportTableState extends State<ReportTable> {
         sheet.getRangeByIndex(i + 2, 2).setText(timelist[i]);
         sheet.getRangeByIndex(i + 2, 3).setText(invoiceNum[i]);
         sheet.getRangeByIndex(i + 2, 4).setText(partynamelist[i]);
-        sheet.getRangeByIndex(i + 2, 5).setText(moplist[i].map((map) => "${map['mode'] ?? "N/A"} : ${map['amount'] ?? ""}")
+        sheet.getRangeByIndex(i + 2, 5).setText(moplist[i].map((map) => "${map['mode'] ?? " "} : ${map['amount'] ?? ""}")
             .join(', '));
         sheet.getRangeByIndex(i + 2, 6).setText(productnamelist[i]);
         sheet.getRangeByIndex(i + 2, 7).setText(hsn[i]);
@@ -1004,7 +1241,7 @@ class _ReportTableState extends State<ReportTable> {
       'Time',
       'Estimate No',
       'Product',
-      'Hsn',
+      'HSN',
       "Rate",
       "Discount",
       "Taxable value", // 'Amount/Unit',
@@ -1058,7 +1295,7 @@ class _ReportTableState extends State<ReportTable> {
       'Party',
       'M.O.P.',
       'Product',
-      'Hsn',
+      'HSN',
       "Rate",
       "Discount",
       "Taxable value", // 'Amount/Unit',
@@ -1082,7 +1319,7 @@ class _ReportTableState extends State<ReportTable> {
         sheet.getRangeByIndex(i + 2, 1).setText(datelist[i]);
         sheet.getRangeByIndex(i + 2, 2).setText(timelist[i]);
         sheet.getRangeByIndex(i + 2, 3).setText(partynamelist[i]);
-        sheet.getRangeByIndex(i + 2, 4).setText(moplist[i].map((map) => "${map['mode'] ?? "N/A"} : ${map['amount'] ?? ""}")
+        sheet.getRangeByIndex(i + 2, 4).setText(moplist[i].map((map) => "${map['mode'] ?? " "} : ${map['amount'] ?? ""}")
             .join(', '));
         sheet.getRangeByIndex(i + 2, 5).setText(productnamelist[i]);
         sheet.getRangeByIndex(i + 2, 6).setText(mrplist[i]);
@@ -1455,7 +1692,7 @@ class _ReportTableState extends State<ReportTable> {
   kotHistory() async {
     Map<String, dynamic> salesResponse = await SalesService.getSingleSaleOrder(invoiceNumController.text);
     Order order = Order.fromMap(salesResponse['salesOrder']);
-    print("order.kotId is ${order.kotId.runtimeType} and value is ${order.kotId}");
+    print("order.kotId is ${order.kotId.runtimeType}");
     if(order.kotId != 'null'){
       Navigator.pop(context);
       _showKotHistory(order.kotId!);
@@ -1578,6 +1815,8 @@ class _ReportTableState extends State<ReportTable> {
     if (widget.args.type == "ReportType.estimate") {
       Map<String, dynamic> estimateResponse =
           await EstimateService.getEstimate(estimateNumController.text);
+      print("line 1106 in report table");
+      print(estimateResponse['estimate']['_id']);
       Order orders = Order.fromMap(estimateResponse['estimate']);
       print(orders.businessName);
       Navigator.pushNamed(context, CreateEstimate.routeName,

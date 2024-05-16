@@ -121,7 +121,7 @@ class _HomePageState extends State<HomePage> {
           if (state is HomeRender) {
             return Scaffold(
               appBar: AppBar(
-                title: Text(state.user.businessName ?? ""),
+                title: Text("Hi ${((state.user.name == null || state.user.name == "") ? state.user.businessName : state.user.name) }!"),
                 centerTitle: true,
               ),
               drawer: Drawer(
@@ -162,7 +162,7 @@ class _HomePageState extends State<HomePage> {
                         title: Title(
                           color: Colors.black,
                           child: Text(
-                            state.user.businessName ?? "",
+                            ((state.user.name == null || state.user.name == "") ? state.user.businessName : state.user.name)!,
                           ),
                         ),
                         subtitle: Text(

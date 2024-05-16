@@ -95,6 +95,7 @@ class ReportCubit extends Cubit<ReportState> {
   _emitSalesReport(Response res, [bool isDownload = false]) {
     final data = res.data['sales'];
     final orders = data.map<Order>((item) => Order.fromMap(item)).toList();
+    print("came in report-cubit line 98");
     emit(isDownload
         ? ReportsDownload(orders: orders)
         : ReportsView(orders: orders));

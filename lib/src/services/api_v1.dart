@@ -28,6 +28,14 @@ class ApiV1Service {
     return cj;
   }
 
+  void intercept(CookieManager cm) {
+    _dio.interceptors.add(cm);
+  }
+  void remIntercept() {
+    _dio.interceptors.clear();
+  }
+
+
   static Future<PersistCookieJar> getCookieJar() async {
     Directory tempDir = await getTemporaryDirectory();
     final tempPath = tempDir.path;

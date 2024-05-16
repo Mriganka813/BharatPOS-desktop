@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shopos/src/blocs/report/report_cubit.dart';
 import 'package:shopos/src/config/colors.dart';
 import 'package:shopos/src/models/input/report_input.dart';
@@ -35,14 +36,25 @@ class _ReportsPageState extends State<ReportsPage> {
   final TextEditingController pinController = TextEditingController();
   PinService _pinService = PinService();
 
+  bool showNamePref = false;
+  bool salegstreport = false;
+  bool purchasegstreport = false;
+  late SharedPreferences prefs;
   ///
   @override
   void initState() {
     super.initState();
+    init();
     _reportCubit = ReportCubit();
     _pdfService = PdfService();
   }
 
+  init() async {
+    prefs = await SharedPreferences.getInstance();
+    showNamePref = (await prefs.getBool('show-name-preference'))!;
+    salegstreport = (await prefs.getBool('sale-gst-preference'))!;
+    purchasegstreport = (await prefs.getBool('purchase-gst-preference'))!;
+  }
   ///
   @override
   void dispose() {
@@ -62,18 +74,25 @@ class _ReportsPageState extends State<ReportsPage> {
   void _handleReportsView(ReportsView state) async {
     if (state.expenses != null) {
       Navigator.pushNamed(context, ReportTable.routeName,
-          arguments: tableArg(
-              expenses: state.expenses, type: _reportInput.type.toString()));
+        arguments: tableArg(
+          expenses: state.expenses, type: _reportInput.type.toString(), showNamePreference: showNamePref,
+          salegstreport: salegstreport, purchasegstreport: purchasegstreport,
+
+        ),);
     }
     if (state.orders != null) {
+      print("line 65 in reports.dart");
       Navigator.pushNamed(context, ReportTable.routeName,
-          arguments: tableArg(
-              orders: state.orders, type: _reportInput.type.toString()));
+        arguments: tableArg(
+          orders: state.orders, type: _reportInput.type.toString(), showNamePreference: showNamePref,
+          salegstreport: salegstreport, purchasegstreport: purchasegstreport,),);
     }
     if (state.product != null) {
+      print("linen 71 in reports.dart");
       Navigator.pushNamed(context, ReportTable.routeName,
-          arguments: tableArg(
-              products: state.product, type: _reportInput.type.toString()));
+        arguments: tableArg(
+          products: state.product, type: _reportInput.type.toString(), showNamePreference: showNamePref,
+          salegstreport: salegstreport, purchasegstreport: purchasegstreport,),);
     }
   }
 
@@ -94,7 +113,8 @@ class _ReportsPageState extends State<ReportsPage> {
           setState(() {
             _showLoader = false;
           });
-//Lottie
+
+          //Lottie
           if(state is ReportLoading){
             Navigator.push(
               context,
@@ -120,15 +140,12 @@ class _ReportsPageState extends State<ReportsPage> {
           padding: const EdgeInsets.all(20.0),
           child: Form(
             key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
+            child: SingleChildScrollView(
+              child: Container(
+                height: 800,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Container(
-                      width: 500,
-                      child: Column(
-                        children: [
                           CheckboxListTile(
                             controlAffinity: ListTileControlAffinity.leading,
                             value: _reportInput.type == ReportType.sale,
@@ -206,12 +223,8 @@ class _ReportsPageState extends State<ReportsPage> {
                               _toggleReportType(ReportType.estimate);
                             },
                             title: const Text("Estimate Report"),
-                          ),
-                        ],
-                      ),
                     ),
-                    Column(
-                      children: [
+                    const SizedBox(height: 40),
                         CustomDatePicker(
                           label: 'Start date',
                           hintText: 'dd/mm/yyyy',
@@ -256,12 +269,9 @@ class _ReportsPageState extends State<ReportsPage> {
                             return null;
                           },
                           value: _reportInput.endDate,
-                        ),
-                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 40),
+
+                const SizedBox(height: 70,),
                 const Spacer(),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -278,7 +288,9 @@ class _ReportsPageState extends State<ReportsPage> {
                     ),
                   ],
                 ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -292,7 +304,10 @@ class _ReportsPageState extends State<ReportsPage> {
         locator<GlobalServices>().errorSnackBar("Please select a report type");
         return;
       }
-
+      // setState(() {
+      //   _showLoader = true;
+      // });
+      // locator<GlobalServices>().showBottomSheetLoader();
       bool status = await _pinService.pinStatus();
       bool todayFlag = false;
       String current_date = await ReportService().getCurrentDate();

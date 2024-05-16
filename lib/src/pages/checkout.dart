@@ -602,6 +602,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       purchasesInvoiceNo++;
     }
     generatePdf(
+
       fileName: "Invoice",
       date: widget.args.order.createdAt.toString() ?? "",
       companyName: user.businessName ?? "",
@@ -610,6 +611,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       totalPrice: totalPrice() ?? '',
       subtotal: totalbasePrice(),
       gstTotal: totalgstPrice(),
+      totalAmount: (double.parse(totalDiscount()!)+double.parse(totalbasePrice()!)).toStringAsFixed(2) ?? "",
+      discountTotal: totalDiscount() ?? "",
       gstType: 'WithGST',
       dlNum: dlNumController.text,
       orderType: widget.args.invoiceType,
@@ -750,7 +753,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return widget.args.order.orderItems?.fold<double>(
         0,
             (acc, curr){
-          return double.parse(curr.discountAmt)+acc;
+          return double.parse(curr.discountAmt!)+acc;
         }
     ).toStringAsFixed(2);
   }
@@ -1613,86 +1616,174 @@ class _CheckoutPageState extends State<CheckoutPage> {
           },
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-        child: Container(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if(convertToSale)
-                  Expanded(
-                    child: Container(
-                      width: MediaQuery.of(context).size.width*0.8,
-                      child: CustomButton(
-                          style: Theme.of(context)
-                              .textTheme
-                              .headline6
-                              ?.copyWith(color: Colors.white, fontSize: 18),
-                          title: "Submit",
-                          onTap: (){
-                            _onTapSubmit();
-                          }),
-                    ),
-                  ),
-                if((shareButtonPref == true && convertToSale == false) || (shareButtonPref == false && widget.args.canEdit == false))
-                  Visibility(
-                    visible: !_loadingShareButton,
-                    child: Expanded(
-                      child: CustomButton(
-                        title: "Share",
-                        onTap: () async {
-                          try {
-                            final res = await UserService.me();
-                            if ((res.statusCode ?? 400) < 300) {
-                              final user = User.fromMap(res.data['user']);
+      bottomNavigationBar: BlocBuilder<CheckoutCubit, CheckoutState>(
+        bloc: _checkoutCubit,
+        builder: (context, state) {
+          if(state is CheckoutLoading) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+              child: Container(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if(convertToSale)
+                        Expanded(
+                          child: Container(
+                            width: MediaQuery.of(context).size.width*0.8,
+                            child: CustomButton(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headline6
+                                    ?.copyWith(color: Colors.white, fontSize: 18),
+                                title: "Submit",
+                                onTap: (){
+                                  _onTapSubmit();
+                                }),
+                          ),
+                        ),
+                      if((shareButtonPref == true && convertToSale == false) || (shareButtonPref == false && widget.args.canEdit == false))
+                        Visibility(
+                          visible: !_loadingShareButton,
+                          child: Expanded(
+                            child: CustomButton(
+                              title: "Share",
+                              onTap: () async {
+                                try {
+                                  final res = await UserService.me();
+                                  if ((res.statusCode ?? 400) < 300) {
+                                    final user = User.fromMap(res.data['user']);
 
-                              openShareModal(context, user, false);
-                            }
-                          } catch (_) {}
-                        },
-                        type: ButtonType.outlined,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 30,
-                          vertical: 10,
+                                    openShareModal(context, user, false);
+                                  }
+                                } catch (_) {}
+                              },
+                              type: ButtonType.outlined,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 30,
+                                vertical: 10,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (widget.args.canEdit != false)
+                        if(!convertToSale)
+                          SizedBox(width: 20,),
+
+                      if (widget.args.canEdit != false)
+                        if(!convertToSale)
+                          Expanded(
+                            child: CustomButton(
+                                onTap: () {
+                                  // _onTapSubmit();
+                                },
+                                title: 'Save',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headline6
+                                    ?.copyWith(color: Colors.white, fontSize: 16)
+                            ),
+                          )
+                      // TextButton(
+                      //   onPressed: () {
+                      //     _onTapSubmit();
+                      //   },
+                      //   style: TextButton.styleFrom(
+                      //     backgroundColor: ColorsConst.primaryColor,
+                      //     shape: const CircleBorder(),
+                      //   ),
+                      //   child: const Icon(
+                      //     Icons.arrow_forward_rounded,
+                      //     size: 40,
+                      //     color: Colors.white,
+                      //   ),
+                      // )
+                    ],
+                  )
+              ),
+            );
+          }
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+            child: Container(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if(convertToSale)
+                      Expanded(
+                        child: Container(
+                          width: MediaQuery.of(context).size.width*0.8,
+                          child: CustomButton(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headline6
+                                  ?.copyWith(color: Colors.white, fontSize: 18),
+                              title: "Submit",
+                              onTap: (){
+                                _onTapSubmit();
+                              }),
                         ),
                       ),
-                    ),
-                  ),
-                if (widget.args.canEdit != false)
-                  if(!convertToSale)
-                SizedBox(width: 20,),
+                    if((shareButtonPref == true && convertToSale == false) || (shareButtonPref == false && widget.args.canEdit == false))
+                      Visibility(
+                        visible: !_loadingShareButton,
+                        child: Expanded(
+                          child: CustomButton(
+                            title: "Share",
+                            onTap: () async {
+                              try {
+                                final res = await UserService.me();
+                                if ((res.statusCode ?? 400) < 300) {
+                                  final user = User.fromMap(res.data['user']);
 
-                if (widget.args.canEdit != false)
-                  if(!convertToSale)
-                    Expanded(
-                      child: CustomButton(
-                          onTap: () {
-                            _onTapSubmit();
-                          },
-                          title: 'Save',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headline6
-                              ?.copyWith(color: Colors.white, fontSize: 16)
+                                  openShareModal(context, user, false);
+                                }
+                              } catch (_) {}
+                            },
+                            type: ButtonType.outlined,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 30,
+                              vertical: 10,
+                            ),
+                          ),
+                        ),
                       ),
-                    )
-                // TextButton(
-                //   onPressed: () {
-                //     _onTapSubmit();
-                //   },
-                //   style: TextButton.styleFrom(
-                //     backgroundColor: ColorsConst.primaryColor,
-                //     shape: const CircleBorder(),
-                //   ),
-                //   child: const Icon(
-                //     Icons.arrow_forward_rounded,
-                //     size: 40,
-                //     color: Colors.white,
-                //   ),
-                // )
-              ],
-            )
-        ),
+                    if (widget.args.canEdit != false)
+                      if(!convertToSale)
+                    SizedBox(width: 20,),
+
+                    if (widget.args.canEdit != false)
+                      if(!convertToSale)
+                        Expanded(
+                          child: CustomButton(
+                              onTap: () {
+                                _onTapSubmit();
+                              },
+                              title: 'Save',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headline6
+                                  ?.copyWith(color: Colors.white, fontSize: 16)
+                          ),
+                        )
+                    // TextButton(
+                    //   onPressed: () {
+                    //     _onTapSubmit();
+                    //   },
+                    //   style: TextButton.styleFrom(
+                    //     backgroundColor: ColorsConst.primaryColor,
+                    //     shape: const CircleBorder(),
+                    //   ),
+                    //   child: const Icon(
+                    //     Icons.arrow_forward_rounded,
+                    //     size: 40,
+                    //     color: Colors.white,
+                    //   ),
+                    // )
+                  ],
+                )
+            ),
+          );
+        }
       ),
 
     );
@@ -1764,6 +1855,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         }
       }
 
+      _checkoutCubit.loading();
       salesInvoiceNo = await _checkoutCubit.getSalesNum() as int;
       purchasesInvoiceNo = await _checkoutCubit.getPurchasesNum() as int;
       estimateNo = await _checkoutCubit.getEstimateNum() as int;

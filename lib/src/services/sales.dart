@@ -26,6 +26,7 @@ class SalesService {
         'businessName': orderItemInput.businessName,
         'businessAddress': orderItemInput.businessAddress,
         'gst': orderItemInput.gst,
+        'subUserName' : orderItemInput.subUserName ?? "NIL",
       },
     );
     print("printing response of sale");

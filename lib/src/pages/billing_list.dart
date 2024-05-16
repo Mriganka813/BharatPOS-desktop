@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -25,7 +27,9 @@ import 'package:shopos/src/widgets/pdf_kot_template.dart';
 import '../blocs/billing/billing_cubit.dart';
 import '../config/colors.dart';
 import '../models/input/kot_model.dart';
+import '../models/product.dart';
 import '../services/api_v1.dart';
+import '../services/background_service.dart';
 import '../services/billing_service.dart';
 import '../services/global.dart';
 import '../services/kot_services.dart';
@@ -85,13 +89,21 @@ class _BillingListScreenState extends State<BillingListScreen> {
   //   _orderType = provider.getAllOrderType();
   // }
   Timer? timer;
+  Timer? buzzertimer;
+  int _dialogCount = 0;
   String date = '';
   bool autoRefreshPref = false;
   bool showReadySwitch = false;
+  bool showNamePref = false;
+  bool buzzerSoundPref = false;
   late SharedPreferences prefs;
   final TextEditingController pinController = TextEditingController();
   PinService _pinService = PinService();
   late final BillingCubit _billingCubit;
+  final AudioCache _audioCache = AudioCache(
+    prefix: 'assets/audio/',
+  );
+  final player = AudioPlayer();
   bool showOption = false;
   TextEditingController tableNoController = TextEditingController();
   @override
@@ -100,13 +112,31 @@ class _BillingListScreenState extends State<BillingListScreen> {
     super.initState();
     fetchNTPTime();
     init();
-    _billingCubit = BillingCubit()..getBillingOrders();
+
+    _billingCubit = BillingCubit()..getBillingOrders()..getQrOrders();
+
     // startTimer();
   }
 
   void startTimer() {
     print("timer started");
     timer = Timer.periodic(Duration(seconds: 30), (_) => refreshPage());
+  }
+  void startBuzzer() {
+
+    // scheduleAlarm('New order received', '');
+    player.play(UrlSource('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg'));
+    // _audioCache.load('telephone_ring.mp3');
+    buzzertimer = Timer.periodic(Duration(seconds: 10), (timer) {
+      // _audioCache.load('telephone_ring.mp3');
+      // player.play(AssetSource('audio/telephone_ring.mp3'));
+      player.play(UrlSource('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg'));
+      print("Timer.tick = ${timer.tick}");
+      // scheduleAlarm('New order received', '');
+    });
+    return;
+
+
   }
   // @override
   // void dispose() {
@@ -120,12 +150,16 @@ class _BillingListScreenState extends State<BillingListScreen> {
 
   void refreshPage() {
     _billingCubit.getBillingOrders();
+    _billingCubit.getQrOrders();
     // print("Function executed!");
   }
   init() async {
     prefs = await SharedPreferences.getInstance();
+    buzzerSoundPref = (await prefs.getBool('buzzer-qr-order-preference'))!;
+    // buzzerSoundPref = true;
     autoRefreshPref = (await prefs.getBool('refresh-pending-orders-preference'))!;
     showReadySwitch = (await prefs.getBool('ready-orders-preference'))!;
+    showNamePref = (await prefs.getBool('show-name-preference'))!;
     if(autoRefreshPref)
       startTimer();
   }
@@ -140,7 +174,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
             (acc, curr){
           // print(acc);
           // print(curr.discountAmt);
-          return double.parse(curr.discountAmt)+acc;
+          return double.parse(curr.discountAmt!)+acc;
         }
     ).toStringAsFixed(2);
   }
@@ -612,6 +646,30 @@ class _BillingListScreenState extends State<BillingListScreen> {
                 print("state is billing success");
                 _billingCubit.getBillingOrders();
               }
+              if(state is BillingQrDialog) {
+
+                timer?.cancel();
+                print("buzzertimer stopped");
+                if(state.qrOrders.isNotEmpty)  {
+                  if(buzzerSoundPref)
+                    startBuzzer();
+                  print("BUZZER Started");
+                  state.qrOrders.forEach((element) {
+                    _dialogCount++;
+                    // initializeService();
+
+                    _showQrDialog(element);
+                    print("k = ");
+                  });
+
+
+                }
+                else {
+                  startTimer();
+                }
+                print("dialog count: $_dialogCount");
+
+              }
             },
             child: BlocBuilder<BillingCubit, BillingState>(
               bloc: _billingCubit,
@@ -624,7 +682,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
                       ),
                     ),
                   );
-                }else if(state is BillingListRender){
+                }
+                else if(state is BillingListRender){
                   List<Order> _allBills = state.bills;
                   print("_allBills length is ${_allBills.length}");
                   return Column(
@@ -662,7 +721,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
                         GridView.builder(
                           gridDelegate:
                           SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2, mainAxisExtent: 250),
+                              crossAxisCount: 2, mainAxisExtent: MediaQuery.of(context).size.height *0.4
+                          ),
                           shrinkWrap: true,
                           itemCount: widget.orderType == OrderType.sale
                               ? _allBills.length
@@ -735,10 +795,14 @@ class _BillingListScreenState extends State<BillingListScreen> {
                               },
                               child: Card(
                                 elevation: 2,
+
+
+
                                 // color: Theme.of(context).scaffoldBackgroundColor,
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
                                   child: Column(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       // Divider(color: Colors.black54),
                                       // Text(
@@ -794,7 +858,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                       const SizedBox(height: 5),
 
                                       const SizedBox(height: 5),
-                                      Divider(color: Colors.black54),
+                                      Divider(color: Colors.black54, height: 5,),
                                       const SizedBox(height: 5),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -806,7 +870,22 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                           ),
                                         ],
                                       ),
-
+                                      // SizedBox(height: showNamePref ?  5 : 0),
+                                      showNamePref ?
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Name'),
+                                          Text(
+                                            (_allBills[index].subUserName != '' && _allBills[index].subUserName != null)
+                                                ? '${_allBills[index].subUserName}' :
+                                            ((_allBills[index].userName != '' && _allBills[index].userName != null) ? '${_allBills[index].userName}' :
+                                            '${_allBills[index].user!.businessName ?? ""}'
+                                            ),
+                                            style: TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                        ],
+                                      ) : SizedBox(height:  0 ,),
                                       const SizedBox(height: 5),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -947,7 +1026,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                                             ),
                                           )
                                         ],
-                                      )
+                                      ),
                                       // Divider(color: Colors.black54),
                                       // const Divider(color: Colors.transparent),
                                     ],
@@ -959,7 +1038,7 @@ class _BillingListScreenState extends State<BillingListScreen> {
                         ),
                       ),
                   ]
-                );
+                                  );
                 }
 
                 return const Center(
@@ -1013,6 +1092,212 @@ class _BillingListScreenState extends State<BillingListScreen> {
       },
     );
   }
+  Future<bool?> _showQrDialog(Order order) {
+    final provider = Provider.of<Billing>(context, listen: false);
+
+    return showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        actionsPadding: EdgeInsets.all(20),
+
+        title: Center(child: Text('Table No ${order.tableNo}', style: TextStyle(fontWeight: FontWeight.bold),)),
+        content: Container(
+          height: 100,
+          width: 100,
+          child: ListView.builder(
+            itemCount: order.orderItems!.length,
+            itemBuilder: (context, index){
+              return ListTile(
+                title: Text('${order.orderItems![index].quantity}x   ${order.orderItems![index].product!.name}'),
+              );
+            },),
+        ),
+        actionsAlignment: MainAxisAlignment.spaceBetween,
+
+        actions: [
+          TextButton(
+            onPressed: () {
+              // Handle reject action
+              _dialogCount--;
+              print(" On reject dialog count: $_dialogCount");
+              if(_dialogCount == 0) {
+                if(buzzerSoundPref) {
+                  buzzertimer?.cancel();
+                  flutterLocalNotificationsPlugin.cancelAll();
+                }
+                print("buzzertimer stopped");
+                startTimer();
+                print("Timer started by Dialog");
+                // _billingCubit.getBillingOrders();
+              }
+              _billingCubit.deleteQrOrder(order.objId.toString());
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            style: ButtonStyle(
+              fixedSize: MaterialStateProperty.all<Size>(Size.fromWidth(100)),
+
+              shape: MaterialStateProperty.all<OutlinedBorder>(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(100),
+                ),
+              ),
+              backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(5.0),
+              child: FittedBox( // Ensures text maintains constant font size
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'Reject',
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async{
+              _dialogCount--;
+              print("\n\n On accept dialog count: $_dialogCount\n\n");
+              if(_dialogCount == 0) {
+                if(buzzerSoundPref) {
+                  buzzertimer?.cancel();
+                  flutterLocalNotificationsPlugin.cancelAll();
+                }
+                print("buzzertimer stopped");
+                startTimer();
+                print("Timer started by Dialog");
+                // _billingCubit.getBillingOrders();
+              }
+              order.kotId = DateTime.now().toString();
+              await insertToDatabase(provider, order);
+              _billingCubit.acceptQrOrder(order.objId.toString(), order);
+              // Handle accept action
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            style: ButtonStyle(
+              fixedSize: MaterialStateProperty.all<Size>(Size.fromWidth(100)),
+              shape: MaterialStateProperty.all<OutlinedBorder>(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(100),
+                ),
+              ),
+              backgroundColor: MaterialStateProperty.all<Color>(Colors.green),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(5.0),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'Accept',
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  insertToDatabase(Billing provider, Order _Order) async {
+
+
+    Kot _kot = Kot(kotId: _Order.kotId,items: []);
+    List<Item> kotItems = [];
+    // int id = await DatabaseHelper().InsertOrder(_Order, provider, newAddedItems!);
+
+    List<Product> Kotlist = [];
+    //remove all from kotList, add all products from _Order to kotList while comparing to _currOrder
+    // print("_currOrder length in line 326 is ${_prevOrder.orderItems?.length}");
+    // if(_prevOrder.orderItems!.length != 0){//no matter we can clear kot list anyway
+    print("clearing kot list");
+    Kotlist.clear();
+    // }
+    for(int i = 0; i < _Order.orderItems!.length; i++){
+      Product? product = _Order.orderItems?[i].product;
+      product?.quantityToBeSold = _Order.orderItems?[i].quantity;
+      // print("product name is ${product!.name} and quantity to be sold is ${product.quantityToBeSold}");
+      String? productId = _Order.orderItems?[i].product?.id;
+      //todo: all the working will be done by orderItems.quantity
+
+      //add the product as it is because it is new product added
+      print("adding in kot list");
+      Kotlist.add(_Order.orderItems![i].product!);
+
+    }
+
+    //if user is editing the order and have removed any products
+    //checks from Previously saved Order and compares
+
+
+
+    var tempMap = CountNoOfitemIsList(Kotlist);
+    print("inserting to database");
+    print("temp map is $tempMap");
+    print("kotlist length is ${Kotlist.length} and kotlist is $Kotlist");
+    Kotlist.forEach((element) {
+      print("---kotList for each loop running---");
+      if(tempMap['${element.id}'] > 0){//to remove those items which has 0 quantity in kotList
+        print("kot model name: ${element.name!}, qtycount :${tempMap['${element.id}']}");
+        //Making Item object for kot api
+        Item item = Item(name: element.name, quantity: tempMap['${element.id}'], createdAt: DateTime.now());
+        kotItems.add(item);
+
+        // var model = KotModel(id, element.name!, tempMap['${element.id}'], "no");//for local database
+        // kotItemlist.add(model);//for local database
+      }
+    });
+
+
+    //adding items to _kot object
+    _kot.items = kotItems;
+    for (int i = 0; i  < kotItems.length; i++) {
+      print("\nKOTITEM = ${kotItems[i]}\n");
+    }
+    await KOTService.createKot(_kot);
+
+
+    // billingCubit.getBillingOrders();
+    // print(resp);
+    // DatabaseHelper().insertKot(kotItemlist);
+  }
+  Map CountNoOfitemIsList(List<Product> temp) {
+    var tempMap = {};
+
+    for (int i = 0; i < temp.length; i++) {
+      if (!tempMap.containsKey("${temp[i].id}")) {
+        // for (int j = i + 1; j < temp.length; j++) {
+        //   if (temp[i].id == temp[j].id) {
+        //     count++;
+        //     print("count =$count");
+        //   }
+        // }
+        temp[i].quantityToBeSold = roundToDecimalPlaces(temp[i].quantityToBeSold!, 4);
+        if(temp[i].quantityToBeSold != 0)
+          tempMap["${temp[i].id}"] = temp[i].quantityToBeSold;
+      }
+    }
+    print("temp map is $tempMap");
+
+    for (int i = 0; i < temp.length; i++) {
+      for (int j = i + 1; j < temp.length; j++) {
+        if (temp[i].id == temp[j].id) {
+          temp.removeAt(j);
+          j--;
+        }
+      }
+    }
+
+    return tempMap;
+  }
+  double roundToDecimalPlaces(double value, int decimalPlaces) {
+    final factor = pow(10, decimalPlaces).toDouble();
+    return (value * factor).round() / factor;
+  }
+
   Widget currentdate(DateTime createdAt) {
     var datereq = DateFormat.MMMM().format(createdAt);
 

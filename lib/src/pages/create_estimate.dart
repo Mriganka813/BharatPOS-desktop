@@ -71,8 +71,8 @@ class _CreateEstimateState extends State<CreateEstimate> {
 
   void _onAdd(OrderItemInput orderItem) {
     final qty = orderItem.quantity + 1;
-    double discountForOneItem = double.parse(orderItem.discountAmt) / orderItem.quantity;
-    orderItem.discountAmt = (double.parse(orderItem.discountAmt) + discountForOneItem).toStringAsFixed(2);
+    double discountForOneItem = double.parse(orderItem.discountAmt!) / orderItem.quantity;
+    orderItem.discountAmt = (double.parse(orderItem.discountAmt!) + discountForOneItem).toStringAsFixed(2);
     final availableQty = orderItem.product?.quantity ?? 0;
     if (qty > availableQty) {
       locator<GlobalServices>().infoSnackBar("Quantity not available");
@@ -206,8 +206,8 @@ class _CreateEstimateState extends State<CreateEstimate> {
   }
 
   void OnDelete(OrderItemInput _orderItem, index) {
-    double discountForOneItem = double.parse(_orderItem.discountAmt) / _orderItem.quantity;
-    _orderItem.discountAmt = (double.parse(_orderItem.discountAmt) - discountForOneItem).toStringAsFixed(2);
+    double discountForOneItem = double.parse(_orderItem.discountAmt!) / _orderItem.quantity;
+    _orderItem.discountAmt = (double.parse(_orderItem.discountAmt!) - discountForOneItem).toStringAsFixed(2);
     setState(() {
       if(_orderItem.quantity <= 1){
         _orderItem.quantity = 0;
@@ -272,7 +272,7 @@ class _CreateEstimateState extends State<CreateEstimate> {
       double basesellingprice, List<OrderItemInput> _orderItems, int index) async{
     final _orderItem = _orderItems[index];
 
-    double discount = double.parse(_orderItem.discountAmt);
+    double discount = double.parse(_orderItem.discountAmt!);
     final product = _orderItems[index].product!;
     final tappedProduct = await ProductService().getProduct(_orderItems[index].product!.id!);
     final productJson = Product.fromMap(tappedProduct.data['inventory']);
@@ -345,14 +345,14 @@ class _CreateEstimateState extends State<CreateEstimate> {
                             if (_orderItem.product!.baseSellingPriceGst ==
                                 "null") {
                               discount = (_orderItem.product!.sellingPrice! +
-                                      double.parse(_orderItem.discountAmt) -
+                                      double.parse(_orderItem.discountAmt!) -
                                       double.parse(localSellingPrice!)
                                           .toDouble()) *
                                   _orderItem.quantity;
                             } else {
                               discount = (double.parse(_orderItem
                                           .product!.baseSellingPriceGst!) +
-                                      double.parse(_orderItem.discountAmt) -
+                                      double.parse(_orderItem.discountAmt!) -
                                       double.parse(localSellingPrice!)
                                           .toDouble()) *
                                   _orderItem.quantity;
@@ -437,7 +437,7 @@ class _CreateEstimateState extends State<CreateEstimate> {
                                     child: ProductCardPurchase(
                                       type: "estimate",
                                       product: _orderItems[index].product!,
-                                      discount: _orderItems[index].discountAmt,
+                                      discount: _orderItems[index].discountAmt!,
                                       onQuantityFieldChange: (double value){
                                         setQuantityToBeSold(_orderItems[index], value, index);
                                       },

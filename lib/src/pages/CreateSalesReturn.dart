@@ -65,8 +65,8 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
 
   void _onAdd(OrderItemInput orderItem) {
     final qty = orderItem.quantity + 1;
-    double discountForOneItem = double.parse(orderItem.discountAmt) / orderItem.quantity;
-    orderItem.discountAmt = (double.parse(orderItem.discountAmt) + discountForOneItem).toStringAsFixed(2);
+    double discountForOneItem = double.parse(orderItem.discountAmt!) / orderItem.quantity;
+    orderItem.discountAmt = (double.parse(orderItem.discountAmt!) + discountForOneItem).toStringAsFixed(2);
     final availableQty = orderItem.product?.quantity ?? 0;
     if (qty > availableQty) {
       locator<GlobalServices>().infoSnackBar("Quantity not available");
@@ -182,7 +182,7 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                               child: ProductCardPurchase(
                                 type: "sale",
                                 product: _orderItems[index].product!,
-                                discount: _orderItems[index].discountAmt,
+                                discount: _orderItems[index].discountAmt!,
                                 onQuantityFieldChange: (double value){
                                   setQuantityToBeSold(_orderItems[index], value, index);
                                 },
@@ -318,7 +318,7 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
   showAddDiscountDialog(List<OrderItemInput> _orderItems, int index) async{
     final _orderItem = _orderItems[index];
     final product = _orderItems[index].product!;
-    double discount = double.parse(_orderItem.discountAmt);
+    double discount = double.parse(_orderItem.discountAmt!);
     final tappedProduct = await ProductService().getProduct(_orderItems[index].product!.id!);
     final productJson = Product.fromMap(tappedProduct.data['inventory']);
     final baseSellingPriceToShow = productJson.baseSellingPriceGst;
@@ -378,9 +378,9 @@ class _CreateSaleReturnState extends State<CreateSaleReturn> {
                             print(localSellingPrice);
                             print(discountedPrice);
                             if(_orderItem.product!.baseSellingPriceGst =="null"){
-                              discount = (_orderItem.product!.sellingPrice!  + double.parse(_orderItem.discountAmt) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
+                              discount = (_orderItem.product!.sellingPrice!  + double.parse(_orderItem.discountAmt!) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
                             }else{
-                              discount = (double.parse(_orderItem.product!.baseSellingPriceGst!) + double.parse(_orderItem.discountAmt) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
+                              discount = (double.parse(_orderItem.product!.baseSellingPriceGst!) + double.parse(_orderItem.discountAmt!) - double.parse(localSellingPrice!).toDouble()) * _orderItem.quantity;
                             }
                             _orderItems[index].discountAmt = discount.toStringAsFixed(2);
                             setState(() {});
