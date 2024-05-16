@@ -1078,7 +1078,8 @@ class _BillingListScreenState extends State<BillingListScreen> {
           actions: [
             TextButton(
                 onPressed: () {
-                  // startTimer();
+                  if(autoRefreshPref)
+                    startTimer();
                   Navigator.pop(ctx, false);
                 },
                 child: Text('No')),

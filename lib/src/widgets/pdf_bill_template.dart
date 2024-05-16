@@ -74,7 +74,9 @@ class PdfUI {
       pw.Page(
         pageFormat: roll80,
         build: (context) {
-          return pw.Center(
+          return pw.Container(
+              margin: pw.EdgeInsets.only(right: 15),
+              child: pw.Center(
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
@@ -262,7 +264,7 @@ class PdfUI {
                     style: pw.TextStyle(fontSize: 12, font: ttf)),
               ],
             ),
-          );
+          ));
         },
       ),
     );

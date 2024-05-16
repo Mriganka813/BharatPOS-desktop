@@ -194,7 +194,7 @@ class PdfKotUI {
       pageFormat: roll80,
       build: (context) {
         return pw.Container(
-          margin: pw.EdgeInsets.all(0),
+          margin: pw.EdgeInsets.only(right: 15),
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
