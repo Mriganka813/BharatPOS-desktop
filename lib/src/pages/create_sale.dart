@@ -338,6 +338,8 @@ class _CreateSaleState extends State<CreateSale> {
                                   // context.read<KotCubit>().deleteKot(_Order.id.toString(), _Order.orderItems![index].product!.name!);
 
                                   setState(() {
+                                    double discountForOneItem = double.parse(_orderItems[index].discountAmt!) / _orderItems[index].quantity;
+                                    _orderItems[index].discountAmt = (double.parse(_orderItems[index].discountAmt!) - discountForOneItem).toStringAsFixed(2);
                                     if(_orderItems[index].quantity <= 1){
                                       _orderItems[index].quantity = 0;
                                       _Order.orderItems?[index].product?.quantityToBeSold = 0;

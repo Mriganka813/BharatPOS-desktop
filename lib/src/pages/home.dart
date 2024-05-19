@@ -8,6 +8,7 @@ import 'package:shopos/src/config/colors.dart';
 import 'package:shopos/src/pages/AboutOptionPage.dart';
 import 'package:shopos/src/pages/CreateSalesReturn.dart';
 import 'package:shopos/src/pages/SwitchAccountPage.dart';
+import 'package:shopos/src/pages/billing_list.dart';
 import 'package:shopos/src/pages/checkout.dart';
 import 'package:shopos/src/pages/create_purchase.dart';
 import 'package:shopos/src/pages/create_sale.dart';
@@ -205,6 +206,21 @@ class _HomePageState extends State<HomePage> {
                           if(result){
                             Navigator.of(context).pushNamed(DefaultPreferences.routeName);
                           }
+                        },
+                      ),
+                      Divider(
+                        color: Colors.transparent,
+                      ),
+                      ListTile(
+                        contentPadding: EdgeInsets.only(left: 10),
+                        leading: Image.asset(
+                          "assets/icon/to_do_list.png",
+                          height: 38,
+
+                        ),
+                        title: Title(color: Colors.black, child: Text("Pending Orders")),
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (context)=> BillingListScreen(orderType: OrderType.sale)));
                         },
                       ),
                       Divider(

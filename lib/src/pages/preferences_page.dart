@@ -233,7 +233,7 @@ class _DefaultPreferencesState extends State<DefaultPreferences> {
                                   await prefs.setBool('in-stock-button-preference', value);
                                 }),
                           ),
-                        ),
+                        ), //In Stock
                         Divider(thickness: 1,),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
@@ -249,7 +249,7 @@ class _DefaultPreferencesState extends State<DefaultPreferences> {
                                   await prefs.setBool('show-name-preference', value);
                                 }),
                           ),
-                        ),
+                        ), //Save Name
                         Divider(thickness: 1,),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
@@ -265,7 +265,7 @@ class _DefaultPreferencesState extends State<DefaultPreferences> {
                                   await prefs.setBool('buzzer-qr-order-preference', value);
                                 }),
                           ),
-                        ),
+                        ), // Notification
                         // Divider(thickness: 1,),
                         // Padding(
                         //   padding: const EdgeInsets.all(8.0),

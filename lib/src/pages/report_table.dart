@@ -145,12 +145,12 @@ class _ReportTableState extends State<ReportTable> {
       'Total',
     ];
     if (_salegstreport)  {
-      headersS.insert(5, 'HSN');
-      headersS.insert(8, 'GST');
-      headersS.insert(8, 'SGST');
-      headersS.insert(8, 'CGST');
-      headersS.insert(8, 'GST Rate');
-      headersS.insert(8, 'Taxable value');
+      headersS.insert(6, 'HSN');
+      headersS.insert(9, 'GST');
+      headersS.insert(9, 'SGST');
+      headersS.insert(9, 'CGST');
+      headersS.insert(9, 'GST Rate');
+      headersS.insert(9, 'Taxable value');
     }
     if(_showNamePreference) {
       headersS.insert(2, 'Name');
@@ -568,7 +568,7 @@ class _ReportTableState extends State<ReportTable> {
         if(_showNamePreference) {
           cells.insert(2, DataCell(Text(names[i], style: TextStyle(fontSize: 6),)),);
         }
-        list.add(DataRow(cells: cells));;
+        list.add(DataRow(cells: cells));
       }
     }
     if (partynametoFilter != "" || filterPaymentModeSelected!=""){
